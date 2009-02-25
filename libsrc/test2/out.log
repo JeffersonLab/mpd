@@ -1,0 +1,468 @@
+
+MPD Library Tests
+----------------------------
+Opening A32 Window (opened at [0xb7ef6000,0xb7f06000])
+Opening A32Blt Window (opened at [0xadef6000,0xb7ef6000])
+Opening A24 Window (opened at [0xacef6000,0xadef6000])
+Opening A16 Window (opened at [0xacee6000,0xacef6000])
+jlabgefMapTsi: Tempe Chip Userspace map successful
+VME Bus Error IRQ Disabled
+vmeBusCreateLockShm: vmeBus shared memory mutex created
+mpdConfigInit: cfg/config_apv.txt: Version = 0.3
+Number of MPDs in config file = 1
+mpdConfigLoad: Loading MPD idx=  0 rotary (slot) =  0
+mpdSetTriggerMode: Calib Latency = 0, Trigger Mode = 0x2
+mpdSetAcqMode: Acquisition Mode = 0x1 (event)
+mpdConfigLoad: 4 APV elements in given MPD 0
+mpdAddApv: APV 0 added to list of FECs
+mpdAddApv: APV 1 added to list of FECs
+mpdAddApv: APV 2 added to list of FECs
+mpdAddApv: APV 3 added to list of FECs
+mpdConfigLoad:  4 APV loaded in Slot=0 MPD settings
+mpdInit: start
+mpdInit: A24 mapping: VME addr=0x80000 -> Local 0xacf76000
+mpdInit: Looking at MPD in slot 0
+ MPD Slot 0 - Firmware Revision ID = 0x4003
+ MPD Slot 0 - Firmware Revision Time: 359290 (s)
+ ++ MPD in slot 0 is in config file, INIT IT
+Initialized MPD  0  Slot # 0 at VME address 0x8000000 (local 0xadef6000) 
+mpdInit: Looking at MPD in slot 1
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x10001c
+mpdInit: WARN: No addressable board at VME addr=0x100000 (local 0xacff6000)
+mpdInit: Looking at MPD in slot 2
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x18001c
+mpdInit: WARN: No addressable board at VME addr=0x180000 (local 0xad076000)
+mpdInit: Looking at MPD in slot 3
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x20001c
+mpdInit: WARN: No addressable board at VME addr=0x200000 (local 0xad0f6000)
+mpdInit: Looking at MPD in slot 4
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x28001c
+mpdInit: WARN: No addressable board at VME addr=0x280000 (local 0xad176000)
+mpdInit: Looking at MPD in slot 5
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x30001c
+mpdInit: WARN: No addressable board at VME addr=0x300000 (local 0xad1f6000)
+mpdInit: Looking at MPD in slot 6
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x38001c
+mpdInit: WARN: No addressable board at VME addr=0x380000 (local 0xad276000)
+mpdInit: Looking at MPD in slot 7
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x40001c
+mpdInit: WARN: No addressable board at VME addr=0x400000 (local 0xad2f6000)
+mpdInit: Looking at MPD in slot 8
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x48001c
+mpdInit: WARN: No addressable board at VME addr=0x480000 (local 0xad376000)
+mpdInit: Looking at MPD in slot 9
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x50001c
+mpdInit: WARN: No addressable board at VME addr=0x500000 (local 0xad3f6000)
+mpdInit: Looking at MPD in slot 10
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x58001c
+mpdInit: WARN: No addressable board at VME addr=0x580000 (local 0xad476000)
+mpdInit: Looking at MPD in slot 11
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x60001c
+mpdInit: WARN: No addressable board at VME addr=0x600000 (local 0xad4f6000)
+mpdInit: Looking at MPD in slot 12
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x68001c
+mpdInit: WARN: No addressable board at VME addr=0x680000 (local 0xad576000)
+mpdInit: Looking at MPD in slot 13
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x70001c
+mpdInit: WARN: No addressable board at VME addr=0x700000 (local 0xad5f6000)
+mpdInit: Looking at MPD in slot 14
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x78001c
+mpdInit: WARN: No addressable board at VME addr=0x780000 (local 0xad676000)
+mpdInit: Looking at MPD in slot 15
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x80001c
+mpdInit: WARN: No addressable board at VME addr=0x800000 (local 0xad6f6000)
+mpdInit: Looking at MPD in slot 16
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x88001c
+mpdInit: WARN: No addressable board at VME addr=0x880000 (local 0xad776000)
+mpdInit: Looking at MPD in slot 17
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x90001c
+mpdInit: WARN: No addressable board at VME addr=0x900000 (local 0xad7f6000)
+mpdInit: Looking at MPD in slot 18
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x98001c
+mpdInit: WARN: No addressable board at VME addr=0x980000 (local 0xad876000)
+mpdInit: Looking at MPD in slot 19
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0xa0001c
+mpdInit: WARN: No addressable board at VME addr=0xa00000 (local 0xad8f6000)
+mpdInit: Looking at MPD in slot 20
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0xa8001c
+mpdInit: WARN: No addressable board at VME addr=0xa80000 (local 0xad976000)
+mpdInit: 1 MPD(s) initialized, 1 discovered
+mpdInit: WARN: Unable to initialize all requested MPD Modules (1)
+ MPD discovered = 1
+ test mpd 0 histo memory
+HISTO Read/Write test SUCCESS on MPD slot 0
+ Try initialize I2C mpd in slot 0
+mpdI2C_Init: i2c low prescaler register set/read : 100 / 100
+mpdI2C_Init: i2c high prescaler register set/read : 4 / 4
+mpdI2C_Init: i2c speed prescale = 1124, (period = 112.400000 us, frequency = 8.896797 kHz)
+Board temperatures: core=128.83 air=128.83 (dec celsius)
+Try APV discovery and init on MPD slot 0
+mpdAPV_Scan: MPD 0 Blind scan on 31 apvs: 
+mpdAPV_Try: timeout 20 : 32 ret = -20
+mpdAPV_Try: timeout 20 : 33 ret = -20
+mpdAPV_Try: timeout 20 : 34 ret = -20
+mpdAPV_Try: timeout 20 : 35 ret = -20
+mpdAPV_Try: timeout 20 : 36 ret = -20
+mpdAPV_Try: timeout 20 : 37 ret = -20
+mpdAPV_Try: timeout 20 : 38 ret = -20
+mpdAPV_Try: timeout 20 : 39 ret = -20
+mpdAPV_Try: timeout 20 : 40 ret = -20
+mpdAPV_Try: timeout 20 : 41 ret = -20
+mpdAPV_Try: timeout 20 : 42 ret = -20
+mpdAPV_Try: timeout 20 : 43 ret = -20
+mpdAPV_Try: timeout 20 : 44 ret = -20
+mpdAPV_Try: timeout 20 : 45 ret = -20
+mpdAPV_Try: timeout 20 : 46 ret = -20
+mpdAPV_Try: timeout 20 : 47 ret = -20
+mpdAPV_Try: timeout 20 : 48 ret = -20
+mpdAPV_Try: timeout 20 : 49 ret = -20
+mpdAPV_Try: timeout 20 : 50 ret = -20
+mpdAPV_Try: timeout 20 : 51 ret = -20
+mpdAPV_Try: timeout 20 : 52 ret = -20
+mpdAPV_Try: timeout 20 : 53 ret = -20
+mpdAPV_Try: timeout 20 : 54 ret = -20
+mpdAPV_Try: timeout 20 : 55 ret = -20
+mpdAPV_Try: timeout 20 : 56 ret = -20
+mpdAPV_Try: timeout 20 : 57 ret = -20
+mpdAPV_Try: timeout 20 : 58 ret = -20
+mpdAPV_Try: timeout 20 : 59 ret = -20
+mpdAPV_Try: timeout 20 : 60 ret = -20
+mpdAPV_Try: timeout 20 : 61 ret = -20
+mpdAPV_Try: timeout 20 : 62 ret = -20
+mpdAPV_Scan: MPD 0 Blind scan done
+mpdAPV_Scan: Try  0  0 : mpdAPV_Try: timeout 20 : 32 ret = -20
+mpdAPV_Scan: 0 matched in MPD in slot 0
+mpdAPV_Scan: APV enable mask 0x0001
+mpdAPV_Scan: Try  1  1 : mpdAPV_Try: timeout 20 : 33 ret = -20
+mpdAPV_Scan: 1 matched in MPD in slot 0
+mpdAPV_Scan: APV enable mask 0x0003
+mpdAPV_Scan: Try  2  2 : mpdAPV_Try: timeout 20 : 33 ret = -20
+mpdAPV_Scan: 2 matched in MPD in slot 0
+mpdAPV_Scan: APV enable mask 0x0007
+mpdAPV_Scan: Try  3  3 : mpdAPV_Try: timeout 20 : 33 ret = -20
+mpdAPV_Scan: 3 matched in MPD in slot 0
+mpdAPV_Scan: APV enable mask 0x000f
+mpdAPV_Scan: 4 APV found matching settings
+Do DELAY setting on MPD slot 0
+mpdDELAY25_Set: start
+mpdDELAY25_Set: end
+Do APV reset on MPD slot 0
+Configure single APV on MPD slot 0
+APV card i2c=0 to ADC (fifo)=0 (from config file)
+mpdAPV_Config: ERROR: I2C Bus Error: i/addr/reg/val/err 0/ 0 0x2 0x0 0xffffffecERR: config apv card 0 failed in mpd 0
+APV card i2c=1 to ADC (fifo)=1 (from config file)
+mpdAPV_Config: ERROR: I2C Bus Error: i/addr/reg/val/err 0/ 1 0x2 0x0 0xffffffecERR: config apv card 1 failed in mpd 0
+APV card i2c=2 to ADC (fifo)=2 (from config file)
+mpdAPV_Config: ERROR: I2C Bus Error: i/addr/reg/val/err 0/ 2 0x2 0x0 0xffffffecERR: config apv card 2 failed in mpd 0
+APV card i2c=3 to ADC (fifo)=3 (from config file)
+mpdAPV_Config: ERROR: I2C Bus Error: i/addr/reg/val/err 0/ 3 0x2 0x0 0xffffffecERR: config apv card 3 failed in mpd 0
+Configure ADC on MPD slot 0
+mpdADS5281_Normal: Board= 0 ADC= 0 No Pattern (Normal Acq)
+mpdADS5281_InvertChannels: Board= 0 ADC= 0 Inverted Polarity
+mpdADS5281_SetGain: Board= 0 ADC= 0 Set Gain 5 5 5 5 5 5 5 5
+mpdADS5281_Normal: Board= 0 ADC= 1 No Pattern (Normal Acq)
+mpdADS5281_InvertChannels: Board= 0 ADC= 1 Inverted Polarity
+mpdADS5281_SetGain: Board= 0 ADC= 1 Set Gain 5 5 5 5 5 5 5 5
+Do 101 Reset on MPD slot 0
+mpdSetAcqMode: Acquisition Mode = 0x4 (histo)
+mpdADS5281_SetGain: Board= 0 ADC= 0 Set Gain 5 5 5 5 5 5 5 5
+ Dump histo data from MPD/ADCch = 0 / 0 (Integral= 40062161)
+ first bin= 24 : 6 8b  last bin= 24
+ first bin= 266a3 37cb  last bin= 26
+ first bin= 28157ef 2617f  last bin= 28
+ first bin= 3027bbf 1a9b6  last bin= 30
+ first bin= 3217f67 1bfe8  last bin= 32
+ first bin= 342bacf 20482  last bin= 34
+ first bin= 36138cd 1be8  last bin= 36
+ first bin= 385a5 5b  last bin= 38
+ first bin= 403  last bin= 40
+ first bin= 421 21  last bin= 42
+ first bin= 4482e 3ce6  last bin= 44
+ first bin= 46e0dc 211ff  last bin= 46
+ first bin= 483a773 1513d  last bin= 48
+ first bin= 5017dbb 2e4ca  last bin= 50
+ first bin= 522960f 19c78  last bin= 52
+ first bin= 54f995 2a8c0  last bin= 54
+ first bin= 562a2c8 22bc8  last bin= 56
+ first bin= 581974c 31777  last bin= 58
+ first bin= 6024c4b 20e67  last bin= 60
+ first bin= 621fb41 3b8df  last bin= 62
+ first bin= 6421ce2 133c0  last bin= 64
+ first bin= 6619ff3 36f14  last bin= 66
+ first bin= 6827155 13951  last bin= 68
+ first bin= 708b74 1e015  last bin= 70
+ first bin= 7239107 743a0  last bin= 72
+ first bin= 7496635 125b16  last bin= 74
+ first bin= 761084d2 1ab955  last bin= 76
+ first bin= 78401348 94f754  last bin= 78
+ first bin= 8064292c 2eb99b  last bin= 80
+ first bin= 82101f67 2d982  last bin= 82
+ first bin= 841808 533  last bin= 84
+ first bin= 862710 1839c  last bin= 86
+ first bin= 88230bf 29f73  last bin= 88
+ first bin= 9017bef b2c7  last bin= 90
+ first bin= 92c0c 144  last bin= 92
+ first bin= 94d 1  last bin= 94
+ first bin= 1441 1d  last bin= 144
+ first bin= 146235 14ae  last bin= 146
+ first bin= 1487aeb 2b22f  last bin= 148
+ first bin= 15020fe6 22a28  last bin= 150
+ first bin= 152ea64 4ef2  last bin= 152
+ first bin= 1543d1 4c  last bin= 154
+ first bin= 1561  last bin= 156
+ first bin= 1611 1b  last bin= 161
+ first bin= 16313c ba8  last bin= 163
+ first bin= 165ba98 18b2c  last bin= 165
+ first bin= 16729ea9 21fbf  last bin= 167
+ first bin= 16917808 29b5  last bin= 169
+ first bin= 171813 97  last bin= 171
+ first bin= 173a  last bin= 173
+ first bin= 1845 15f  last bin= 184
+ first bin= 186cf1 567e  last bin= 186
+ first bin= 18824a0b 270cb  last bin= 188
+ first bin= 19024309 fd28  last bin= 190
+ first bin= 192549e 643  last bin= 192
+ first bin= 194db 6  last bin= 194
+ first bin= 1961  last bin= 196
+ first bin= 22023 15a  last bin= 220
+ first bin= 222f23 518a  last bin= 222
+ first bin= 224190f6 253ba  last bin= 224
+ first bin= 22627794 1456a  last bin= 226
+ first bin= 228ab1b b9c  last bin= 228
+ first bin= 230102 c  last bin= 230
+ first bin= 2721 c  last bin= 272
+ first bin= 27416f 2631  last bin= 274
+ first bin= 2766e50 18e27  last bin= 276
+ first bin= 278344f1 218cf  last bin= 278
+ first bin= 280eb27 437d  last bin= 280
+ first bin= 282ae4 2f  last bin= 282
+ first bin= 2842  last bin= 284
+ first bin= 4622 3a  last bin= 462
+ first bin= 464234 1503  last bin= 464
+ first bin= 466c62f 1ae6b  last bin= 466
+ first bin= 46824e4a 1ffad  last bin= 468
+ first bin= 47019f5c 365c  last bin= 470
+ first bin= 472ab7 11a  last bin= 472
+ first bin= 47410  last bin= 474
+ first bin= 26974 26  last bin= 2697
+ first bin= 269919b af9  last bin= 2699
+ first bin= 2701716b e191  last bin= 2701
+ first bin= 27031bce3 1a41c  last bin= 2703
+ first bin= 27052a059 df61  last bin= 2705
+ first bin= 27075d54 1829  last bin= 2707
+ first bin= 2709577 32  last bin= 2709
+ first bin= 27113 1  last bin= 2711
+ first bin= 29449 57  last bin= 2944
+ first bin= 294632d 10c8  last bin= 2946
+ first bin= 29486b66 f0f9  last bin= 2948
+ first bin= 29501c4ca 1d2ab  last bin= 2950
+ first bin= 295229184 ce02  last bin= 2952
+ first bin= 29544049 1289  last bin= 2954
+ first bin= 2956108 13  last bin= 2956
+ first bin= 29581 
+ Dump histo data from MPD/ADCch = 0 / 1 (Integral= 40090532)
+ first bin= 139 : 1 22  last bin= 139
+ first bin= 1418ed 37c5  last bin= 141
+ first bin= 143d5c7 1f093  last bin= 143
+ first bin= 1453e296 15845  last bin= 145
+ first bin= 14767bc 11be  last bin= 147
+ first bin= 1491ac 29  last bin= 149
+ first bin= 151250 1832  last bin= 151
+ first bin= 15311a9c 20ab0  last bin= 153
+ first bin= 1552ac77 1d929  last bin= 155
+ first bin= 157e039 1517  last bin= 157
+ first bin= 159234 18  last bin= 159
+ first bin= 1611 2  last bin= 161
+ first bin= 16336 36f  last bin= 163
+ first bin= 16548b7 10db1  last bin= 165
+ first bin= 16721539 2a612  last bin= 167
+ first bin= 16925724 c922  last bin= 169
+ first bin= 17116d3e 26f84  last bin= 171
+ first bin= 1733a851 1d636  last bin= 173
+ first bin= 17528077 2e1e1  last bin= 175
+ first bin= 17747420 2e27d  last bin= 177
+ first bin= 17925a69 1c822  last bin= 179
+ first bin= 181333a8 2a205  last bin= 181
+ first bin= 1831d5e6 1b100  last bin= 183
+ first bin= 1855e663 9232c  last bin= 185
+ first bin= 187e1a12 147c26  last bin= 187
+ first bin= 189eac4a 1c009d  last bin= 189
+ first bin= 19142dfcd 9a0cd9  last bin= 191
+ first bin= 1935d6e14 304b40  last bin= 193
+ first bin= 195d5ab4 274f4  last bin= 195
+ first bin= 197f21 808  last bin= 197
+ first bin= 199326d 19abb  last bin= 199
+ first bin= 20127de3 27062  last bin= 201
+ first bin= 20316d32 83f9  last bin= 203
+ first bin= 205804 9d  last bin= 205
+ first bin= 2074  last bin= 207
+ first bin= 2592 15  last bin= 259
+ first bin= 261141 f60  last bin= 261
+ first bin= 263b71a 1a0ef  last bin= 263
+ first bin= 26529a01 2366d  last bin= 265
+ first bin= 26715989 251e  last bin= 267
+ first bin= 269513 45  last bin= 269
+ first bin= 27112 108  last bin= 271
+ first bin= 273b96 4a0b  last bin= 273
+ first bin= 27519b17 26301  last bin= 275
+ first bin= 27726111 1c097  last bin= 277
+ first bin= 2793d73 891  last bin= 279
+ first bin= 281af 8  last bin= 281
+ first bin= 2871 34  last bin= 287
+ first bin= 289383 4de5  last bin= 289
+ first bin= 291dcea 20651  last bin= 291
+ first bin= 29327f0c 28687  last bin= 293
+ first bin= 2956ca1 1406  last bin= 295
+ first bin= 297205 1b  last bin= 297
+ first bin= 31812 ef  last bin= 318
+ first bin= 320a5c 40b9  last bin= 320
+ first bin= 3221e495 26bec  last bin= 322
+ first bin= 3242686a 18727  last bin= 324
+ first bin= 3262ab7 5be  last bin= 326
+ first bin= 3288c 9  last bin= 328
+ first bin= 35716 fc  last bin= 357
+ first bin= 359b2f 4545  last bin= 359
+ first bin= 3611f8c2 273bb  last bin= 361
+ first bin= 36323437 14867  last bin= 363
+ first bin= 3657c41 5ee  last bin= 365
+ first bin= 36761 1  last bin= 367
+ first bin= 4821 16  last bin= 482
+ first bin= 484177 d91  last bin= 484
+ first bin= 486a396 183ab  last bin= 486
+ first bin= 48824dca 2646d  last bin= 488
+ first bin= 49018c52 3ccb  last bin= 490
+ first bin= 492a82 ea  last bin= 492
+ first bin= 49412  last bin= 494
+ first bin= 27046 1b8  last bin= 2704
+ first bin= 2706931 2955  last bin= 2706
+ first bin= 27088173 1faed  last bin= 2708
+ first bin= 27101dd26 1dd5e  last bin= 2710
+ first bin= 271214fed da1c  last bin= 2712
+ first bin= 27141f5c 73c  last bin= 2714
+ first bin= 2716149 1d  last bin= 2716
+ first bin= 27183  last bin= 2718
+ first bin= 288719 f4  last bin= 2887
+ first bin= 2889117d 44a9  last bin= 2889
+ first bin= 2891b587 17ec0  last bin= 2891
+ first bin= 289331fe7 1a6ab  last bin= 2893
+ first bin= 2895eeb6 5d1e  last bin= 2895
+ first bin= 28971d74 1a4  last bin= 2897
+ first bin= 289938 2 
+ Dump histo data from MPD/ADCch = 0 / 2 (Integral= 40092130)
+ first bin= 53 : 4 83  last bin= 53
+ first bin= 551271 6a28  last bin= 55
+ first bin= 5714e2b 265ba  last bin= 57
+ first bin= 5934eb6 f04c  last bin= 59
+ first bin= 6142a3 b95  last bin= 61
+ first bin= 633830 c9e4  last bin= 63
+ first bin= 651db3b 25b4d  last bin= 65
+ first bin= 672c95b 964c  last bin= 67
+ first bin= 691f97 42b  last bin= 69
+ first bin= 714e  last bin= 71
+ first bin= 79b4 64e  last bin= 79
+ first bin= 813411 b3d9  last bin= 81
+ first bin= 832f5ee 28992  last bin= 83
+ first bin= 8518fc4 9e3e  last bin= 85
+ first bin= 8736e3 7e00  last bin= 87
+ first bin= 8914936 28a5b  last bin= 89
+ first bin= 91402b1 31d23  last bin= 91
+ first bin= 9339079 40475  last bin= 93
+ first bin= 955a7ee 2c27b  last bin= 95
+ first bin= 97320bd 440e7  last bin= 97
+ first bin= 9930375 456f9  last bin= 99
+ first bin= 1015f173 94eec  last bin= 101
+ first bin= 103454ca 55eba  last bin= 103
+ first bin= 10555df3 a808b  last bin= 105
+ first bin= 107c1e89 167974  last bin= 107
+ first bin= 10935df9b 91a974  last bin= 109
+ first bin= 1116a2a39 383c43  last bin= 111
+ first bin= 11316b096 473f8  last bin= 113
+ first bin= 115222d 1893  last bin= 115
+ first bin= 117704b 28094  last bin= 117
+ first bin= 11926b35 22dda  last bin= 119
+ first bin= 121dea5 388d  last bin= 121
+ first bin= 123276 1b  last bin= 123
+ first bin= 1252  last bin= 125
+ first bin= 1801 39  last bin= 180
+ first bin= 182363 17ea  last bin= 182
+ first bin= 1848720 25c49  last bin= 184
+ first bin= 18629cb7 1fe6d  last bin= 186
+ first bin= 1881072e 192c  last bin= 188
+ first bin= 19029f 3a  last bin= 190
+ first bin= 1922  last bin= 192
+ first bin= 2002 2c  last bin= 200
+ first bin= 2022f8 182b  last bin= 202
+ first bin= 204fc0c 21ca3  last bin= 204
+ first bin= 20628caa 1eeb9  last bin= 206
+ first bin= 208f476 16ad  last bin= 208
+ first bin= 21029a 29  last bin= 210
+ first bin= 2256 57  last bin= 225
+ first bin= 22747a 64f5  last bin= 227
+ first bin= 229101bc 247fc  last bin= 229
+ first bin= 23136697 12e17  last bin= 231
+ first bin= 23362f5 10d6  last bin= 233
+ first bin= 23514b 1  last bin= 235
+ first bin= 260a 70  last bin= 260
+ first bin= 2627a3 7561  last bin= 262
+ first bin= 26412caf 24b18  last bin= 264
+ first bin= 26626888 20842  last bin= 266
+ first bin= 268482c de9  last bin= 268
+ first bin= 270111 14  last bin= 270
+ first bin= 3018 25a  last bin= 301
+ first bin= 303f7e 5b0d  last bin= 303
+ first bin= 30511b2a 3bb4f  last bin= 305
+ first bin= 3071fcdd 12418  last bin= 307
+ first bin= 309496c f34  last bin= 309
+ first bin= 3114e  last bin= 311
+ first bin= 4465 1cd  last bin= 446
+ first bin= 448f7a 4515  last bin= 448
+ first bin= 45010158 30545  last bin= 450
+ first bin= 45223b93 17521  last bin= 452
+ first bin= 454898a 24d8  last bin= 454
+ first bin= 45611d 17  last bin= 456
+ first bin= 4581  last bin= 458
+ first bin= 266212 a7  last bin= 2662
+ first bin= 266442a 16be  last bin= 2664
+ first bin= 2666a1d8 12050  last bin= 2666
+ first bin= 26681eb49 1f542  last bin= 2668
+ first bin= 267022f2b 8c7d  last bin= 2670
+ first bin= 26723585 b4b  last bin= 2672
+ first bin= 267426b e  last bin= 2674
+ first bin= 26763 1  last bin= 2676
+ first bin= 28651 28  last bin= 2865
+ first bin= 2867193 80d  last bin= 2867
+ first bin= 286958ac ce3f  last bin= 2869
+ first bin= 287117b6d 2194c  last bin= 2871
+ first bin= 28732b1fb dc9f  last bin= 2873
+ first bin= 28754d68 17a0  last bin= 2875
+ first bin= 287740e 2a  last bin= 2877
+ first bin= 28792 
+ Dump histo data from MPD/ADCch = 0 / 3 (Integral= 40091364)
+ first bin= 70 : 11 436  last bin= 70
+ first bin= 721dbf a234  last bin= 72
+ first bin= 741b357 3ebf7  last bin= 74
+ first bin= 761ade1 8c33  last bin= 76
+ first bin= 781c9b 300  last bin= 78
+ first bin= 807  last bin= 80
+ first bin= 851 a  last bin= 85
+ first bin= 87440 2257  last bin= 87
+ first bin= 89ad08 1bb90  last bin= 89
+ first bin= 913dfb6 1a7b9  last bin= 91
+ first bin= 938802 1a20  last bin= 93
+ first bin= 95466 d  last bin= 95
+ first bin= 1024e 2ee  last bin= 102
+ first bin= 1041533 7ba9  last bin= 104
+ first bin= 1062ab41 2662d  last bin= 106
+ first bin= 1082150d 16263  last bin= 108
+ first bin= 11025615 1cd88  last bin= 110
+ first bin= 11216986 107be  last bin= 112
+ first bin= 11427cbc 2c14e  last bin= 114
+ first bin= 116309cb 281c5  last bin= 116
+ first bin= 11846e16 3b105  last bin= 118
+ first bin= 120347b5 2dda8  last bin= 120
+ first bin= 12227204 13628  last bin= 122
+ first bin= 12419e3a 250b1  last bin= 124
+ first bin= 1263d2b5 2f423  last bin= 126
+ first bin= 128408ec 4cc42  last bin= 128
+ first bin= 130ab700 ae593  last bin= 130
+ firs

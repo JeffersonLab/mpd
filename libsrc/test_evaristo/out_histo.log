@@ -1,0 +1,414 @@
+
+MPD Library Tests
+----------------------------
+Opening A32 Window (opened at [0xb7fcb000,0xb7fdb000])
+Opening A32Blt Window (opened at [0xadfcb000,0xb7fcb000])
+Opening A24 Window (opened at [0xacfcb000,0xadfcb000])
+Opening A16 Window (opened at [0xacfbb000,0xacfcb000])
+jlabgefMapTsi: Tempe Chip Userspace map successful
+VME Bus Error IRQ Disabled
+vmeBusCreateLockShm: vmeBus shared memory mutex created
+mpdConfigInit: cfg/config_apv.txt: Version = 0.3
+Number of MPDs in config file = 1
+mpdConfigLoad: Loading MPD idx=  0 rotary (slot) =  0
+mpdSetTriggerMode: Calib Latency = 0, Trigger Mode = 0x2
+mpdSetAcqMode: Acquisition Mode = 0x1 (event)
+mpdConfigLoad: 4 APV elements in given MPD 0
+mpdAddApv: APV 0 added to list of FECs
+mpdAddApv: APV 1 added to list of FECs
+mpdAddApv: APV 2 added to list of FECs
+mpdAddApv: APV 3 added to list of FECs
+mpdConfigLoad:  4 APV loaded in Slot=0 MPD settings
+mpdInit: start
+mpdInit: A24 mapping: VME addr=0x80000 -> Local 0xad04b000
+mpdInit: Looking at MPD in slot 0
+ MPD Slot 0 - Firmware Revision ID = 0x4003
+ MPD Slot 0 - Firmware Revision Time: 359290 (s)
+ ++ MPD in slot 0 is in config file, INIT IT
+Initialized MPD  0  Slot # 0 at VME address 0x8000000 (local 0xadfcb000) 
+mpdInit: Looking at MPD in slot 1
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x10001c
+mpdInit: WARN: No addressable board at VME addr=0x100000 (local 0xad0cb000)
+mpdInit: Looking at MPD in slot 2
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x18001c
+mpdInit: WARN: No addressable board at VME addr=0x180000 (local 0xad14b000)
+mpdInit: Looking at MPD in slot 3
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x20001c
+mpdInit: WARN: No addressable board at VME addr=0x200000 (local 0xad1cb000)
+mpdInit: Looking at MPD in slot 4
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x28001c
+mpdInit: WARN: No addressable board at VME addr=0x280000 (local 0xad24b000)
+mpdInit: Looking at MPD in slot 5
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x30001c
+mpdInit: WARN: No addressable board at VME addr=0x300000 (local 0xad2cb000)
+mpdInit: Looking at MPD in slot 6
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x38001c
+mpdInit: WARN: No addressable board at VME addr=0x380000 (local 0xad34b000)
+mpdInit: Looking at MPD in slot 7
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x40001c
+mpdInit: WARN: No addressable board at VME addr=0x400000 (local 0xad3cb000)
+mpdInit: Looking at MPD in slot 8
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x48001c
+mpdInit: WARN: No addressable board at VME addr=0x480000 (local 0xad44b000)
+mpdInit: Looking at MPD in slot 9
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x50001c
+mpdInit: WARN: No addressable board at VME addr=0x500000 (local 0xad4cb000)
+mpdInit: Looking at MPD in slot 10
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x58001c
+mpdInit: WARN: No addressable board at VME addr=0x580000 (local 0xad54b000)
+mpdInit: Looking at MPD in slot 11
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x60001c
+mpdInit: WARN: No addressable board at VME addr=0x600000 (local 0xad5cb000)
+mpdInit: Looking at MPD in slot 12
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x68001c
+mpdInit: WARN: No addressable board at VME addr=0x680000 (local 0xad64b000)
+mpdInit: Looking at MPD in slot 13
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x70001c
+mpdInit: WARN: No addressable board at VME addr=0x700000 (local 0xad6cb000)
+mpdInit: Looking at MPD in slot 14
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x78001c
+mpdInit: WARN: No addressable board at VME addr=0x780000 (local 0xad74b000)
+mpdInit: Looking at MPD in slot 15
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x80001c
+mpdInit: WARN: No addressable board at VME addr=0x800000 (local 0xad7cb000)
+mpdInit: Looking at MPD in slot 16
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x88001c
+mpdInit: WARN: No addressable board at VME addr=0x880000 (local 0xad84b000)
+mpdInit: Looking at MPD in slot 17
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x90001c
+mpdInit: WARN: No addressable board at VME addr=0x900000 (local 0xad8cb000)
+mpdInit: Looking at MPD in slot 18
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x98001c
+mpdInit: WARN: No addressable board at VME addr=0x980000 (local 0xad94b000)
+mpdInit: Looking at MPD in slot 19
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0xa0001c
+mpdInit: WARN: No addressable board at VME addr=0xa00000 (local 0xad9cb000)
+mpdInit: Looking at MPD in slot 20
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0xa8001c
+mpdInit: WARN: No addressable board at VME addr=0xa80000 (local 0xada4b000)
+mpdInit: 1 MPD(s) initialized, 1 discovered
+mpdInit: WARN: Unable to initialize all requested MPD Modules (1)
+ MPD discovered = 1
+ test mpd 0 histo memory
+HISTO Read/Write test SUCCESS on MPD slot 0
+ Try initialize I2C mpd in slot 0
+mpdI2C_Init: i2c low prescaler register set/read : 100 / 100
+mpdI2C_Init: i2c high prescaler register set/read : 4 / 4
+mpdI2C_Init: i2c speed prescale = 1124, (period = 112.400000 us, frequency = 8.896797 kHz)
+Board temperatures: core=128.63 air=128.63 (dec celsius)
+Try APV discovery and init on MPD slot 0
+mpdAPV_Scan: MPD 0 Blind scan on 31 apvs: 
+mpdAPV_Try: timeout 20 : 32 ret = -20
+mpdAPV_Try: timeout 20 : 33 ret = -20
+mpdAPV_Try: timeout 20 : 34 ret = -20
+mpdAPV_Try: timeout 20 : 35 ret = -20
+mpdAPV_Try: timeout 20 : 36 ret = -20
+mpdAPV_Try: timeout 20 : 37 ret = -20
+mpdAPV_Try: timeout 20 : 38 ret = -20
+mpdAPV_Try: timeout 20 : 39 ret = -20
+mpdAPV_Try: timeout 20 : 40 ret = -20
+mpdAPV_Try: timeout 20 : 41 ret = -20
+mpdAPV_Try: timeout 20 : 42 ret = -20
+mpdAPV_Try: timeout 20 : 43 ret = -20
+mpdAPV_Try: timeout 20 : 44 ret = -20
+mpdAPV_Try: timeout 20 : 45 ret = -20
+mpdAPV_Try: timeout 20 : 46 ret = -20
+mpdAPV_Try: timeout 20 : 47 ret = -20
+mpdAPV_Try: timeout 20 : 48 ret = -20
+mpdAPV_Try: timeout 20 : 49 ret = -20
+mpdAPV_Try: timeout 20 : 50 ret = -20
+mpdAPV_Try: timeout 20 : 51 ret = -20
+mpdAPV_Try: timeout 20 : 52 ret = -20
+mpdAPV_Try: timeout 20 : 53 ret = -20
+mpdAPV_Try: timeout 20 : 54 ret = -20
+mpdAPV_Try: timeout 20 : 55 ret = -20
+mpdAPV_Try: timeout 20 : 56 ret = -20
+mpdAPV_Try: timeout 20 : 57 ret = -20
+mpdAPV_Try: timeout 20 : 58 ret = -20
+mpdAPV_Try: timeout 20 : 59 ret = -20
+mpdAPV_Try: timeout 20 : 60 ret = -20
+mpdAPV_Try: timeout 20 : 61 ret = -20
+mpdAPV_Try: timeout 20 : 62 ret = -20
+mpdAPV_Scan: MPD 0 Blind scan done
+mpdAPV_Scan: Try  1  1 : mpdAPV_Try: timeout 20 : 33 ret = -20
+mpdAPV_Scan: 1 matched in MPD in slot 0
+mpdAPV_Scan: APV enable mask 0x0002
+mpdAPV_Scan: Try  2  2 : mpdAPV_Try: timeout 20 : 33 ret = -20
+mpdAPV_Scan: 2 matched in MPD in slot 0
+mpdAPV_Scan: APV enable mask 0x0006
+mpdAPV_Scan: Try  3  3 : mpdAPV_Try: timeout 20 : 33 ret = -20
+mpdAPV_Scan: 3 matched in MPD in slot 0
+mpdAPV_Scan: APV enable mask 0x000e
+mpdAPV_Scan: Try  4  4 : mpdAPV_Try: timeout 20 : 33 ret = -20
+mpdAPV_Scan: 4 matched in MPD in slot 0
+mpdAPV_Scan: APV enable mask 0x001e
+mpdAPV_Scan: 4 APV found matching settings
+Do DELAY setting on MPD slot 0
+mpdDELAY25_Set: start
+mpdDELAY25_Set: end
+Do APV reset on MPD slot 0
+Configure single APV on MPD slot 0
+APV card i2c=1 to ADC (fifo)=1 (from config file)
+mpdApvBufferAlloc: DEBUG: Fifo 1, buffer allocated with word size 11880
+APV card i2c=2 to ADC (fifo)=2 (from config file)
+mpdApvBufferAlloc: DEBUG: Fifo 2, buffer allocated with word size 11880
+APV card i2c=3 to ADC (fifo)=3 (from config file)
+mpdApvBufferAlloc: DEBUG: Fifo 3, buffer allocated with word size 11880
+APV card i2c=4 to ADC (fifo)=4 (from config file)
+mpdAPV_Config: ERROR: I2C Bus Error: i/addr/reg/val/err 0/ 4 0x2 0x0 0xffffffecERR: config apv card 3 failed in mpd 0
+Configure ADC on MPD slot 0
+mpdADS5281_Normal: Board= 0 ADC= 0 No Pattern (Normal Acq)
+mpdADS5281_InvertChannels: Board= 0 ADC= 0 Inverted Polarity
+mpdADS5281_SetGain: Board= 0 ADC= 0 Set Gain 5 5 5 5 5 5 5 5
+mpdADS5281_Normal: Board= 0 ADC= 1 No Pattern (Normal Acq)
+mpdADS5281_InvertChannels: Board= 0 ADC= 1 Inverted Polarity
+mpdADS5281_SetGain: Board= 0 ADC= 1 Set Gain 5 5 5 5 5 5 5 5
+Do 101 Reset on MPD slot 0
+mpdSetAcqMode: Acquisition Mode = 0x4 (histo)
+mpdADS5281_SetGain: Board= 0 ADC= 0 Set Gain 5 5 5 5 5 5 5 5
+ ### histo peaks integral MPD/ADCch = 0 / 0 (total Integral= 40022187)
+ first bin= 2042: 40022188 last bin= 2060
+ ### histo peaks integral MPD/ADCch = 0 / 1 (total Integral= 40056405)
+ first bin= 109: 1144470 last bin= 124
+ first bin= 137: 33761827 last bin= 173
+ first bin= 184: 572235 last bin= 195
+ first bin= 231: 572235 last bin= 242
+ first bin= 247: 572235 last bin= 258
+ first bin= 265: 572234 last bin= 277
+ first bin= 292: 572234 last bin= 304
+ first bin= 322: 572234 last bin= 333
+ first bin= 454: 572234 last bin= 466
+ first bin= 2784: 572234 last bin= 2798
+ first bin= 2964: 572234 last bin= 2978
+ ### histo peaks integral MPD/ADCch = 0 / 2 (total Integral= 40056252)
+ first bin= 97: 1144464 last bin= 108
+ first bin= 118: 33761701 last bin= 149
+ first bin= 157: 572232 last bin= 168
+ first bin= 203: 1144464 last bin= 228
+ first bin= 231: 572232 last bin= 243
+ first bin= 258: 572232 last bin= 269
+ first bin= 292: 572232 last bin= 303
+ first bin= 453: 572232 last bin= 466
+ first bin= 2720: 572232 last bin= 2734
+ first bin= 2922: 572232 last bin= 2936
+ ### histo peaks integral MPD/ADCch = 0 / 3 (total Integral= 40022010)
+ first bin= 128: 2 last bin= 128
+ first bin= 130: 35448061 last bin= 212
+ first bin= 214: 2 last bin= 215
+ first bin= 224: 2 last bin= 224
+ first bin= 233: 1 last bin= 233
+ first bin= 243: 1715229 last bin= 302
+ first bin= 308: 2 last bin= 308
+ first bin= 310: 571735 last bin= 329
+ first bin= 332: 4 last bin= 333
+ first bin= 339: 1 last bin= 339
+ first bin= 345: 1 last bin= 345
+ first bin= 347: 2 last bin= 347
+ first bin= 349: 571738 last bin= 370
+ first bin= 372: 2 last bin= 373
+ first bin= 493: 571742 last bin= 517
+ first bin= 519: 1 last bin= 519
+ first bin= 2723: 1 last bin= 2723
+ first bin= 2730: 571742 last bin= 2755
+ first bin= 2924: 571742 last bin= 2947
+ first bin= 2949: 1 last bin= 2949
+ ### histo peaks integral MPD/ADCch = 0 / 4 (total Integral= 40055705)
+ first bin= 137: 572224 last bin= 149
+ first bin= 155: 34333465 last bin= 195
+ first bin= 230: 572224 last bin= 242
+ first bin= 260: 1144448 last bin= 280
+ first bin= 286: 572224 last bin= 298
+ first bin= 319: 572224 last bin= 330
+ first bin= 395: 572224 last bin= 406
+ first bin= 731: 572224 last bin= 744
+ first bin= 2512: 572225 last bin= 2526
+ first bin= 2890: 572224 last bin= 2904
+ ### histo peaks integral MPD/ADCch = 0 / 5 (total Integral= 40055968)
+ first bin= 2050: 40055969 last bin= 2065
+ ### histo peaks integral MPD/ADCch = 0 / 6 (total Integral= 40056099)
+ first bin= 203: 35478260 last bin= 269
+ first bin= 289: 1716690 last bin= 336
+ first bin= 340: 572230 last bin= 358
+ first bin= 379: 572230 last bin= 397
+ first bin= 525: 572230 last bin= 543
+ first bin= 2707: 572230 last bin= 2729
+ first bin= 2893: 572230 last bin= 2913
+ ### histo peaks integral MPD/ADCch = 0 / 7 (total Integral= 40056268)
+ first bin= 61: 34906181 last bin= 114
+ first bin= 136: 572232 last bin= 146
+ first bin= 177: 572232 last bin= 187
+ first bin= 190: 572232 last bin= 201
+ first bin= 208: 572232 last bin= 220
+ first bin= 235: 572232 last bin= 245
+ first bin= 267: 572232 last bin= 277
+ first bin= 412: 572232 last bin= 423
+ first bin= 2722: 1 last bin= 2722
+ first bin= 2724: 572231 last bin= 2737
+ first bin= 2906: 572232 last bin= 2920
+ ### histo peaks integral MPD/ADCch = 0 / 8 (total Integral= 40056093)
+ first bin= 120: 1144460 last bin= 140
+ first bin= 146: 33761564 last bin= 181
+ first bin= 194: 572230 last bin= 204
+ first bin= 230: 572230 last bin= 241
+ first bin= 248: 572230 last bin= 259
+ first bin= 261: 572230 last bin= 271
+ first bin= 284: 572230 last bin= 294
+ first bin= 322: 572230 last bin= 333
+ first bin= 505: 572230 last bin= 518
+ first bin= 2634: 572230 last bin= 2646
+ first bin= 2853: 572230 last bin= 2866
+ ### histo peaks integral MPD/ADCch = 0 / 9 (total Integral= 40054322)
+ first bin= 176: 572204 last bin= 186
+ first bin= 194: 34332284 last bin= 238
+ first bin= 282: 572204 last bin= 293
+ first bin= 303: 1144408 last bin= 323
+ first bin= 332: 572204 last bin= 343
+ first bin= 375: 572204 last bin= 385
+ first bin= 459: 572204 last bin= 470
+ first bin= 770: 572204 last bin= 781
+ first bin= 2438: 572204 last bin= 2451
+ first bin= 2819: 572204 last bin= 2833
+ ### histo peaks integral MPD/ADCch = 0 / 10 (total Integral= 40056015)
+ first bin= 2067: 40056016 last bin= 2085
+ ### histo peaks integral MPD/ADCch = 0 / 11 (total Integral= 40096432)
+ first bin= 149: 30931533 last bin= 194
+ first bin= 211: 4582449 last bin= 244
+ first bin= 253: 1145613 last bin= 264
+ first bin= 270: 1145613 last bin= 281
+ first bin= 386: 1145613 last bin= 398
+ first bin= 2749: 1145613 last bin= 2763
+ ### histo peaks integral MPD/ADCch = 0 / 12 (total Integral= 40096091)
+ first bin= 123: 30931272 last bin= 167
+ first bin= 182: 4582412 last bin= 221
+ first bin= 224: 1145602 last bin= 239
+ first bin= 249: 1145602 last bin= 265
+ first bin= 374: 1145602 last bin= 390
+ first bin= 2698: 1145602 last bin= 2716
+ ### histo peaks integral MPD/ADCch = 0 / 13 (total Integral= 40056421)
+ first bin= 214: 30900670 last bin= 272
+ first bin= 274: 4577876 last bin= 319
+ first bin= 327: 1144469 last bin= 339
+ first bin= 354: 1144469 last bin= 365
+ first bin= 458: 1144469 last bin= 470
+ first bin= 2732: 1144469 last bin= 2748
+ ### histo peaks integral MPD/ADCch = 0 / 14 (total Integral= 40062291)
+ first bin= 182: 34911427 last bin= 238
+ first bin= 259: 572318 last bin= 271
+ first bin= 298: 1144636 last bin= 316
+ first bin= 322: 572318 last bin= 335
+ first bin= 362: 572318 last bin= 375
+ first bin= 441: 572318 last bin= 455
+ first bin= 751: 572319 last bin= 765
+ first bin= 2570: 572319 last bin= 2586
+ first bin= 2967: 572319 last bin= 2983
+ ### histo peaks integral MPD/ADCch = 0 / 15 (total Integral= 40055874)
+ first bin= 2043: 40055875 last bin= 2070
+mpdSetAcqMode: Acquisition Mode = 0x1 (event)
+mpdDAQ_Config : ReadoutConfig = 0x1
+mpdTRIG_Enable: Control Addr = 0xff22001e
+mpdTRIG_Enable: Trig Gen = 0x822231
+mpdTRIG_Enable: Logic Threshold = 0x76c01f4
+ ============ START ACQ ===========
+ ---- Event 0 occurred -----
+ EC: card 0 buffer size available = 11879
+mpdApvGetBufferPointer: DEBUG: Fifo 1, retrieved pointer from position 0 , size is 11880
+EC: nwords from fifo 1 0x0
+EC: nwords from fifo 1 0x0
+mpdFIFO_ReadSingle: number of words to be read 0
+mpdFIFO_ReadSingle: DEBUG: fifo ch = 1, words in fifo= 0, retries= 2 (max 1)
+ EC: card 0 readsingle done nread=0, err=-1
+mpdApvGetBufferSample: DEBUG: Fifo = 1 has 0 samples (0 bytes) stored
+mpdFIFO_ReadAll: DEBUG: FIFO= 1, word read= 0, event/sample read= 0, error=-1
+mpdApvGetBufferSample: DEBUG: Fifo = 1 has 0 samples (0 bytes) stored
+mpdFIFO_ReadAll: DEBUG: Fifo= 0, total sample left= 6 (<0 means more samples than requested)
+ EC: card 1 buffer size available = 11879
+mpdApvGetBufferPointer: DEBUG: Fifo 2, retrieved pointer from position 0 , size is 11880
+EC: nwords from fifo 2 0x0
+EC: nwords from fifo 2 0x0
+mpdFIFO_ReadSingle: number of words to be read 0
+mpdFIFO_ReadSingle: DEBUG: fifo ch = 2, words in fifo= 0, retries= 2 (max 1)
+ EC: card 1 readsingle done nread=0, err=-1
+mpdApvGetBufferSample: DEBUG: Fifo = 2 has 0 samples (0 bytes) stored
+mpdFIFO_ReadAll: DEBUG: FIFO= 2, word read= 0, event/sample read= 0, error=-1
+mpdApvGetBufferSample: DEBUG: Fifo = 2 has 0 samples (0 bytes) stored
+mpdFIFO_ReadAll: DEBUG: Fifo= 1, total sample left= 12 (<0 means more samples than requested)
+ EC: card 2 buffer size available = 11879
+mpdApvGetBufferPointer: DEBUG: Fifo 3, retrieved pointer from position 0 , size is 11880
+EC: nwords from fifo 3 0x0
+EC: nwords from fifo 3 0x0
+mpdFIFO_ReadSingle: number of words to be read 0
+mpdFIFO_ReadSingle: DEBUG: fifo ch = 3, words in fifo= 0, retries= 2 (max 1)
+ EC: card 2 readsingle done nread=0, err=-1
+mpdApvGetBufferSample: DEBUG: Fifo = 3 has 0 samples (0 bytes) stored
+mpdFIFO_ReadAll: DEBUG: FIFO= 3, word read= 0, event/sample read= 0, error=-1
+mpdApvGetBufferSample: DEBUG: Fifo = 3 has 0 samples (0 bytes) stored
+mpdFIFO_ReadAll: DEBUG: Fifo= 2, total sample left= 18 (<0 means more samples than requested)
+mpdFIFO_ReadAll: DEBUG: Fifo= 3, total sample left= 18 (<0 means more samples than requested)
+ Rdone/Tout/error = 0 0 -1
+main: ERROR in readout, clear fifo
+mpdTRIG_Enable: Control Addr = 0xff22001e
+mpdTRIG_Enable: Trig Gen = 0x822231
+mpdTRIG_Enable: Logic Threshold = 0x76c01f4
+ ---- Event 1 occurred -----
+ EC: card 0 buffer size available = 11879
+mpdApvGetBufferPointer: DEBUG: Fifo 1, retrieved pointer from position 0 , size is 11880
+EC: nwords from fifo 1 0x0
+EC: nwords from fifo 1 0x0
+mpdFIFO_ReadSingle: number of words to be read 0
+mpdFIFO_ReadSingle: DEBUG: fifo ch = 1, words in fifo= 0, retries= 2 (max 1)
+ EC: card 0 readsingle done nread=0, err=-1
+mpdApvGetBufferSample: DEBUG: Fifo = 1 has 0 samples (0 bytes) stored
+mpdFIFO_ReadAll: DEBUG: FIFO= 1, word read= 0, event/sample read= 0, error=-1
+mpdApvGetBufferSample: DEBUG: Fifo = 1 has 0 samples (0 bytes) stored
+mpdFIFO_ReadAll: DEBUG: Fifo= 0, total sample left= 6 (<0 means more samples than requested)
+ EC: card 1 buffer size available = 11879
+mpdApvGetBufferPointer: DEBUG: Fifo 2, retrieved pointer from position 0 , size is 11880
+EC: nwords from fifo 2 0x0
+EC: nwords from fifo 2 0x0
+mpdFIFO_ReadSingle: number of words to be read 0
+mpdFIFO_ReadSingle: DEBUG: fifo ch = 2, words in fifo= 0, retries= 2 (max 1)
+ EC: card 1 readsingle done nread=0, err=-1
+mpdApvGetBufferSample: DEBUG: Fifo = 2 has 0 samples (0 bytes) stored
+mpdFIFO_ReadAll: DEBUG: FIFO= 2, word read= 0, event/sample read= 0, error=-1
+mpdApvGetBufferSample: DEBUG: Fifo = 2 has 0 samples (0 bytes) stored
+mpdFIFO_ReadAll: DEBUG: Fifo= 1, total sample left= 12 (<0 means more samples than requested)
+ EC: card 2 buffer size available = 11879
+mpdApvGetBufferPointer: DEBUG: Fifo 3, retrieved pointer from position 0 , size is 11880
+EC: nwords from fifo 3 0x0
+EC: nwords from fifo 3 0x0
+mpdFIFO_ReadSingle: number of words to be read 0
+mpdFIFO_ReadSingle: DEBUG: fifo ch = 3, words in fifo= 0, retries= 2 (max 1)
+ EC: card 2 readsingle done nread=0, err=-1
+mpdApvGetBufferSample: DEBUG: Fifo = 3 has 0 samples (0 bytes) stored
+mpdFIFO_ReadAll: DEBUG: FIFO= 3, word read= 0, event/sample read= 0, error=-1
+mpdApvGetBufferSample: DEBUG: Fifo = 3 has 0 samples (0 bytes) stored
+mpdFIFO_ReadAll: DEBUG: Fifo= 2, total sample left= 18 (<0 means more samples than requested)
+mpdFIFO_ReadAll: DEBUG: Fifo= 3, total sample left= 18 (<0 means more samples than requested)
+ Rdone/Tout/error = 0 0 -1
+main: ERROR in readout, clear fifo
+mpdTRIG_Enable: Control Addr = 0xff22001e
+mpdTRIG_Enable: Trig Gen = 0x822231
+mpdTRIG_Enable: Logic Threshold = 0x76c01f4
+ ---- Event 2 occurred -----
+ EC: card 0 buffer size available = 11879
+mpdApvGetBufferPointer: DEBUG: Fifo 1, retrieved pointer from position 0 , size is 11880
+EC: nwords from fifo 1 0x0
+EC: nwords from fifo 1 0x0
+mpdFIFO_ReadSingle: number of words to be read 0
+mpdFIFO_ReadSingle: DEBUG: fifo ch = 1, words in fifo= 0, retries= 2 (max 1)
+ EC: card 0 readsingle done nread=0, err=-1
+mpdApvGetBufferSample: DEBUG: Fifo = 1 has 0 samples (0 bytes) stored
+mpdFIFO_ReadAll: DEBUG: FIFO= 1, word read= 0, event/sample read= 0, error=-1
+mpdApvGetBufferSample: DEBUG: Fifo = 1 has 0 samples (0 bytes) stored
+mpdFIFO_ReadAll: DEBUG: Fifo= 0, total sample left= 6 (<0 means more samples than requested)
+ EC: card 1 buffer size available = 11879
+mpdApvGetBufferPointer: DEBUG: Fifo 2, retrieved pointer from position 0 , size is 11880
+EC: nwords from fifo 2 0x0
+EC: nwords from fifo 2 0x0
+mpdFIFO_ReadSingle: number of words to be read 0
+mpdFIFO_ReadSingle: DEBUG: fifo ch = 2, words in fifo= 0, retries= 2 (max 1)
+ EC: card 1 readsingle done nread=0, err=-1
+mpdApvGetBufferSample: DEBUG: Fifo = 2 has 0 samples (0 bytes) stored
+mpdFIFO_ReadAll: DEBUG: FIFO= 2, word read= 0, event/sample read= 0, error=-1
+mpdApvGetBufferSample: DEBUG: Fifo = 2 has 0 samples (0 bytes) stored
+mpdFIFO_ReadAll: DEB
