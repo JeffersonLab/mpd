@@ -647,12 +647,42 @@ mpdCheckAddresses(int id)
 
   printf("%s:\n\t ---------- Checking mpd250 address space ---------- \n",__FUNCTION__);
 
-  base = (unsigned int) &MPDp[id]->version;
+  base = (unsigned int) &MPDp[id]->SdramFifo[0];
 
-  offset = ((unsigned int) &MPDp[id]->system_monitor) - base;
-  expected = 0xFC;
+  offset = ((unsigned int) &MPDp[id]->AdcConfig) - base;
+  expected = 0x01000000;
   if(offset != expected)
-    printf("%s: ERROR MPDp[id]->system_monitor not at offset = 0x%x (@ 0x%x)\n",
+    printf("%s: ERROR MPDp[id]->AdcConfig not at offset = 0x%x (@ 0x%x)\n",
+	   __FUNCTION__,expected,offset);
+
+  offset = ((unsigned int) &MPDp[id]->I2C.Clock_Prescaler_low) - base;
+  expected = 0x02000000;
+  if(offset != expected)
+    printf("%s: ERROR MPDp[id]->I2C.Clock_Prescaler_low not at offset = 0x%x (@ 0x%x)\n",
+	   __FUNCTION__,expected,offset);
+
+  offset = ((unsigned int) &MPDp[id]->Histo.block[0]) - base;
+  expected = 0x03000000;
+  if(offset != expected)
+    printf("%s: ERROR MPDp[id]->Histo.block[0] not at offset = 0x%x (@ 0x%x)\n",
+	   __FUNCTION__,expected,offset);
+
+  offset = ((unsigned int) &MPDp[id]->ApvDaq.Data_Ch[0][0]) - base;
+  expected = 0x04000000;
+  if(offset != expected)
+    printf("%s: ERROR MPDp[id]->ApvDaq.Data_Ch[0][0] not at offset = 0x%x (@ 0x%x)\n",
+	   __FUNCTION__,expected,offset);
+
+  offset = ((unsigned int) &MPDp[id]->SdramChip0[0]) - base;
+  expected = 0x05000000;
+  if(offset != expected)
+    printf("%s: ERROR MPDp[id]->SdramChip0[0] not at offset = 0x%x (@ 0x%x)\n",
+	   __FUNCTION__,expected,offset);
+
+  offset = ((unsigned int) &MPDp[id]->SdramChip1[0]) - base;
+  expected = 0x06000000;
+  if(offset != expected)
+    printf("%s: ERROR MPDp[id]->SdramChip1[0] not at offset = 0x%x (@ 0x%x)\n",
 	   __FUNCTION__,expected,offset);
 
   return OK;
