@@ -1,40 +1,114 @@
-MPD_OBJ  = MPDhi.o MPDlo.o  
-MPD_DEPS = MPDhi.h MPDlo.h
-MPD_LIB  = libmpd.so
+#
+# Description:  Makefile for mpdLib.o, mpdLib.so
+#   Depending on ARCH:
+#
+#  ARCH = VXWORKSPPC:
+#   This driver is specific to VxWorks BSPs and must be compiled
+#   with access to vxWorks headers.
+#
+#  ARCH = Linux:
+#   This driver requires access to the jvme headers (JLab specific Linux routine header)
+#
+# Uncomment DEBUG line for debugging info ( -g and -Wall )
+#DEBUG=1
+#
+ifndef ARCH
+	ifdef LINUXVME_LIB
+		ARCH=Linux
+	else
+		ARCH=VXWORKSPPC
+	endif
+endif
 
-OBJ      = Vme_gexvb.o
 
-DEPS     = Bus.h Vme_gexvb.h
+#Check Operating system we are using
+ifndef OSNAME
+  OSNAME := $(subst -,_,$(shell uname))
+endif
 
-LINUXVME_LIB	?= ${CODA}/extensions/linuxvme/libs
-LINUXVME_INC	?= ${CODA}/extensions/linuxvme/include
+ifndef ARCH
+  ARCH = VXWORKSPPC
+endif
 
-CFLAGS	= -g -c -Wall -DLINUX -I../include
-LDFLAGS	= -ljvme
-DEFS	= -DJLAB
-INCS	= -I. -I${LINUXVME_INC} -I../include
-CFLAGS += -O ${DEFS} -O2  $(INCS)
-LDFLAGS	= -L${LINUXVME_LIB}  -ljvme
+ifndef WIND_BASE
+  WIND_BASE = /site/vxworks/5.5/ppc
+endif
 
-LIB	= libjgi.so
-CC	= g++ 
-LD	= g++
 
-LDFLAGS	= -shared -fPIC -L${LINUXVME_LIB} -ljvme
+ifeq ($(OSNAME),SunOS)
+CODALIB		= $(CODA)/$(OSNAME)/lib
+CODAINC		= $(CODA)/common/include
+CFLAGS		= -O $(DEFS)
+endif
 
-$(MPD_LIB): $(LIB) $(MPD_OBJ)
-#	ar cr $(MPD_LIB) $(MPD_OBJ)
-	$(LD) $(LDFLAGS)  $(MPD_OBJ) -o  $@
+ifeq ($(ARCH),Linux)
 
-$(LIB): $(OBJ)
-#	ar cr $(LIB) $(OBJ)
-	$(LD) $(LDFLAGS)  $(OBJ) -o  $@
+LINUXVME_LIB	?= ${CODA}/linuxvme/lib
+LINUXVME_INC	?= ${CODA}/linuxvme/include
 
-.cpp.o: $(DEPS) $(MPD_DEPS)
-	$(CC) -o $@ $< $(CFLAGS)
+CODALIB 	= $(CODA)/$(OSNAME)/lib
+CODAINC 	= $(CODA)/common/include
+CFLAGS 		= -O $(DEFS) \
+		-I. -I${LINUXVME_INC}  \
+		-L. -L${LINUXVME_LIB} -DJLAB
+ifdef DEBUG
+CFLAGS		+= -Wall -g
+else
+CFLAGS		+= -O2
+endif
+AR		= ar
+RANLIB		= ranlib
+endif
+
+ifeq ($(ARCH),VXWORKSPPC)
+INCDIR		= $(WIND_BASE)/target/h -I../universeDma
+CC		= ccppc
+LD		= ldppc
+DEFS		= -mcpu=604 -DCPU=PPC604 -DVXWORKS -D_GNU_TOOL -DVXWORKSPPC
+CFLAGS		= -O $(DEFS)
+INCS		= -fno-for-scope -fno-builtin -fvolatile -fstrength-reduce -mlongcall \
+		 -I. -I$(CODAINC) -I$(INCDIR)
+endif
+
+ifeq ($(ARCH),VXWORKS68K51)
+INCDI		= /site/vxworks/5.3/68k/target/h
+CC		= cc68k
+DEFS		= -DCPU=MC68040 -DVXWORKS -DVXWORKS68K51
+CFLAGS		= -O $(DEFS)
+INCS		= -Wall -mc68020 -fvolatile -fstrength-reduce -nostdinc -I. -I$(INCDIR)
+endif
+
+
+ifeq ($(ARCH),Linux)
+all: echoarch libmpd.a
+else 
+all: echoarch mpdLib.o
+endif
+
+mpdLib.o: mpdLib.c mpdLib.h
+	$(CC) -c $(CFLAGS) $(INCS) -o $@ mpdLib.c
 
 clean:
-	rm -f $(MPD_OBJ) $(MPD_LIB) $(EXE) $(OBJ) $(LIB) *~ *.log
+	rm -f mpdLib.o libmpd.{a,so} *~
 
-testxvb: testxvb.o Vme_gexvb.o
-	$(LD) $(LDFLAGS2)  $^ -o  $@
+echoarch:
+	echo "Make for $(ARCH)"
+
+ifeq ($(OSNAME),Linux)
+libmpd.a: mpdLib.o
+	$(CC) -fpic -shared $(CFLAGS) -o libmpd.so mpdLib.c
+	$(AR) ruv libmpd.a mpdLib.o
+	$(RANLIB) libmpd.a
+
+links: libmpd.a
+	ln -sf $(PWD)/libmpd.a $(LINUXVME_LIB)/libmpd.a
+	ln -sf $(PWD)/libmpd.so $(LINUXVME_LIB)/libmpd.so
+	ln -sf $(PWD)/mpdLib.h $(LINUXVME_INC)/mpdLib.h
+
+install: libmpd.a
+	@cp -v $(PWD)/$< $(LINUXVME_LIB)/$<
+	@cp -v $(PWD)/$(<:%.a=%.so) $(LINUXVME_LIB)/$(<:%.a=%.so)
+	@cp -v ${PWD}/*Lib.h $(LINUXVME_INC)
+
+endif
+
