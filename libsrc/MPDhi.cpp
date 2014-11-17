@@ -16,7 +16,6 @@
 #include <iostream>
 
 #include "MPDhi.h"
-#include "GI_Common.h"
 
 #define MAX_SAMPLES	8192
 
@@ -278,7 +277,7 @@ int MPDhi::FIFO_Synch(int l0_min, int l0_max, int l1_min, int l1_max, int l_step
 	}
       }
       //      std::cout << "SYNCH: " << phase << " " << phase*0.5 << " " << i << " " << llow << " " << lhigh << " " << lhigh-llow << std::endl;
-      GI_INF("%3d %5.1f %3d %4d %4d %4d [",phase,phase*0.5,i,llow,lhigh,lhigh-llow);
+      printf("%3d %5.1f %3d %4d %4d %4d [",phase,phase*0.5,i,llow,lhigh,lhigh-llow);
       for (int si=0;si<16;si++) {
 	printf(" %3.0f",((float) scount[si])/((float) tcount)*100.);
       }
