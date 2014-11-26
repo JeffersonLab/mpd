@@ -20,21 +20,6 @@
 #define MPD_SUPPORTED_FIRMWARE 0x23
 
 
-struct mpd_struct 
-{
-  /* 0x00000000 */ volatile unsigned int            SdramFifo[(0x01000000-0x0)>>2];
-  /* 0x01000000 */ volatile unsigned int            AdcConfig;
-  /* 0x01000004 */          unsigned int            blank1[(0x02000000-0x01000004)>>2];
-  /* 0x02000000 */ struct   mpd_i2c_control_struct  I2C;
-  /* 0x02000004 */          unsigned int            blank2[(0x03000000-0x02000004)>>2];
-  /* 0x03000000 */ struct   mpd_histogrammer_struct Histo;
-  /* 0x03010000 */          unsigned int            blank3[(0x04000000-0x03010000)>>2];
-  /* 0x04000000 */ struct   mpd_apv_daq_struct      ApvDaq;
-  /* 0x04880000 */          unsigned int            blank4[(0x05000000-0x04880000)>>2];
-  /* 0x05000000 */ volatile unsigned int            SdramChip0[(0x06000000-0x05000000)>>2];
-  /* 0x06000000 */ volatile unsigned int            SdramChip1[(0x07000000-0x06000000)>>2];
-};
-
 struct mpd_i2c_control_struct
 {
   /* 0x0000 */ volatile unsigned int Clock_Prescaler_low;
@@ -47,6 +32,18 @@ struct mpd_i2c_control_struct
   /* 0x0020 */
 };
 
+#define MPD_I2C_CONTROL_ENABLE_CORE  0x80
+
+#define MPD_I2C_COMMSTAT_NACK        0x08
+#define MPD_I2C_COMMSTAT_WRITE       0x10
+#define MPD_I2C_COMMSTAT_READ        0x20
+#define MPD_I2C_COMMSTAT_STOP        0x40
+#define MPD_I2C_COMMSTAT_NACK_RECV   0x80
+#define MPD_I2C_COMMSTAT_START_WRITE 0x90
+
+#define MPD_I2C_APVRESET_ASYNC_SET   0x00
+#define MPD_I2C_APVRESET_ASYNC_CLEAR 0x01
+
 struct mpd_hist_block_struct
 {
   /* 0x0000 */ volatile unsigned int Memory[(0x4000-0x0)>>2];
@@ -54,7 +51,7 @@ struct mpd_hist_block_struct
   /* 0x4004 */ volatile unsigned int Histo_Count;
   /* 0x4008 */          unsigned int blank0[(0x8000-0x4008)>>2];
   /* 0x8000 */
-}
+};
 
 struct mpd_histogrammer_struct
 {
@@ -65,9 +62,9 @@ struct mpd_histogrammer_struct
 struct mpd_ped_thres_apv_pair_struct
 {
   /* 0x0000 */ volatile unsigned int ram[(0x0200-0x0)>>2];
-  /* 0x0200 */          unsinged int blank0[(0x4000-0x0200)>>2];
+  /* 0x0200 */          unsigned int blank0[(0x4000-0x0200)>>2];
   /* 0x4000 */
-}
+};
 
 struct mpd_apv_daq_control_struct
 {
@@ -92,6 +89,22 @@ struct mpd_apv_daq_control_struct
   /* 0x084000 */ volatile unsigned int Trigger_Time_Fifo[4096];
   /* 0x088000 */
 };
+
+struct mpd_struct 
+{
+  /* 0x00000000 */ volatile unsigned int            SdramFifo[(0x01000000-0x0)>>2];
+  /* 0x01000000 */ volatile unsigned int            AdcConfig;
+  /* 0x01000004 */          unsigned int            blank1[(0x02000000-0x01000004)>>2];
+  /* 0x02000000 */ struct   mpd_i2c_control_struct  I2C;
+  /* 0x02000004 */          unsigned int            blank2[(0x03000000-0x02000004)>>2];
+  /* 0x03000000 */ struct   mpd_histogrammer_struct Histo;
+  /* 0x03010000 */          unsigned int            blank3[(0x04000000-0x03010000)>>2];
+  /* 0x04000000 */ struct   mpd_apv_daq_struct      ApvDaq;
+  /* 0x04880000 */          unsigned int            blank4[(0x05000000-0x04880000)>>2];
+  /* 0x05000000 */ volatile unsigned int            SdramChip0[(0x06000000-0x05000000)>>2];
+  /* 0x06000000 */ volatile unsigned int            SdramChip1[(0x07000000-0x06000000)>>2];
+};
+
 
 
 /* Function Prototypes */

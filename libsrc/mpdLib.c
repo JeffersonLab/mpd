@@ -74,9 +74,9 @@ int nmpd = 0;                                       /* Number of MPDs in Crate *
 int mpdA32Base   = 0x08000000;                      /* Minimum VME A32 Address for use by MPDs */
 int mpdA32Offset = 0x08000000;                      /* Difference in CPU A32 Base - VME A32 Base */
 int mpdA24Offset = 0x0;                             /* Difference in CPU A24 Base - VME A24 Base */
-volatile struct mpd_struct *FAp[(FA_MAX_BOARDS+1)]; /* pointers to MPD memory map */
-volatile unsigned int *FApd[(FA_MAX_BOARDS+1)];      /* pointers to MPD FIFO memory */
-volatile unsigned int *FApmb;                        /* pointer to Multblock window */
+volatile struct mpd_struct *MPDp[(FA_MAX_BOARDS+1)]; /* pointers to MPD memory map */
+volatile unsigned int *MPDpd[(FA_MAX_BOARDS+1)];      /* pointers to MPD FIFO memory */
+volatile unsigned int *MPDpmb;                        /* pointer to Multblock window */
 int mpdID[FA_MAX_BOARDS];                           /* array of slot numbers for MPDs */
 unsigned int mpdAddrList[FA_MAX_BOARDS];            /* array of a24 addresses for MPDs */
 int mpdRev[(FA_MAX_BOARDS+1)];                      /* Board Revision Info for each module */
@@ -110,38 +110,6 @@ int mpdBlockError=FA_BLOCKERROR_NO_ERROR; /* Whether (>0) or not (0) Block Trans
  *
  *  @param iFlag 18 bit integer
  * <pre>
- *       Low 6 bits - Specifies the default Signal distribution (clock,trigger) 
- *                    sources for the board (Internal, FrontPanel, VXS, VME(Soft))
- *       bit    0:  defines Sync Reset source
- *                     0  VME (Software Sync-Reset)
- *                     1  Front Panel/VXS/P2 (Depends on Clk/Trig source selection)
- *       bits 3-1:  defines Trigger source
- *               0 0 0  VME (Software Triggers)
- *               0 0 1  Front Panel Input
- *               0 1 0  VXS (P0) 
- *               (all others Undefined - default to VME/Software)
- *       bits 5-4:  defines Clock Source
- *           0 0  Internal 250MHz Clock
- *           0 1  Front Panel 
- *           1 0  VXS (P0)
- *           1 1  P2 Connector (Backplane)
- * </pre>
- *
- * <pre>
- *       Common Modes of Operation:
- *           Value = 0  CLK (Int)  TRIG (Soft)   SYNC (Soft)    (Debug/Test Mode)
- *                   2  CLK (Int)  TRIG (FP)     SYNC (Soft)    (Single Board
- *                   3  CLK (Int)  TRIG (FP)     SYNC (FP)         Modes)
- *                0x10  CLK (FP)   TRIG (Soft)   SYNC (Soft)
- *                0x13  CLK (FP)   TRIG (FP)     SYNC (FP)      (VME SDC Mode)
- *                0x20  CLK (VXS)  TRIG (Soft)   SYNC (Soft)
- *                0x25  CLK (VXS)  TRIG (VXS)    SYNC (VXS)     (VXS SD Mode)
- *
- *
- *      High 10bits - A16 Base address of MPD Signal Distribution Module
- *                    This board can control up to 7 MPD Boards.
- *                    Clock Source must be set to Front Panel (bit4 = 1)
- *
  *      bit 16:  Exit before board initialization
  *             0 Initialize MPD (default behavior)
  *             1 Skip initialization (just setup register map pointers)
@@ -160,7 +128,7 @@ int mpdBlockError=FA_BLOCKERROR_NO_ERROR; /* Whether (>0) or not (0) Block Trans
  * @return OK, or ERROR if the address is invalid or a board is not present.
  */
 STATUS 
-mpdInit(UINT32 addr, UINT32 addr_inc, int nadc, int iFlag)
+mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
 {
   int ii, res, errFlag = 0;
   int boardID = 0;
@@ -173,20 +141,18 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nadc, int iFlag)
   int noBoardInit=0;
   int useList=0;
   int noFirmwareCheck=0;
-  unsigned short supported_proc[MPD_SUPPORTED_PROC_FIRMWARE_NUMBER]
-    = {MPD_SUPPORTED_PROC_FIRMWARE};
-  unsigned short proc_version=0;
-  int icheck=0, proc_supported=0;
 
   /* Check if we have already Initialized boards before */
   if((mpdInited>0) && (mpdID[0] != 0)) 
     {
+#ifdef NOTSURE
       /* Hard Reset of all MPD boards in the Crate */
       for(ii=0;ii<nmpd;ii++) 
 	{
 	  vmeWrite32(&(MPDp[mpdID[ii]]->csr),MPD_CSR_HARD_RESET);
 	}
       taskDelay(5);
+#endif /* NOTSURE */
     }
   
   /* Check if we are to exit when pointers are setup */
@@ -211,8 +177,8 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nadc, int iFlag)
     }
   else
     { /* A24 Addressing */
-      if( ((addr_inc==0)||(nadc==0)) && (useList==0) )
-	nadc = 1; /* assume only one MPD to initialize */
+      if( ((addr_inc==0)||(nmpd==0)) && (useList==0) )
+	nmpd = 1; /* assume only one MPD to initialize */
 
       /* get the MPD address */
 #ifdef VXWORKS
@@ -232,13 +198,15 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nadc, int iFlag)
       mpdA24Offset = laddr - addr;
     }
 
+#ifdef NOTSURE
   /* Init Some Global variables */
   mpdSource = iFlag&MPD_SOURCE_MASK;
   mpdInited = nmpd = 0;
   bzero((char *)mpdChanDisable,sizeof(mpdChanDisable));
   bzero((char *)mpdID,sizeof(mpdID));
+#endif /* NOTSURE */
 
-  for (ii=0;ii<nadc;ii++) 
+  for (ii=0;ii<nmpd;ii++) 
     {
       if(useList==1)
 	{
@@ -278,6 +246,8 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nadc, int iFlag)
 	    }
 	  else 
 	    {
+
+#ifdef NOTSURE
 	      /* Check if this is board has a valid slot number */
 	      boardID =  ((vmeRead32(&(mpd->intr)))&MPD_SLOT_ID_MASK)>>16;
 
@@ -407,132 +377,7 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nadc, int iFlag)
     }
 #endif
 
-  if(!noBoardInit)
-    {
-      /* what are the Trigger Sync Reset and Clock sources */
-      if (mpdSource == MPD_SOURCE_VXS)
-	{
-	  printf("mpdInit: Enabling MPD for VXS Clock ");
-	  clkSrc  = MPD_REF_CLK_P0;
-	  switch (iFlag&0xf) 
-	    {
-	    case 0: case 1:
-	    case 8: case 10: case 12: case 14:
-	    case 9: case 11: case 13: case 15:
-	      printf("and Software Triggers (Soft Sync Reset)\n");
-	      trigSrc = MPD_TRIG_VME | MPD_ENABLE_SOFT_TRIG;
-	      srSrc   = MPD_SRESET_VME | MPD_ENABLE_SOFT_SRESET;
-	      break;
-	    case 2:
-	      printf("and Front Panel Triggers (Soft Sync Reset)\n");
-	      trigSrc = MPD_TRIG_FP_ISYNC;
-	      srSrc   = MPD_SRESET_VME | MPD_ENABLE_SOFT_SRESET;
-	      break;
-	    case 3:
-	      printf("and Front Panel Triggers (FP Sync Reset)\n");
-	      trigSrc = MPD_TRIG_FP_ISYNC;
-	      srSrc   = MPD_SRESET_FP_ISYNC;
-	      break;
-	    case 4: case 6:
-	      printf("and VXS Triggers (Soft Sync Reset)\n");
-	      trigSrc = MPD_TRIG_P0_ISYNC;
-	      srSrc   = MPD_SRESET_VME | MPD_ENABLE_SOFT_SRESET;
-	      break;
-	    case 5: case 7:
-	      printf("and VXS Triggers (VXS Sync Reset)\n");
-	      trigSrc = MPD_TRIG_P0_ISYNC;
-	      srSrc   = MPD_SRESET_P0_ISYNC;
-	      break;
-	    }
-	}
-      else if (mpdSource == MPD_SOURCE_SDC) 
-	{
-	  printf("mpdInit: Enabling MPD for SDC Clock (Front Panel) ");
-	  clkSrc  = MPD_REF_CLK_FP;
-	  switch (iFlag&0xf) 
-	    {
-	    case 0: case 1:
-	    case 8: case 10: case 12: case 14:
-	    case 9: case 11: case 13: case 15:
-	      printf("and Software Triggers (Soft Sync Reset)\n");
-	      trigSrc = MPD_TRIG_VME | MPD_ENABLE_SOFT_TRIG;
-	      srSrc   = MPD_SRESET_VME | MPD_ENABLE_SOFT_SRESET;
-	      break;
-	    case 2: case 4: case 6:
-	      printf("and Front Panel Triggers (Soft Sync Reset)\n");
-	      trigSrc = MPD_TRIG_FP_ISYNC;
-	      srSrc   = MPD_SRESET_VME | MPD_ENABLE_SOFT_SRESET;
-	      break;
-	    case 3: case 5: case 7:
-	      printf("and Front Panel Triggers (FP Sync Reset)\n");
-	      trigSrc = MPD_TRIG_FP_ISYNC;
-	      srSrc   = MPD_SRESET_FP_ISYNC;
-	      break;
-	    }
-	}
-      else 
-	{  /* Use internal Clk */
-	  printf("mpdInit: Enabling MPD Internal Clock, ");
-	  clkSrc = MPD_REF_CLK_INTERNAL;
-	  switch (iFlag&0xf) 
-	    {
-	    case 0: case 1:
-	    case 8: case 10: case 12: case 14:
-	    case 9: case 11: case 13: case 15:
-	      printf("and Software Triggers (Soft Sync Reset)\n");
-	      trigSrc = MPD_TRIG_VME | MPD_ENABLE_SOFT_TRIG;
-	      srSrc   = MPD_SRESET_VME | MPD_ENABLE_SOFT_SRESET ;
-	      break;
-	    case 2:
-	      printf("and Front Panel Triggers (Soft Sync Reset)\n");
-	      trigSrc = MPD_TRIG_FP_ISYNC;
-	      srSrc   = MPD_SRESET_VME | MPD_ENABLE_SOFT_SRESET;
-	      break;
-	    case 3:
-	      printf("and Front Panel Triggers (FP Sync Reset)\n");
-	      trigSrc = MPD_TRIG_FP_ISYNC;
-	      srSrc   = MPD_SRESET_FP_ISYNC;
-	      break;
-	    case 4: case 6:
-	      printf("and VXS Triggers (Soft Sync Reset)\n");
-	      trigSrc = MPD_TRIG_P0_ISYNC;
-	      srSrc   = MPD_SRESET_VME | MPD_ENABLE_SOFT_SRESET;
-	      break;
-	    case 5: case 7:
-	      printf("and VXS Triggers (VXS Sync Reset)\n");
-	      trigSrc = MPD_TRIG_P0_ISYNC;
-	      srSrc   = MPD_SRESET_P0_ISYNC;
-	      break;
-	    }
-	}
-    }
 
-  /* Enable Clock source - Internal Clk enabled by dempdult */ 
-  if(!noBoardInit)
-    {
-      for(ii=0;ii<nmpd;ii++) 
-	{
-	  vmeWrite32(&(MPDp[mpdID[ii]]->ctrl1),(clkSrc | MPD_ENABLE_INTERNAL_CLK)) ;
-	}
-      taskDelay(20);
-
-
-      /* Hard Reset FPGAs and FIFOs */
-      for(ii=0;ii<nmpd;ii++) 
-	{
-	  vmeWrite32(&(MPDp[mpdID[ii]]->reset),
-		     (MPD_RESET_ADC_FPGA1 | MPD_RESET_ADC_FIFO1 |
-		      MPD_RESET_DAC | MPD_RESET_EXT_RAM_PT));
-
-	  /* Release reset on MGTs */
-	  vmeWrite32(&(MPDp[mpdID[ii]]->mgt_ctrl),MPD_RELEASE_MGT_RESET);
-	  vmeWrite32(&(MPDp[mpdID[ii]]->mgt_ctrl),MPD_MGT_RESET);
-	  vmeWrite32(&(MPDp[mpdID[ii]]->mgt_ctrl),MPD_RELEASE_MGT_RESET);
-	}
-      taskDelay(5);
-    }
-
-  /* Write configuration registers with dempdult/defined Sources */
   for(ii=0;ii<nmpd;ii++) 
     {
     
@@ -558,18 +403,11 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nadc, int iFlag)
 	{
 	  vmeWrite32(&(MPDp[mpdID[ii]]->adr32),(a32addr>>16) + 1);  /* Write the register and enable */
 	
-	  /* Set Dempdult Block Level to 1 */
+	  /* Set Default Block Level to 1 */
 	  vmeWrite32(&(MPDp[mpdID[ii]]->blk_level),1);
 	}
       mpdBlockLevel=1;
 
-      /* Setup Trigger and Sync Reset sources */
-      if(!noBoardInit)
-	{
-	  vmeWrite32(&(MPDp[mpdID[ii]]->ctrl1),
-		     vmeRead32(&(MPDp[mpdID[ii]]->ctrl1)) | 
-		     (srSrc | trigSrc) );
-	}
     }
 
   /* If there are more than 1 MPD in the crate then setup the Muliblock Address
@@ -617,10 +455,12 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nadc, int iFlag)
   if(!noBoardInit)
     mpdInited = nmpd;
 
+#endif /* NOTSURE */
+
   if(errFlag > 0) 
     {
       printf("mpdInit: WARN: Unable to initialize all requested MPD Modules (%d)\n",
-	     nadc);
+	     nmpd);
       if(nmpd > 0)
 	printf("mpdInit: %d MPD(s) successfully initialized\n",nmpd );
       return(ERROR);
@@ -711,3 +551,321 @@ mpdSlot(unsigned int i)
   return mpdID[i];
 }
 
+
+/****************************
+ * LOW LEVEL routines 
+ ****************************/
+
+/* I2C methods */
+
+int 
+mpdI2C_ApvReset(int id)
+{
+  if(id==0) id=mpdID[0];
+  if((MPDp[id]==NULL) || (id<=0) || (id>21))
+    {
+      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
+	     __FUNCTION__,id);
+      return ERROR;
+    }
+
+  MPDUNLOCK;
+  vmeWrite32(&MPDp[id]->I2C.ApvReset, MPD_I2C_APVRESET_ASYNC_CLEAR);
+  vmeWrite32(&MPDp[id]->I2C.ApvReset, MPD_I2C_APVRESET_ASYNC_SET);
+  MPDUNLOCK;
+
+  return OK;
+}
+
+int 
+mpdI2C_Init(int id)
+{
+  unsigned int data, rdata;
+  int success = OK;
+  if(id==0) id=mpdID[0];
+  if((MPDp[id]==NULL) || (id<=0) || (id>21))
+    {
+      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
+	     __FUNCTION__,id);
+      return ERROR;
+    }
+  
+  /* 
+     clock_prescaler = prescaler_high * 256 + prescaler_low
+     period = clock_prescale/10 us
+  */
+
+  
+  MPDLOCK;
+  vmeWrite32(&MPDp[id]->I2C.Control, 0); /* Disable I2C Core and interrupts */
+
+  int ispeed = GetI2CSpeed();
+
+  vmeWrite32(&MPDp[id]->I2C.Clock_Prescaler_low, (ispeed & 0xFF));
+  
+  rdata = vmeRead32(&MPDp[id]->I2C.Clock_Prescaler_low);
+
+  // FIXME: Fix this.
+  printf("%s: i2c low prescaler register (0x%x) set/read : %d / %d\n",
+	 __FUNCTION__,addr,data,rdata);
+
+  vmeWrite32(&MPDp[id]->I2C.Clock_Prescaler_high, (ispeed>>8) & 0xff);
+  rdata = vmeRead32(&MPDp[id]->I2C.Clock_Prescaler_high);
+
+  // FIXME: Fix this.
+  printf("%s: i2c high prescaler register (0x%x) set/read : %d / %d\n",
+	 __FUNCTION__,addr,data,rdata);
+
+  printf("%s: i2c speed prescale = %d, (period = %f us, frequency = %f kHz)\n",
+	 __FUNCTION__,ispeed, ispeed/10., 10000./ispeed);
+  
+  vmeWrite32(&MPDp[id]->I2C.Control, MPD_I2C_CONTROL_ENABLE_CORE);
+
+  MPDUNLOCK;
+
+  return success;
+
+}
+
+int 
+mpdI2C_ByteWrite(int id, unsigned char dev_addr, unsigned char int_addr, 
+		     int ndata, unsigned char *data)
+{
+  int success, i;
+  if(id==0) id=mpdID[0];
+  if((MPDp[id]==NULL) || (id<=0) || (id>21))
+    {
+      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
+	     __FUNCTION__,id);
+      return ERROR;
+    }
+  
+  if( (success = mpdI2C_SendByte(id, (unsigned char)(dev_addr & 0xFE), 1)) != BUS_OK )
+    {
+      if( success <= -10 )
+	{
+	  mpdI2C_SendStop(id);
+	  return success;
+	}
+      else
+	return mpdI2C_SendStop(id);
+    }
+  //  usleep(300);
+  if( (success = mpdI2C_SendByte(id, int_addr, 0)) != BUS_OK )
+    {
+      if( success <= -10 )
+	{
+	  mpdI2C_SendStop(id);
+	  return success;
+	}
+      else
+	return mpdI2C_SendStop(id);
+    }
+  //  usleep(300);
+  for(i=0; i<ndata; i++)
+    if( (success = I2C_SendByte(id, data[i], 0)) != BUS_OK )
+      {
+	if( success <= -10 )
+	  {
+	    mpdI2C_SendStop(id);
+	    return success;
+	  }
+	else
+	  return mpdI2C_SendStop(id);
+      }
+  //  usleep(300);
+  success = mpdI2C_SendStop(id);
+  // usleep(300);
+  return success;
+
+}
+
+int
+mpdI2C_ByteRead(int id, unsigned char dev_addr, unsigned char int_addr, 
+		int ndata, unsigned char *data)
+{
+  int success, i;
+  if(id==0) id=mpdID[0];
+  if((MPDp[id]==NULL) || (id<=0) || (id>21))
+    {
+      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
+	     __FUNCTION__,id);
+      return ERROR;
+    }
+  
+  if( (success = mpdI2C_SendByte(id, (unsigned char)(dev_addr | 0x01), 1)) != OK )
+    return mpdI2C_SendStop(id);
+  
+  if( (success = I2C_SendByte(id, int_addr, 0)) != OK )
+    return mpdI2C_SendStop(id);
+  
+  for(i=0; i<ndata; i++)
+    if( (success = I2C_ReceiveByte(id, data+i)) != OK )
+      return mpdI2C_SendStop(id);
+  
+  return mpdI2C_SendStop(id);
+}
+
+int 
+mpdI2C_ByteWriteRead(int id, unsigned char dev_addr, unsigned char int_addr, 
+		     int ndata, unsigned char *data)
+{
+  int success, i;
+  if((MPDp[id]==NULL) || (id<=0) || (id>21))
+    {
+      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
+	     __FUNCTION__,id);
+      return ERROR;
+    }
+  
+  if( (success = mpdI2C_SendByte(id, (unsigned char)(dev_addr & 0xFE), 1)) != OK )
+    return mpdI2C_SendStop(id);
+  
+  if( (success = mpdI2C_SendByte(id, int_addr, 0)) != OK )
+    return mpdI2C_SendStop(id);
+  
+  for(i=0; i<ndata; i++)
+    if( (success = mpdI2C_ReceiveByte(id, data+i)) != OK )
+      return mpdI2C_SendStop(id);
+  
+  return mpdI2C_SendStop(id);
+}
+
+
+int 
+mpdI2C_ByteRead1(int id, unsigned char dev_addr, unsigned char *data)
+{
+  int success;
+  if(id==0) id=mpdID[0];
+  if((MPDp[id]==NULL) || (id<=0) || (id>21))
+    {
+      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
+	     __FUNCTION__,id);
+      return ERROR;
+    }
+
+  
+  if( (success = I2C_SendByte(id, (unsigned char)(dev_addr & 0xFE), 1)) != OK )
+    return mpdI2C_SendStop(id);
+  
+  if( (success = I2C_ReceiveByte(data)) != BUS_OK )
+    return mpdI2C_SendStop(id);
+  
+  return mpdI2C_SendStop(id);
+}
+
+int 
+mpdI2C_SendByte(int id, unsigned char byteval, int start)
+{
+  int rval=OK, retry_count;
+  if(id==0) id=mpdID[0];
+  if((MPDp[id]==NULL) || (id<=0) || (id>21))
+    {
+      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
+	     __FUNCTION__,id);
+      return ERROR;
+    }
+
+
+  MPDLOCK;
+
+  vmeWrite32(&MPDp[id]->I2C.TxRx, byteval);
+  
+  if( start )
+    vmeWrite32(&MPDp[id]->I2C.CommStat, MPD_I2C_COMMSTAT_START_WRITE);
+  else
+    vmeWrite32(&MPDp[id]->I2C.CommStat, MPD_I2C_COMMSTAT_WRITE);
+
+  retry_count = 0;
+  data = 0x00000002;
+  while( (data & 0x00000002) != 0 && retry_count < GetI2CMaxRetry() )
+    {
+      data = vmeRead32(&MPDp[id].I2C.CommStat);
+      retry_count++;
+    }
+
+  if( retry_count >= GetI2CMaxRetry() )
+    rval = -10;
+
+  if( data & MPD_I2C_COMMSTAT_NACK_RECV )	/* NACK received */
+    rval = -20;
+
+  MPDLOCK;
+
+  return rval;
+}
+
+int 
+mpdI2C_ReceiveByte(int id, unsigned char *byteval)
+{
+  int retry_count;
+  int rval=0;
+  if(id==0) id=mpdID[0];
+  if((MPDp[id]==NULL) || (id<=0) || (id>21))
+    {
+      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
+	     __FUNCTION__,id);
+      return ERROR;
+    }
+
+  MPDLOCK;
+  vmeWrite32(&MPDp[id]->I2C.CommStat, MPD_I2C_READ);
+
+  retry_count = 0;
+  data = 0x00000002;
+  while( (data & 0x00000002) != 0 && retry_count < GetI2CMaxRetry() )
+    {
+      data = vmeRead32(&MPDp[id].I2C.CommStat)
+      retry_count++;
+    }
+
+  if( retry_count >= GetI2CMaxRetry() )
+    rval = -10;
+
+  if( data & MPD_I2C_COMMSTAT_NACK_RECV )	/* NACK received */
+    rval = -20;
+
+  data = vmeRead32(&MPD[id]->I2C.TxRx);
+  
+  *byteval = data;
+  MPDUNLOCK;
+
+  return rval;
+
+}
+
+int 
+mpdI2C_SendStop(int id)
+{
+  if(id==0) id=mpdID[0];
+  if((MPDp[id]==NULL) || (id<=0) || (id>21))
+    {
+      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
+	     __FUNCTION__,id);
+      return ERROR;
+    }
+
+  MPDLOCK;
+  vmeWrite32(&MPDp[id]->I2C.CommStat, MPD_I2C_COMMSTAT_STOP);
+  MPDUNLOCK;
+
+  return OK;
+}
+
+int 
+mpdI2C_SendNack(int id)
+{
+  if(id==0) id=mpdID[0];
+  if((MPDp[id]==NULL) || (id<=0) || (id>21))
+    {
+      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
+	     __FUNCTION__,id);
+      return ERROR;
+    }
+
+  MPDLOCK;
+  vmeWrite32(&MPDp[id]->I2C.CommStat, MPD_I2C_COMMSTAT_NACK);
+  MPDUNLOCK;
+
+  return OK;
+}
