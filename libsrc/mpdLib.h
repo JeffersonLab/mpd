@@ -40,6 +40,8 @@
 
 #define	EVENT_SIZE	130
 
+#define DAQ_FIFO_SIZE	2048
+
 #define MPD_MSG(format, ...) {printf("%s: ",__FUNCTION__); printf(format, ## __VA_ARGS__);}
 #define MPD_DUM(format, ...) {printf("%s: ",__FUNCTION__); printf(format, ## __VA_ARGS__);}
 #define MPD_DBG(format, ...) {printf("%s: DEBUG: ",__FUNCTION__); printf(format, ## __VA_ARGS__);}
@@ -264,9 +266,46 @@ typedef struct mpd_priv_struct
 STATUS mpdInit (UINT32 addr, UINT32 addr_inc, int nadc, int iFlag);
 int  mpdCheckAddresses(int id);
 int  mpdSlot(uint32_t i);
+
+void mpdSetZeroLevel(int id, uint16_t level);
+int  mpdGetZeroLevel(int id);
+void mpdSetOneLevel(int id, uint16_t level);
+int  mpdGetOneLevel(int id);
+void mpdSetChannelMark(int id, int v);
+int  mpdGetChannelMark(int id);
+void mpdSetCommonNoiseSubtraction(int id, short val);
+short mpdGetCommonNoiseSubtraction(int id);
+void mpdSetEventBuilding(int id, int val);
+int  mpdGetEventBuilding(int id);
+void mpdSetCommonOffset(int id, int val);
+int  mpdGetCommonOffset(int id);
+void mpdSetCalibLatency(int id, int val);
+int  mpdGetCalibLatency(int id);
+void mpdSetTriggerNumber(int id, int val);
+int  mpdGetTriggerNumber(int id);
+void mpdSetTriggerMode(int id, int lat, int num);
+int  mpdGetTriggerMode(int id);
+void mpdSetAcqMode(int id, char *name);
+int  mpdGetAcqMode(int id);
+void mpdSetInPath0(int id, int t1P0, int t2P0, int tFront, int sP0, int sFront);
+void mpdSetInPath(int id, int conn, int signal, int val);
+int  mpdGetInPath(int id, int conn, int signal);
+int  mpdGetInPathI(int id, int conn, int signal);
+uint32_t mpdGetFpgaRevision(int id);
+void mpdSetFpgaRevision(int id, uint32_t r);
+uint32_t mpdGetHWRevision(int id);
+uint32_t mpdGetFWRevision(int id);
+uint32_t mpdGetFpgaCompileTime(int id);
+void mpdSetFpgaCompileTime(int id, uint32_t t);
+
 int  mpdLM95235_Read(int id, int *t);
 
 /* I2C methods */
+void mpdSetI2CSpeed(int id, int val);
+int  mpdGetI2CSpeed(int id);
+void mpdSetI2CMaxRetry(int id, int val);
+int  mpdGetI2CMaxRetry(int id);
+
 int  mpdI2C_ApvReset(int id);
 int  mpdI2C_Init(int id);
 int  mpdI2C_ByteWrite(int id, uint8_t dev_addr, uint8_t int_addr, 
