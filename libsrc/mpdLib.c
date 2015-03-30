@@ -1292,7 +1292,7 @@ int
 mpdAPV_Config(int id, int apv_index)
 {
   int success, i;
-  uint8_t apv_addr, reg_addr=0, val;
+  uint8_t apv_addr, reg_addr=0, val=0;
 
   if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<=0) || (id>21))
@@ -1594,9 +1594,7 @@ mpdTRIG_BitClear(int id)
 int 
 mpdTRIG_Enable(int id) 
 {
-  uint32_t addr;
   uint32_t data;
-  int success;
 
   uint8_t sync_period;
   uint8_t reset_latency;
@@ -1729,3 +1727,967 @@ mpdDELAY25_Set(int id, int apv1_delay, int apv2_delay)
   return 0;
 }
 
+//======================================================
+// adc methods
+
+#define MPD_ADC_TOUT 1000
+#define MPD_ADC_USLEEP 50
+
+/**
+ * adc = 0 or 1 (first or second adc in MPD)
+ */
+int 
+mpdADS5281_Set(int id, int adc, uint32_t val) 
+{
+/*   int success, retry_count; */
+  uint32_t data;
+
+  data = (adc == 0) ? 0x40000000 : 0x80000000 ;
+  data |= val;
+
+  MPDLOCK;
+  vmeWrite32(&MPDp[id]->AdcConfig, data);
+  usleep(MPD_ADC_USLEEP);
+  MPDUNLOCK;
+
+  return OK;
+
+  // BM: Retain this stuff if there's a problem writing to the AdcConfig 
+/* #ifdef DUM */
+/*   MPD_DUM("Write Adc= %d: value= 0x%x, success= 0x%x\n",adc, data, success); */
+/* #endif */
+
+/*   retry_count = 0; */
+/*   data = 0xC0000000; */
+/*   while( ((data & 0xFFFFFFF) != val) && (success == BUS_OK) && (retry_count < MPD_ADC_TOUT) ) { */
+/*     success = BUS_Read(AdcConfigOffset, &data); */
+/* #ifdef DUM */
+/*     MPD_DUM("Read Adc= %d: value= 0x%x, success= 0x%x\n",adc, data, success); */
+/* #endif */
+/*     usleep(MPD_ADC_USLEEP); */
+/*     retry_count++; */
+/*   } */
+
+/* #ifdef DEBUG */
+/*   printf("%s: Adc= %d: set/get value= 0x%x/0x%x, success= 0x%x, retry= %d\n", */
+/* 	 __FUNCTION__,adc, val, data, success, retry_count); */
+/* #endif */
+
+/*   if( success != BUS_OK ) return success; */
+/*   if( retry_count >= MPD_ADC_TOUT ) return BUS_TIMEOUT; */
+
+/*   return success; */
+
+}
+
+int 
+mpdADS5281_InvertChannels(int id, int adc)	/* adc == 0, 1 */
+{
+  printf("%s: Board= %d ADC= %d Inverted Polarity\n",
+	 __FUNCTION__,fMpd[id].fSlot, adc);
+  return mpdADS5281_Set(id, adc, 0x2400FF);
+}
+
+int 
+mpdADS5281_NonInvertChannels(int id, int adc)	/* adc == 0, 1 */
+{
+  printf("%s: Board= %d ADC= %d Direct Polarity\n",
+	 __FUNCTION__, fMpd[id].fSlot, adc);
+  return mpdADS5281_Set(id, adc, 0x240000);
+  
+}
+
+int 
+mpdADS5281_SetParameters(int id, int adc)	/* adc == 0, 1 */
+{
+  int success;
+  
+  if (mpdGetHWRevision(id)>=4) 
+    {
+      if ((success = mpdADS5281_Set(id, adc, 0x428021)) != OK) { return success; } // Differential clock
+    } 
+  else 
+    {
+      if ((success = mpdADS5281_Set(id, adc, 0x428020)) != OK) { return success; } // Single ended clock
+    }
+  usleep(MPD_ADC_USLEEP);
+  return mpdADS5281_Set(id, adc, 0x110000);
+}
+
+int 
+mpdADS5281_Normal(int id, int adc)	/* adc == 0, 1 */
+{
+  int success;
+
+  MPD_MSG("Board= %d ADC= %d No Pattern (Normal Acq)\n",fMpd[id].fSlot, adc);
+  if ((success = mpdADS5281_Set(id, adc, 0x450000)) != OK) { return success; }
+  usleep(MPD_ADC_USLEEP);
+  return mpdADS5281_Set(id, adc, 0x250000);
+}
+
+int 
+mpdADS5281_Sync(int id, int adc)	/* adc == 0, 1 */
+{
+  int success;
+
+  MPD_MSG("Board= %d ADC= %d Sync Pattern\n",fMpd[id].fSlot, adc);
+  if ((success = mpdADS5281_Set(id, adc, 0x250000)) != OK) { return success; }
+  usleep(MPD_ADC_USLEEP);
+  return mpdADS5281_Set(id, adc, 0x450002);
+}
+
+int 
+mpdADS5281_Deskew(int id, int adc)	/* adc == 0, 1 */
+{
+  int success;
+
+  MPD_MSG("Board= %d ADC= %d Deskew Pattern\n",fMpd[id].fSlot, adc);
+  if ((success = mpdADS5281_Set(id, adc,0x250000)) != OK) { return success; }
+  usleep(MPD_ADC_USLEEP);
+  return mpdADS5281_Set(id, adc, 0x450001);
+}
+
+int 
+mpdADS5281_Ramp(int id, int adc)	/* adc == 0, 1 */
+{
+  int success;
+
+  MPD_MSG("Board= %d ADC= %d Ramp Pattern\n",fMpd[id].fSlot, adc);
+  if ((success = mpdADS5281_Set(id, adc, 0x450000)) != OK) { return success; }
+  usleep(MPD_ADC_USLEEP);
+  return mpdADS5281_Set(id, adc, 0x250040);
+}
+
+
+int 
+mpdADS5281_SetGain(int id, int adc, 
+			   int gain0, int gain1, int gain2, int gain3, 
+			   int gain4, int gain5, int gain6, int gain7)
+{
+  uint32_t data;
+  int success;
+
+  MPD_MSG("Board= %d ADC= %d Set Gain %d %d %d %d %d %d %d %d\n",fMpd[id].fSlot, adc,
+	  gain0, gain1, gain2, gain3, gain4, gain5, gain6, gain7);
+
+  data = 0x2A0000;
+  data |= gain0 | (gain1<<4) | (gain2<<8) | (gain3<<12);
+  if ((success = mpdADS5281_Set(id, adc, data)) != OK) { return success; }
+  usleep(MPD_ADC_USLEEP);
+  data = 0x2B0000;
+  data |= gain7 | (gain6<<4) | (gain5<<8) | (gain4<<12);
+  return mpdADS5281_Set(id, adc, data);
+
+}
+
+//======================================================
+// histogramming methods
+
+int 
+mpdHISTO_Clear(int id, int ch, int val)	/* ch == 0, 15 */
+{
+  uint32_t data[4096];
+  int success=OK, i, j;
+  int block=0;
+
+  if( ch >= 8 ) block = 1;
+
+  if (val<0) {
+    for(i = 0; i<4096; i++) data[i] = i;
+  } else {
+    for(i = 0; i<4096; i++) data[i] = val;
+  }
+
+#ifdef BLOCK_TRANSFER
+  success = BUS_BlockWrite(addr, 4096, data, &j);
+  if( j != (4096) ) success = BUS_GENERIC_ERROR;
+#else
+
+  int ntimes = 4096 / 64;
+  for(i = 0; i<ntimes; i++) {
+    for(j = 0; j<64; j++) {	/* single word transfer */
+      vmeWrite32(&MPDp[id]->Histo.block[block].Memory[i*64+j], data[i*64+j]);
+    }
+  }
+#endif
+  return success;
+}
+
+int 
+mpdHISTO_Start(int id, int ch)	/* ch == 0, 15 */
+{
+  uint32_t data;
+  int block=0;
+
+  if(ch > 8) block = 1;
+
+  data = 0x80 | (ch & 0x07);
+
+  MPDLOCK;
+  vmeWrite32(&MPDp[id]->Histo.block[block].CSR, data);
+  MPDUNLOCK;
+
+  return OK;
+}
+
+int 
+mpdHISTO_Stop(int id, int ch)	/* ch == 0, 15 */
+{
+  uint32_t data;
+  int block=0;
+
+  if(ch > 8) block = 1;
+
+  data = (ch & 0x07);
+
+  MPDLOCK;
+  vmeWrite32(&MPDp[id]->Histo.block[block].CSR, data);
+  MPDUNLOCK;
+
+  return OK;
+}
+
+int 
+mpdHISTO_GetIntegral(int id, int ch, uint32_t *integral)	/* ch == 0, 15 */
+{
+  int block=0;
+
+  if(ch > 8) block = 1;
+  
+  MPDLOCK;
+  *integral = vmeRead32(&MPDp[id]->Histo.block[block].Histo_Count);
+  MPDUNLOCK;
+
+  return OK;
+}
+
+int 
+mpdHISTO_Read(int id, int ch, uint32_t *histogram)	/* ch == 0, 15; uint32_t histogram[4096] */
+{
+  int success=OK, i, j;
+  int block=0;
+
+  if( ch >= 8 ) block=1;
+#ifdef BLOCK_TRANSFER
+  success = BUS_BlockRead(addr, 4096, histogram, &j);
+  if( j != 4096 ) {
+    MPD_ERR("Block Transfer returned %d 32bit words, 4096 expected\n",j);
+    success = BUS_GENERIC_ERROR;
+  }
+#else
+  int ntimes = 4096 / 64;
+  for(i = 0; i<ntimes; i++) {
+    for(j = 0; j<64; j++) {	/* single word transfer */
+      histogram[i*64+j] = vmeRead32(&MPDp[id]->Histo.block[block].Memory[i*64+j]);
+    }
+  }
+#endif
+  return success;
+}
+
+
+//======================================================
+// Daq-Readout methods
+#ifdef NOTDONE
+
+
+/**
+ * Readout Fifo
+ * Standard Event Mode (no zero suppression or pedestal subtraction)
+ * Return 0 when something has been read, error otherwise
+ */
+int MPDlo::FIFO_ReadSingle(int id, 
+			   int channel,     // apv channel (FIFO)
+			   uint32_t *dbuf, // data buffer
+			   int &wrec,      // max number of words to get / return words received 
+			   int max_retry)   // max number of retry for timeout
+//			   int &err)        // return error code
+//			   int &n_events)   // number of events
+{
+  
+  uint32_t base_addr, fifo_addr;
+  int success, i, size;
+  int nwords; // words available in fifo
+  int wmax; // maximum word acceptable
+
+  base_addr = ApvFifoOffset;
+  fifo_addr = base_addr + (channel << 14);
+
+  wmax = wrec;
+  wrec=0; // returned words
+
+  nwords = 0;
+
+  i = 0;
+  while( (nwords <= 0) && (i <= max_retry) ) {
+    if( max_retry > 0 ) i++;
+    success = FIFO_GetNwords(channel, &nwords);
+    if( success != BUS_OK ) return success;
+  }
+
+  size = (nwords < wmax) ? nwords : wmax;
+
+  MPD_DBG("fifo ch = %d, words in fifo= %d, retries= %d (max %d)\n",channel, nwords,i, max_retry);
+
+  if( i > max_retry ) {
+    MPD_ERR(" max retry = %d, count=%d nword=%d\n", max_retry, i, nwords);
+    return BUS_TBC;
+  }
+
+#ifdef BLOCK_TRANSFER
+  success = BUS_BlockRead(fifo_addr, size, dbuf, &wrec); // trasfer 4 byte words!!
+  MPD_DBG("Block Read fifo ch = %d, words requested = %d, returned = %d\n", channel, size, wrec);
+#else
+  for(i=0; i<size; i++) {
+    success = BUS_Read(fifo_addr+(i*4), (dbuf+i));
+    if( success != BUS_OK ) return success;
+    wrec+=1;
+  }
+  MPD_DBG("Read apv = %d, wrec = %d, success = %d\n", channel, wrec, success);
+#endif
+
+  if( wrec != size ) {
+    MPD_DBG("Count Mismatch: %d expected %d\n", wrec, size);
+    return BUS_MISMATCH;
+  }
+  return success;
+}
+
+/*
+ * For Zero Suppression Processor / Pedestal Subtraction
+ *
+ * channel : ADC Channel (correspond to a single APV)
+ * blen    : buffer lenght available
+ * event   : event buffer
+ * nread   : the number of words read back
+ *
+ * return error or 0 on success
+ *
+ */
+
+int MPDlo::FIFO_ReadSingle(int id, int channel, int blen, uint32_t *event, int &nread)
+{
+
+  uint32_t base_addr, fifo_addr;
+  int rval, nwords, size;
+  int n_part;
+
+  base_addr = ApvFifoOffset;
+  fifo_addr = base_addr + (channel << 14);
+  
+  nread = 0;
+  nwords = 0;
+  n_part = 0;
+  
+  rval = FIFO_GetNwords(channel, &nwords);
+  if( rval != BUS_OK ) return 2;
+  
+  size = (nwords > blen) ? blen : nwords; // cannot exceed memory buffer size
+
+  if (size>0) {
+
+#ifdef BLOCK_TRANSFER
+    rval = BUS_BlockRead(fifo_addr, size, event, &n_part);
+#else
+    for(int i=0; i<size; i++) {
+      rval = BUS_Read(fifo_addr+(i*4), (event+i));
+      if( rval != BUS_OK ) { 
+	return rval; 
+      } 
+      n_part++;
+    }
+#endif
+
+#ifdef DEBUG_DUMP
+    printf("\nReadData: %x %d\n",fifo_addr,channel);
+    for (i=0;i<n_part;i++) {
+      if ((i%16) == 0) printf("\n%4d",i);
+      printf(" %6x", event[i]);
+    }
+
+    printf(" -> %d\n", n_part);
+#endif
+    nread += n_part;
+
+    if( n_part != size ) return 1;
+
+  }
+
+  return nread;
+
+}
+
+int MPDlo::FIFO_Samples(int id, 
+			int channel, 
+			uint32_t *event, int *nread, int max_samples, int *err)
+{
+  uint32_t base_addr, fifo_addr;
+  int success, nwords;
+
+  base_addr = ApvFifoOffset;
+	
+  *err = 1;
+  *nread = 0;
+  fifo_addr = base_addr + (channel << 14);
+  nwords = DAQ_FIFO_SIZE;
+  if( nwords > max_samples )
+    {
+      *err = 2;
+      return BUS_GENERIC_ERROR;
+    }
+#ifdef BLOCK_TRANSFER
+  success = BUS_BlockRead(fifo_addr, nwords, event, nread);
+#else
+  for(int i=0; i<nwords; i++)
+    BUS_Read(fifo_addr+(i*4), (event+i));
+  *nread = nwords*4;
+#endif
+  *nread /= 4;
+  if( *nread == nwords )
+    *err = 0;
+  return success;
+}
+
+int MPDlo::FIFO_IsSynced(int id, int channel, int *synced)
+{
+  uint32_t base_addr, error_addr;
+  uint32_t data;
+  uint32_t channel_mask, synced_mask;
+  int success;
+
+  base_addr = ApvFifoOffset;	
+  error_addr = base_addr + SYNCED_ERROR_ADDR;
+  channel_mask = 1 << (channel & 0x0F);
+  synced_mask = channel_mask << 16;	/* @ error_addr */
+
+  success = BUS_Read(error_addr, &data);
+  if( data & synced_mask )
+    *synced = 1;
+  else
+    *synced = 0;
+  return success;
+}
+
+/*
+ * Return the synch status of each FE, (one bit = one FE, 1 means synched) 
+ */
+int MPDlo::FIFO_AllSynced(int id, int *synced)
+{
+  uint32_t base_addr, error_addr;
+  uint32_t data;
+  int success;
+
+  base_addr = ApvFifoOffset;	
+  error_addr = base_addr + SYNCED_ERROR_ADDR;
+
+  success = BUS_Read(error_addr, &data);
+  *synced = (data>>16);
+  return success;
+}
+
+int MPDlo::FIFO_HasError(int id, int channel, int *error)
+{
+  uint32_t base_addr, error_addr;
+  uint32_t data;
+  uint32_t channel_mask, error_mask;
+  int success;
+
+  base_addr = ApvFifoOffset;	
+  error_addr = base_addr + SYNCED_ERROR_ADDR;
+  channel_mask = 1 << (channel & 0x0F);
+  error_mask = channel_mask;			/* @ error_addr */
+
+  success = BUS_Read(error_addr, &data);
+  if( data & error_mask )
+    *error = 1;
+  else
+    *error = 0;
+  return success;
+}
+
+int MPDlo::FIFO_GetAllFlags(int id, uint16_t *full, uint16_t *empty)
+{
+  uint32_t base_addr, flag_addr;
+  uint32_t data;
+  int success;
+
+  base_addr = ApvFifoOffset;	
+  flag_addr = base_addr + FIFO_FLAG_ADDR;
+
+  success = BUS_Read(flag_addr, &data);
+  *full =  data >> 16;
+  *empty = data & 0xFFFF;
+  return success;
+}
+
+int MPDlo::FIFO_IsFull(int channel, int *full)
+{
+  uint32_t base_addr, flag_addr;
+  uint32_t data;
+  uint32_t channel_mask, full_mask;
+  int success;
+  
+  base_addr = ApvFifoOffset;	
+  flag_addr = base_addr + FIFO_FLAG_ADDR;
+  channel_mask = 1 << (channel & 0x0F);
+  full_mask = channel_mask << 16;		/* @ flag_addr */
+
+  success = BUS_Read(flag_addr, &data);
+  if( data & full_mask )
+    *full = 1;
+  else
+    *full = 0;
+  return success;
+}
+
+int MPDlo::FIFO_GetNwords(int id, int channel, int *nwords) // can be optimized reading both consecutive channels
+{
+  uint32_t base_addr, nwords_addr;
+  uint32_t data;
+  uint32_t nwords_addr_offset[16] = {0,0,4,4,8,8,12,12,16,16,20,20,24,24,28,28};
+  int success;
+  
+  base_addr = ApvFifoOffset;	
+  nwords_addr = base_addr + USED_WORDS_ADDR + nwords_addr_offset[channel];
+
+  success =BUS_Read(nwords_addr, &data);
+  if( channel % 2 )	// if odd
+    *nwords =  ((data & 0xFFFF0000) >> 16) & 0xFFFF;
+  else
+    *nwords =  data & 0xFFFF;
+  return success;
+}
+
+int MPDlo::FIFO_IsEmpty(int id, int channel, int *empty)
+{
+  uint32_t base_addr, flag_addr;
+  uint32_t data;
+  uint32_t channel_mask, empty_mask;
+  int success;
+
+  base_addr = ApvFifoOffset;	
+  flag_addr = base_addr + FIFO_FLAG_ADDR;
+  channel_mask = 1 << (channel & 0x0F);
+  empty_mask = channel_mask;			/* @ flag_addr */
+
+  success = BUS_Read(flag_addr, &data);
+  if( data & empty_mask )
+    *empty = 1;
+  else
+    *empty = 0;
+  return success;
+}
+
+int MPDlo::FIFO_ClearAll(int id)
+{
+  uint32_t addr;
+  uint32_t data, oldval;
+  int success;
+
+  // Issue a pulse on READOUT_CONFIG[31]
+  addr = ApvFifoOffset;
+  addr += READOUT_CONFIG_ADDR;
+  if( (success = BUS_Read(addr, &oldval)) != BUS_OK )
+    return success;
+  data = oldval | 0x80000000;
+  if( (success = BUS_Write(addr, &data)) != BUS_OK )
+    return success;
+  data = oldval & 0x7FFFFFFF;
+  return BUS_Write(addr, &data);
+}
+
+
+int MPDlo::FIFO_WaitNotEmpty(int id, int channel, int max_retry)
+{
+  uint32_t base_addr, flag_addr;
+  uint32_t data;
+  uint32_t channel_mask, empty_mask;
+  int success, retry_count, fifo_empty;
+
+  base_addr = ApvFifoOffset;	
+  flag_addr = base_addr + FIFO_FLAG_ADDR;
+  channel_mask = 1 << (channel & 0x0F);
+  empty_mask = channel_mask;			/* @ flag_addr */
+
+  retry_count = 0;
+  fifo_empty = 1;
+  success = BUS_OK;
+
+  while( fifo_empty && success == BUS_OK && retry_count <= max_retry )
+    {
+      success = BUS_Read(flag_addr, &data);
+      if( max_retry > 0 )
+	retry_count++;
+      if( data & empty_mask )
+	fifo_empty = 1;
+      else
+	fifo_empty = 0;
+      if( retry_count > max_retry )
+	return -10;
+    }
+  return success;
+}
+
+/**
+ * Standard event mode (no process)
+ *
+ * return true if all cards have been read
+ */
+
+bool MPDlo::FIFO_ReadAll(int id, int &timeout, int &global_fifo_error) {
+
+  unsigned int k;
+  int sample_left;
+
+  int nread, err;
+
+  sample_left = 0;
+  global_fifo_error = 0;
+
+  if (fReadDone == false) { // at least one MPD FIFO needs to be read
+    for(k=0; k<fApv.size(); k++) { // loop on ADC channels on single board
+
+      if (ApvReadDone(k) == false) { // APV FIFO has data to be read
+
+	nread = ApvGetBufferAvailable(k);
+	if (nread>0) { // space in memory buffer
+	  err = FIFO_ReadSingle(v2a(k), ApvGetBufferPWrite(k), nread, 100000); 
+
+	  ApvIncBufferPointer(k,nread);
+
+	  global_fifo_error |= err; // ???	  
+	} else { // no space in memory buffer
+	  MPD_ERR("No space in memory buffer for MPD slot=%d, APV i2c=%d adc=%d\n", GetSlot(), v2a(k), v2i(k));
+	}
+
+	if ((err == BUS_TIMEOUT) || (nread == 0)) timeout++; // timeout
+
+	int n = ApvGetBufferSample(k);
+
+	MPD_DBG("Fifo= %d, word rec= %d, event rec= %d, error=%d\n",v2a(k),nread ,n, global_fifo_error);
+
+	sample_left += ApvGetSampleLeft(k);
+
+      }
+
+      MPD_DBG("Fifo= %d, total sample left= %d\n",k, sample_left);
+
+    } // loop on ADC
+    fReadDone = (sample_left>0) ? false : true;  
+  } // if fReadDone
+  
+  return fReadDone;
+
+}
+
+// ***** Utility functions for sparse readout *****
+
+/**
+ *
+ * Search sample End Marker in Data Buffer
+ * b = buffer of the ADC
+ * i0, i1: first and last elements of the buffer to be checked
+ *
+ * return the location of the end marker or -1 if not found
+ */
+int MPDlo::SearchEndMarker(int id, uint32_t *b, int i0, int i1) {
+
+  int i;
+
+  if (i0>=i1) { return -1; }
+  for (i=i0;i<i1;i++) {
+    if ((b[i] & 0x180000) == 0x180000) {
+      return i;
+      break;
+    } 
+  }
+
+  return -1;
+}
+
+/*
+ * k = apv vector index
+ * i0 = fBs
+ */
+
+void MPDlo::ApvShiftDataBuffer(int id, int k, int i0) {
+
+  uint32_t *b;
+
+  b = ApvGetBufferPointer(k, 0);
+  int delta = fApv[k].fBi1 - i0;
+
+  MPD_DBG("Move block of %d words from %d to 0\n",delta,i0);
+
+  if (delta>0) {
+    memmove(&b[0],&b[i0],sizeof(uint32_t)*delta); // areas may overlap
+  }
+
+  fApv[k].fBi0 = 0; // to be removed
+  fApv[k].fBi1 = delta;
+  
+  MPD_DBG("Fifo= %d cleaned (data shifted) write pointer at=%d\n",v2a(k),fApv[k].fBi1);
+
+}
+
+bool MPDlo::FIFO_ReadAllNew(int id, int &timeout, int &global_fifo_error) {
+
+  int n;
+  unsigned int k;
+  int sample_left;
+
+  int nread, err;
+  uint32_t multiple_events;
+
+  int ii1=0;
+
+  n=1; // single event mode
+
+  sample_left = 0;
+
+  if (fReadDone == false) { // MPD fifos need to be read
+    for(k=0; k<fApv.size(); k++) { // loop on ADC channels on single board
+
+      if (ApvReadDone(k) == false) { // APV FIFO has data to be read
+  
+	//      sample_left += ApvGetSampleLeft(k);
+
+        //      ii0=fApv[k].fBi0;
+        //      ii1=fApv[k].fBi1;
+        //      idx = SearchEndMarker(ApvGetBufferPointer(k),ii0,ii1);
+        //      fApv[k].fBi0 = ii1;
+        //      cout << __FUNCTION__ << dec << " " << j << " " << k;
+
+	uint32_t *bptr = ApvGetBufferPointer(k,ii1);
+      
+	int bsiz = fApv[k].fBufSize - ii1; // space left in buffer
+
+	err = FIFO_ReadSingle(v2a(k), bsiz, bptr, nread);
+
+	// ***
+	if( nread > 0 ) {
+	  for (int i=0; i<nread; i++) {
+	    if (IsEndBlock(bptr[i])) { 
+	      ApvDecSampleLeft(k,1);
+	      if (ApvGetSampleLeft(k) == 0) {
+		fApv[k].fBs = ii1 + i; // pointer to the last sample word
+	      }
+	    }
+	  }
+
+	  fApv[k].fBi1=ii1+nread;
+
+	} else {
+	  timeout++;
+	}
+	
+	if( err != 2 )
+	  global_fifo_error |= err;
+      
+	if (err == 2) timeout++;
+      
+	if( n > 1 ) multiple_events++; // not used 
+	
+      } else { // ...
+#ifdef DEBUG_DUMP
+	cout << __FUNCTION__ << ": xxxx " << endl;
+#endif
+      }
+      
+      sample_left += ApvGetSampleLeft(k);
+
+    } // loop on ADC FIFOs
+    fReadDone = (sample_left == 0) ? true : false;      
+  } 
+  
+  return fReadDone;
+
+}
+
+/**
+ *
+ */
+
+int MPDlo::DAQ_Enable(int id)
+{
+  DAQ_Config();
+  return TRIG_Enable();
+}
+
+int MPDlo::DAQ_Disable(int id)
+{
+  uint32_t addr;
+  uint32_t data;
+  int success;
+
+  addr = ApvFifoOffset;
+	
+  addr += READOUT_CONFIG_ADDR;
+  data = 0;
+  if( (success = BUS_Write(addr, &data)) != BUS_OK )
+    return success;
+  return TRIG_Disable();
+
+}
+
+int MPDlo::DAQ_Config(int id) {
+
+  uint32_t addr, data;
+  int success;
+  short evtbld;
+
+  evtbld = GetEventBuilding() ? 1 : 0;
+
+  addr = ApvFifoOffset;
+	
+  addr += READOUT_CONFIG_ADDR;
+  data = (GetAcqMode() & 0x07) | // ((test & 0x01) << 15) |
+    ((GetCommonOffset() & 0xfff) << 16) | 
+    ((GetCommonNoiseSubtraction() & 0x1) << 28) | 
+    ((evtbld & 0x1) << 30);
+  if( (success = BUS_Write(addr, &data)) != BUS_OK )
+    return success;
+
+  return FIFO_ClearAll();
+
+  for (unsigned int i=0;i<fApv.size();i++) {
+    fApv[i].fBi0 = 0;
+    fApv[i].fBi1 = 0;
+  }
+
+}
+
+
+// ***** Pedestal and Thresholds handling routines
+
+/**
+ *
+ */
+
+int MPDlo::PED_Write(int id, int ch, int *ped_even, int *ped_odd)	// even, odd is the apv channles, ch = 0..7
+{
+  uint32_t addr, data;
+  int success, i;
+
+  addr = ApvFifoOffset;
+	
+  addr += PEDESTAL_BASE_ADDR + (ch << 14);
+  for(i=0; i<128; i++)
+    {
+      data = ped_even[i] | (ped_odd[i] << 16);
+      if( (success = BUS_Write(addr, &data)) != BUS_OK )
+	return success;
+      addr += 4;
+    }
+  return success;
+}
+
+int MPDlo::PED_Write(int id, int ch, int v)	// ch = 0..7
+{
+  int i, data[128];
+  
+  for(i=0; i<128; i++)
+    data[i] = v;
+  return PED_Write(ch, data, data);
+}
+
+int MPDlo::PED_Read(int id, int ch, int *ped_even, int *ped_odd)	// TBD
+{
+  for(int i=0; i<128;  i++)
+    ped_even[i] = ped_odd[i] = 0;	// TBD
+  return BUS_OK;
+}
+
+
+int MPDlo::THR_Write(int id, int ch, int *thr_even, int *thr_odd)	// ch = 0..7
+{
+  uint32_t addr, data;
+  int success, i;
+
+  addr = ApvFifoOffset;
+	
+  addr += THRESHOLD_BASE_ADDR + (ch << 14);
+  for(i=0; i<128; i++)
+    {
+      data = thr_even[i] | (thr_odd[i] << 16);
+      if( (success = BUS_Write(addr, &data)) != BUS_OK )
+	return success;
+      addr += 4;
+    }
+  return success;
+}
+
+int MPDlo::THR_Write(int id, int ch, int v)	// ch = 0..7
+{
+  int i, data[128];
+  
+  for(i=0; i<128; i++)
+    data[i] = v;
+  return THR_Write(ch, data, data);
+}
+
+int MPDlo::THR_Read(int id, int ch, int *thr_even, int *thr_odd)	// TBD
+{
+  for(int i=0; i<128;  i++)
+    thr_even[i] = thr_odd[i] = 0;	// TBD
+  return BUS_OK;
+}
+
+/**
+ * Load pedestal and threshold data into the MPD
+ */
+int MPDlo::PEDTHR_Write(int id) {
+
+  for (int ia=0;ia<8;ia++) {// loop on apv,  odd and even apv are download simultaneously
+    PED_Write(ia, GetApvPed(2*ia), GetApvPed(2*ia+1));
+    THR_Write(ia, GetApvThr(2*ia), GetApvThr(2*ia+1));
+  }
+
+  return 0;
+
+}
+
+
+
+/**
+ * Read Pedestals and Thresholds of a single MPD from the file pname
+ * if pname is empty, use the stored PedThrPath value
+ */
+int MPDlo::ReadPedThr(int id, std::string pname) {
+
+  string line;
+
+  int ch, ped, thr;
+  int count,i;
+
+  if (pname.empty()) {
+    pname = GetPedThrPath();
+  };
+
+  for (i=0;i<2048;i++) {
+    SetPedThr(i, GetPedCommon(), GetThrCommon());
+  };
+
+  std::ifstream infile(pname.data(), std::ifstream::in);
+  if (infile.is_open()) {
+    count=0;
+    while (infile.good()) {
+      getline(infile, line);
+      if (line.find("#") != 0) { // no comment line
+	std::istringstream iss(line);
+	iss >> ch >> ped >> thr;
+	count += SetPedThr(ch, ped, thr);
+      }
+    }    
+    cout << __FUNCTION__ << ": " << count << " channels read from file " << pname << " and set" << endl;
+    infile.close();
+  } else {
+    cout << __FUNCTION__ << ": Warning, unable to open file " << pname << endl;
+    cout << __FUNCTION__ << ": Warning, set pedestal and threshold to common values" << endl; 
+  }
+
+  return count;
+
+}
+
+#endif /* NOTDONE */
