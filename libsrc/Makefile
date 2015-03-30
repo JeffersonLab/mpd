@@ -10,7 +10,7 @@
 #   This driver requires access to the jvme headers (JLab specific Linux routine header)
 #
 # Uncomment DEBUG line for debugging info ( -g and -Wall )
-#DEBUG=1
+DEBUG=1
 #
 ifndef ARCH
 	ifdef LINUXVME_LIB
