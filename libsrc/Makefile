@@ -78,27 +78,37 @@ CFLAGS		= -O $(DEFS)
 INCS		= -Wall -mc68020 -fvolatile -fstrength-reduce -nostdinc -I. -I$(INCDIR)
 endif
 
+SRC		= mpdLib.c mpdConfig.c
+OBJ		= $(SRC:.c=.o)
 
 ifeq ($(ARCH),Linux)
-all: echoarch libmpd.a
+all: echoarch libmpd.a libmpd.so
 else 
-all: echoarch mpdLib.o
+all: echoarch mpdLib.o 
 endif
 
-mpdLib.o: mpdLib.c mpdLib.h
-	$(CC) -c $(CFLAGS) $(INCS) -o $@ mpdLib.c
-
 clean:
-	rm -f mpdLib.o libmpd.{a,so} *~
+	rm -f mpd*.o libmpd.{a,so} *~
 
 echoarch:
-	echo "Make for $(ARCH)"
+	@echo "Make for $(ARCH)"
 
 ifeq ($(OSNAME),Linux)
-libmpd.a: mpdLib.o
-	$(CC) -fpic -shared $(CFLAGS) -o libmpd.so mpdLib.c
-	$(AR) ruv libmpd.a mpdLib.o
-	$(RANLIB) libmpd.a
+libmpd.a: $(OBJ)
+	@echo
+	@echo "Building "$@
+	$(AR) ruv $(@) $(OBJ) 
+	$(RANLIB) $(@)
+
+libmpd.so: $(SRC)
+	@echo
+	@echo "Building "$@
+	$(CC) -fpic -shared $(CFLAGS) -o $(@) $(OBJ)
+
+%.o: %.c
+	@echo
+	@echo "Building "$@
+	$(CC) -c $(CFLAGS) $(INCS) $(<) -o $(@)
 
 links: libmpd.a
 	ln -sf $(PWD)/libmpd.a $(LINUXVME_LIB)/libmpd.a

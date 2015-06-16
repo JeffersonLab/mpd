@@ -1,4 +1,5 @@
 #ifndef __MPDLIB__
+#define __MPDLIB__
 /******************************************************************************
  *
  *  mpdLib.h  
@@ -12,7 +13,6 @@
  *
  */
 
-#define __MPDLIB__
 
 #define MPD_BOARD_ID       0x12345678
 #define MPD_MAX_BOARDS             21
@@ -144,6 +144,10 @@ struct mpd_struct
   /* 0x06000000 */ volatile uint32_t            SdramChip1[(0x07000000-0x06000000)>>2];
 };
 
+#define MPD_ADS5281_PAT_NONE    0
+#define MPD_ADS5281_PAT_SYNC    1
+#define MPD_ADS5281_PAT_DESKEW  2
+#define MPD_ADS5281_PAT_RAMP    3
 
 typedef struct apvparm_struct // actually a structure
 {
@@ -316,7 +320,27 @@ int  mpdI2C_ByteWriteRead(int id, uint8_t dev_addr, uint8_t int_addr,
 			  int ndata, uint8_t *data);
 int  mpdI2C_ByteRead1(int id, uint8_t dev_addr, uint8_t *data);
 
+/* ADC set/get methods */
+void mpdSetAdcClockPhase(int id, int adc, int phase);
+int  mpdGetAdcClockPhase(int id, int adc);
+void mpdSetAdcGain(int id, int adc, int ch, int g);
+int  mpdGetAdcGain(int id, int adc, int ch);
+void mpdSetAdcInvert(int id, int adc, int val);
+int  mpdGetAdcInvert(int id, int adc);
+void mpdSetAdcPattern(int id, int adc, int p);
+int  mpdGetAdcPattern(int id, int adc);
+
+
 /* APV methods */
+int  mpdApvGetLatency(int id, int ia);
+int  mpdApvGetCalibrationMode(int id, int ia);
+int  mpdApvGetMode(int id, int ia);
+int  mpdApvGetSample(int id, int ia);
+void mpdApvSetSampleLeft(int id, int ia);
+void mpdApvDecSampleLeft(int id, int ia, int n);
+int  mpdApvReadDone(int id, int ia);
+int  mpdApvGetSampleLeft(int id, int ia);
+int  mpdApvGetSampleIdx(int id, int ia);
 int  mpdAPV_Reset101(int id);
 int  mpdAPV_Try(int id, uint8_t apv_addr);
 
@@ -332,7 +356,99 @@ int  mpdApvGetPeakMode(int id);
 void mpdAddApv(int id, ApvParameters v);
 int  mpdApvGetFrequency(int id);
 uint8_t mpdApvGetMaxLatency(int id);
+void mpdApvBufferAlloc(int id, int ia) ;
+void mpdApvBufferFree(int id, int ia);
+void mpdApvIncBufferPointer(int id, int ia, int b);
+uint32_t* mpdApvGetBufferPointer(int id, int ia, int ib);
+int  mpdApvGetBufferSample(int id, int ia);
+uint32_t* mpdApvGetBufferPWrite(int id, int ia);
+uint32_t mpdApvGetBufferElement(int id, int ia, int ib);
+int  mpdApvGetBufferAvailable(int id, int ia);
+int  mpdApvGetBufferLength(int id, int ia);
+int  mpdApvGetEventSize(int id, int ia);
+
 int  mpdArmReadout(int id);
 
+// trigger methods
+int  mpdTRIG_BitSet(int id);
+int  mpdTRIG_BitClear(int id);
+int  mpdTRIG_Enable(int id);
+int  mpdTRIG_Disable(int id);
+int  mpdTRIG_GetMissed(int id, uint32_t *missed);
+int  mpdDELAY25_Set(int id, int apv1_delay, int apv2_delay);
+
+// adc methods
+int  mpdADS5281_Set(int id, int adc, uint32_t val);
+int  mpdADS5281_InvertChannels(int id, int adc);
+int  mpdADS5281_NonInvertChannels(int id, int adc);
+int  mpdADS5281_SetParameters(int id, int adc);
+int  mpdADS5281_Normal(int id, int adc);
+int  mpdADS5281_Sync(int id, int adc);
+int  mpdADS5281_Deskew(int id, int adc);
+int  mpdADS5281_Ramp(int id, int adc);
+int  mpdADS5281_SetGain(int id, int adc, 
+			int gain0, int gain1, int gain2, int gain3, 
+			int gain4, int gain5, int gain6, int gain7);
+
+// histogramming methods
+
+int  mpdHISTO_Clear(int id, int ch, int val);
+int  mpdHISTO_Start(int id, int ch);
+int  mpdHISTO_Stop(int id, int ch);
+int  mpdHISTO_GetIntegral(int id, int ch, uint32_t *integral);
+int  mpdHISTO_Read(int id, int ch, uint32_t *histogram);
+
+// Daq-Readout methods
+int  mpdFIFO_ReadSingle(int id, int channel, uint32_t *dbuf, int *wrec, int max_retry);
+int  mpdFIFO_ReadSingle0(int id, int channel, int blen, uint32_t *event, int *nread);
+int  mpdFIFO_Samples(int id, 
+		     int channel, 
+		     uint32_t *event, int *nread, int max_samples, int *err);
+int  mpdFIFO_IsSynced(int id, int channel, int *synced);
+int  mpdFIFO_AllSynced(int id, int *synced);
+int  mpdFIFO_HasError(int id, int channel, int *error);
+int  mpdFIFO_GetAllFlags(int id, uint16_t *full, uint16_t *empty);
+int  mpdFIFO_IsFull(int id, int channel, int *full);
+int  mpdFIFO_GetNwords(int id, int channel, int *nwords);
+int  mpdFIFO_IsEmpty(int id, int channel, int *empty);
+int  mpdFIFO_ClearAll(int id);
+int  mpdFIFO_WaitNotEmpty(int id, int channel, int max_retry);
+#ifdef NOTDONE
+int  mpdFIFO_ReadAll(int id, int *timeout, int *global_fifo_error);
+#endif /* NOTDONE */
+
+int  mpdSearchEndMarker(uint32_t *b, int i0, int i1);
+void mpdApvShiftDataBuffer(int id, int k, int i0);
+#ifdef NOTDONE
+int  mpdFIFO_ReadAllNew(int id, int *timeout, int *global_fifo_error);
+#endif /* NOTDONE */
+int  mpdDAQ_Enable(int id);
+int  mpdDAQ_Disable(int id);
+int  mpdDAQ_Config(int id);
+
+// ***** Pedestal and Thresholds handling routines
+int  mpdPED_Write0(int id, int ch, int *ped_even, int *ped_odd);
+int  mpdPED_Write(int id, int ch, int v);
+int  mpdPED_Read(int id, int ch, int *ped_even, int *ped_odd);
+int  mpdTHR_Write0(int id, int ch, int *thr_even, int *thr_odd);
+int  mpdTHR_Write(int id, int ch, int v);
+int  mpdTHR_Read(int id, int ch, int *thr_even, int *thr_odd);
+int  mpdPEDTHR_Write(int id);
+
+void mpdSetPedThrPath(int id, char *val);
+char *mpdGetPedThrPath(int id);
+int  mpdSetPedThr(int id, int ch, int p, int t);
+int  mpdGetPed(int id, int ch);
+int  mpdGetThr(int id, int ch);
+int  *mpdGetApvPed(int id, int ach);
+int  *mpdGetApvThr(int id, int ach);
+
+void mpdSetPedThrCommon(int id, int p, int t);
+int  mpdGetPedCommon(int id);
+int  mpdGetThrCommon(int id);
+
+#ifdef NOTDONE
+int  mpdReadPedThr(int id, std::string pname);
+#endif /* NOTDONE */
 
 #endif /* __MPDLIB__ */

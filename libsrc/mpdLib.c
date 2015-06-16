@@ -234,14 +234,6 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
       mpdA24Offset = laddr - addr;
     }
 
-#ifdef NOTSURE
-  /* Init Some Global variables */
-  mpdSource = iFlag&MPD_SOURCE_MASK;
-  mpdInited = nmpd = 0;
-  bzero((char *)mpdChanDisable,sizeof(mpdChanDisable));
-  bzero((char *)mpdID,sizeof(mpdID));
-#endif /* NOTSURE */
-
   for (ii=0;ii<nmpd;ii++) 
     {
       if(useList==1)
@@ -297,7 +289,7 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
 
 	      if(!noFirmwareCheck)
 		{
-		  /* Check Control FPGA firmware version */
+		  /* Check FPGA firmware version */
 		  if( (rdata&MPD_VERSION_MASK) < MPD_SUPPORTED_CTRL_FIRMWARE )
 		    {
 		      printf("%s: ERROR: Slot %2d: Control FPGA Firmware (0x%02x) not supported by this driver.\n",
@@ -306,53 +298,16 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
 		      continue;
 		    }
 
-		  /* Check Processing FPGA firmware version */
-		  proc_version = 
-		    (uint16_t)(vmeRead32(&mpd->adc_status[0]) & MPD_ADC_VERSION_MASK);
-
-		  for(icheck=0; icheck<MPD_SUPPORTED_PROC_FIRMWARE_NUMBER; icheck++)
-		    {
-		      if(proc_version == supported_proc[icheck])
-			proc_supported=1;
-		    }
-
-		  if(proc_supported==0)
-		    {
-		      printf("%s: ERROR: Slot %2d: Proc FPGA Firmware (0x%02x) not supported by this driver.\n",
-			     __FUNCTION__,boardID, proc_version);
-		      printf("\tSupported Proc Firmware:  ");
-		      for(icheck=0; icheck<MPD_SUPPORTED_PROC_FIRMWARE_NUMBER; icheck++)
-			{
-			  printf("0x%02x ",supported_proc[icheck]);
-			}
-		      printf("\n");
-		      continue;
-		    }
 		}
 	      else
 		{
-		  /* Check Control FPGA firmware version */
+		  /* Check FPGA firmware version */
 		  if( (rdata&MPD_VERSION_MASK) < MPD_SUPPORTED_CTRL_FIRMWARE )
 		    {
 		      printf("%s: WARN: Slot %2d: Control FPGA Firmware (0x%02x) not supported by this driver (ignored).\n",
 			     __FUNCTION__,boardID, rdata & MPD_VERSION_MASK);
 		    }
 
-		  /* Check Processing FPGA firmware version */
-		  proc_version = 
-		    (uint16_t)(vmeRead32(&mpd->adc_status[0]) & MPD_ADC_VERSION_MASK);
-
-		  for(icheck=0; icheck<MPD_SUPPORTED_PROC_FIRMWARE_NUMBER; icheck++)
-		    {
-		      if(proc_version == supported_proc[icheck])
-			proc_supported=1;
-		    }
-
-		  if(proc_supported==0)
-		    {
-		      printf("%s: WARN: Slot %2d: Proc FPGA Firmware (0x%02x) not supported by this driver (ignored).\n",
-			     __FUNCTION__,boardID, proc_version & MPD_VERSION_MASK);
-		    }
 		}
 
 	      MPDp[boardID] = (struct mpd_struct *)(laddr_inc);
@@ -380,14 +335,6 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
 	}
       taskDelay(60); 
     }
-
-  /* Initialize Interrupt variables */
-  mpdIntID = -1;
-  mpdIntRunning = MPDLSE;
-  mpdIntLevel = MPD_VME_INT_LEVEL;
-  mpdIntVec = MPD_VME_INT_VEC;
-  mpdIntRoutine = NULL;
-  mpdIntArg = 0;
 
   /* Calculate the A32 Offset for use in Block Transfers */
 #ifdef VXWORKS
@@ -638,13 +585,12 @@ int mpdGetTriggerMode(int id) { return fMpd[id].fTriggerMode; };
 void mpdSetAcqMode(int id, char *name) 
 {
   fMpd[id].fAcqMode = 0; // disabled
-  // FIXME: String comp here
-  if( name == "ramtest" ) fMpd[id].fAcqMode = MPD_DAQ_RAM_TEST;
-  if( name == "histo" ) fMpd[id].fAcqMode = MPD_DAQ_HISTO;
-  if( name == "event" ) fMpd[id].fAcqMode = MPD_DAQ_EVENT;
-  if( name == "process" ) fMpd[id].fAcqMode = MPD_DAQ_PROCESS;
-  if( name == "sample" ) fMpd[id].fAcqMode = MPD_DAQ_SAMPLE;
-  if( name == "sync" ) fMpd[id].fAcqMode = MPD_DAQ_SYNC;
+  if(strcmp(name,"ramtest")==0) fMpd[id].fAcqMode = MPD_DAQ_RAM_TEST;
+  if(strcmp(name,"histo")==0) fMpd[id].fAcqMode = MPD_DAQ_HISTO;
+  if(strcmp(name,"event")==0) fMpd[id].fAcqMode = MPD_DAQ_EVENT;
+  if(strcmp(name,"process")==0) fMpd[id].fAcqMode = MPD_DAQ_PROCESS;
+  if(strcmp(name,"sample")==0) fMpd[id].fAcqMode = MPD_DAQ_SAMPLE;
+  if(strcmp(name,"sync")==0) fMpd[id].fAcqMode = MPD_DAQ_SYNC;
 
   printf("%s: Acquisition Mode = 0x%x (%s)\n",
 	 __FUNCTION__,fMpd[id].fAcqMode, name);
@@ -1444,7 +1390,7 @@ mpdAddApv(int id, ApvParameters v)
     }
 
 
-  fApv[id][nApv[id]] = v;
+  memcpy((void *)&fApv[id][nApv[id]], &v, sizeof(ApvParameters));
   fApv[id][nApv[id]].fBuffer = 0;
   
   printf("%s: APV %d added to list of FECs\n",
@@ -3077,10 +3023,35 @@ mpdPEDTHR_Write(int id)
 
 }
 
+void mpdSetPedThrPath(int id, char *val) { fMpd[id].fPedThrPath = val; };
+char *mpdGetPedThrPath(int id) { return fMpd[id].fPedThrPath; };
+int mpdSetPedThr(int id, int ch, int p, int t) {
+  if (ch>=0 && ch<2048) {
+    fMpd[id].fPed[ch] = p;
+    fMpd[id].fThr[ch] = t;
+    return 1;
+  }
+  return 0;
+};
+int mpdGetPed(int id, int ch) { 
+  if (ch>=0 && ch<2048) { return fMpd[id].fPed[ch]; } else { return fMpd[id].fPedCommon; }
+};
+int mpdGetThr(int id, int ch) { 
+  if (ch>=0 && ch<2048) { return fMpd[id].fThr[ch]; } else { return fMpd[id].fThrCommon; }
+};
+
+int *mpdGetApvPed(int id, int ach) { if (ach>=0 && ach<16) { return &(fMpd[id].fPed[ach*128]); } else { return 0; }};
+int *mpdGetApvThr(int id, int ach) { if (ach>=0 && ach<16) { return &(fMpd[id].fThr[ach*128]); } else { return 0; }};
+
+void mpdSetPedThrCommon(int id, int p, int t) {
+  fMpd[id].fPedCommon = p;
+  fMpd[id].fThrCommon = t;
+};
+int mpdGetPedCommon(int id) { return fMpd[id].fPedCommon; };
+int mpdGetThrCommon(int id) { return fMpd[id].fThrCommon; };
+
+
 #ifdef NOTDONE
-
-
-
 /**
  * Read Pedestals and Thresholds of a single MPD from the file pname
  * if pname is empty, use the stored PedThrPath value
@@ -3130,5 +3101,4 @@ mpdReadPedThr(int id, std::string pname)
   return count;
 
 }
-
 #endif /* NOTDONE */
