@@ -13,10 +13,11 @@
  *
  */
 
-
+#include "stdio.h"
 #define MPD_BOARD_ID       0x12345678
 #define MPD_MAX_BOARDS             21
-#define MPD_MAX_APV                16
+//#define MPD_MAX_APV                16
+#define MPD_MAX_APV                31
 
 #define MPD_SUPPORTED_FIRMWARE 0x23
 
@@ -40,23 +41,25 @@
 
 #define	EVENT_SIZE	130
 
-#define DAQ_FIFO_SIZE	2048
+#define DAQ_FIFO_SIZE	1024
 
-#define MPD_MSG(format, ...) {printf("%s: ",__FUNCTION__); printf(format, ## __VA_ARGS__);}
-#define MPD_DUM(format, ...) {printf("%s: ",__FUNCTION__); printf(format, ## __VA_ARGS__);}
-#define MPD_DBG(format, ...) {printf("%s: DEBUG: ",__FUNCTION__); printf(format, ## __VA_ARGS__);}
-#define MPD_ERR(format, ...) {fprintf(stderr,"%s: ERROR: ",__FUNCTION__); fprintf(stderr,format, ## __VA_ARGS__);}
+#define MPD_MSG(format, ...) {printf("%s: ",__FUNCTION__); printf(format, ## __VA_ARGS__);} 
+#define MPD_DUM(format, ...) {printf("%s: ",__FUNCTION__); printf(format, ## __VA_ARGS__);} 
+#define MPD_DBG(format, ...) {printf("%s: DEBUG: ",__FUNCTION__); printf(format, ## __VA_ARGS__);} 
+#define MPD_ERR(format, ...) {fprintf(stderr,"%s: ERROR: ",__FUNCTION__); fprintf(stderr,format, ## __VA_ARGS__);} 
+
 
 struct mpd_i2c_control_struct
 {
-  /* 0x0000 */ volatile uint32_t Clock_Prescaler_low;
-  /* 0x0004 */ volatile uint32_t Clock_Prescaler_high;
-  /* 0x0008 */ volatile uint32_t Control;
-  /* 0x000C */ volatile uint32_t TxRx;
-  /* 0x0010 */ volatile uint32_t CommStat;
-  /* 0x0014 */          uint32_t blank0;
-  /* 0x001C */ volatile uint32_t ApvReset;
-  /* 0x0020 */
+  volatile uint32_t Clock_Prescaler_low;///* 0x0000 */
+  volatile uint32_t Clock_Prescaler_high;// /* 0x0004 */
+  volatile uint32_t Control; ///* 0x0008 */
+  volatile uint32_t TxRx; ///* 0x000C */
+  volatile uint32_t CommStat;// /* 0x0010 */
+  uint32_t blank0; ///* 0x0014 */ 
+  uint32_t blank1; ///* 0x0018 */ 
+  volatile uint32_t ApvReset;///* 0x001C */
+  // /* 0x0020 */
 };
 
 #define MPD_I2C_CONTROL_ENABLE_CORE  0x80
@@ -98,7 +101,6 @@ struct mpd_apv_daq_struct
   /* 0x000000 */ volatile uint32_t Data_Ch[16][(0x4000-0x0)>>2];
   /* 0x040000 */ struct   mpd_ped_thres_apv_pair_struct Ped[8];
   /* 0x060000 */ struct   mpd_ped_thres_apv_pair_struct Thres[8];
-  /* 0x07C200 */          uint32_t blank0[(0x080000-0x07C200)>>2];
   /* 0x080000 */ volatile uint32_t Used_Word_Ch_Pair[8];
   /* 0x080020 */ volatile uint32_t FIFO_Status;
   /* 0x080024 */ volatile uint32_t Sync_Status;
@@ -108,13 +110,8 @@ struct mpd_apv_daq_struct
   /* 0x080034 */ volatile uint32_t Trig_Gen_Config;
   /* 0x080038 */ volatile uint32_t Logic_Thresholds;
   /* 0x08003C */ volatile uint32_t Control;
-  /* 0x080040 */ volatile uint32_t SDRAM_Fifo_WAC;
-  /* 0x080044 */ volatile uint32_t SDRAM_Fifo_RAC;
-  /* 0x080048 */ volatile uint32_t SDRAM_Fifo_Word_Count;
-  /* 0x08004C */ volatile uint32_t Output_Fifo_Word_Count;
-  /* 0x080050 */          uint32_t blank2[(0x084000-0x080050)>>2];
-  /* 0x084000 */ volatile uint32_t Trigger_Time_Fifo[4096];
-  /* 0x088000 */
+  /* 0x080040 */ volatile uint32_t Fir_Params[6]; // 12 taps
+  /* 0x080044 */
 };
 
 #define MPD_APVDAQ_TRIGCONFIG_ENABLE_MACH 0x00001000
@@ -128,6 +125,16 @@ struct mpd_apv_daq_struct
 #define MPD_IN_P0    0
 #define MPD_IN_FRONT 1
 
+struct mpd_struct_csr
+{
+  uint32_t blank0[7];
+  volatile uint32_t crcode[2];
+  volatile uint32_t manufactID[3];
+  volatile uint32_t boardID[4];
+  volatile uint32_t revisionID[4];
+  uint32_t blank1[3];
+  volatile uint32_t revisionTime[4];
+};
 
 struct mpd_struct 
 {
@@ -135,11 +142,11 @@ struct mpd_struct
   /* 0x01000000 */ volatile uint32_t            AdcConfig;
   /* 0x01000004 */          uint32_t            blank1[(0x02000000-0x01000004)>>2];
   /* 0x02000000 */ struct   mpd_i2c_control_struct  I2C;
-  /* 0x02000004 */          uint32_t            blank2[(0x03000000-0x02000004)>>2];
+  /* 0x02000004 */          uint32_t            blank2[(0x03000000-0x02000020)>>2];
   /* 0x03000000 */ struct   mpd_histogrammer_struct Histo;
   /* 0x03010000 */          uint32_t            blank3[(0x04000000-0x03010000)>>2];
   /* 0x04000000 */ struct   mpd_apv_daq_struct      ApvDaq;
-  /* 0x04880000 */          uint32_t            blank4[(0x05000000-0x04880000)>>2];
+  /* 0x04080044 */          uint32_t            blank4[(0x05000000-0x04080044)>>2];
   /* 0x05000000 */ volatile uint32_t            SdramChip0[(0x06000000-0x05000000)>>2];
   /* 0x06000000 */ volatile uint32_t            SdramChip1[(0x07000000-0x06000000)>>2];
 };
@@ -203,6 +210,7 @@ typedef struct apvparm_struct // actually a structure
 
 typedef struct mpd_priv_struct
 {
+
   uint32_t fBaseAddr; // MPD base address
   int fSlot; // rotary switch
   int fBus; // bus index where the MPD is connected to
@@ -219,6 +227,7 @@ typedef struct mpd_priv_struct
   uint32_t Last1Offset;
 
   uint16_t fApv_enable_mask;
+  uint16_t nAPV; // number of apv in mpd (EC)
 
   // config settings
   int   fCalibLatency;
@@ -227,6 +236,9 @@ typedef struct mpd_priv_struct
   short fAcqMode; // histo, event process ...
 
   int fInPath[2][3]; // define the path of the trigger, synch and clock ...
+
+  short fInLevelTTL[2]; // input lemo logic level 0=NIM, 1=TTL
+  short fOutLevelTTL[2]; // output lemo logic level 0=NIM, 1=TTL
 
   int fEventBuilding;
 
@@ -265,7 +277,6 @@ typedef struct mpd_priv_struct
 #define MPD_INIT_USE_ADDRLIST        (1<<17)
 #define MPD_INIT_SKIP_FIRMWARE_CHECK (1<<18)
 
-
 /* Function Prototypes */
 STATUS mpdInit (UINT32 addr, UINT32 addr_inc, int nadc, int iFlag);
 int  mpdCheckAddresses(int id);
@@ -295,6 +306,11 @@ void mpdSetInPath0(int id, int t1P0, int t2P0, int tFront, int sP0, int sFront);
 void mpdSetInPath(int id, int conn, int signal, int val);
 int  mpdGetInPath(int id, int conn, int signal);
 int  mpdGetInPathI(int id, int conn, int signal);
+void mpdSetInputLevel(int id, int conn, short val);
+short mpdGetInputLevel(int id, int conn);
+void mpdSetOutputLevel(int id, int conn, short val);
+short mpdGetOutputLevel(int id, int conn);
+
 uint32_t mpdGetFpgaRevision(int id);
 void mpdSetFpgaRevision(int id, uint32_t r);
 uint32_t mpdGetHWRevision(int id);
@@ -302,7 +318,11 @@ uint32_t mpdGetFWRevision(int id);
 uint32_t mpdGetFpgaCompileTime(int id);
 void mpdSetFpgaCompileTime(int id, uint32_t t);
 
-int  mpdLM95235_Read(int id, int *t);
+int  mpdLM95235_Read(int id, double *core_t, double *air_t);
+
+/* service methods */
+int mpdGetNumberAPV(int id); // EC
+void mpdSetNumberAPV(int id, uint16_t v); // EC
 
 /* I2C methods */
 void mpdSetI2CSpeed(int id, int val);
@@ -366,6 +386,7 @@ uint32_t mpdApvGetBufferElement(int id, int ia, int ib);
 int  mpdApvGetBufferAvailable(int id, int ia);
 int  mpdApvGetBufferLength(int id, int ia);
 int  mpdApvGetEventSize(int id, int ia);
+int mpdApvGetAdc(int id, int ia);
 
 int  mpdArmReadout(int id);
 
@@ -378,6 +399,7 @@ int  mpdTRIG_GetMissed(int id, uint32_t *missed);
 int  mpdDELAY25_Set(int id, int apv1_delay, int apv2_delay);
 
 // adc methods
+int  mpdADS5281_Config(int id); // (EC)
 int  mpdADS5281_Set(int id, int adc, uint32_t val);
 int  mpdADS5281_InvertChannels(int id, int adc);
 int  mpdADS5281_NonInvertChannels(int id, int adc);
@@ -413,15 +435,12 @@ int  mpdFIFO_GetNwords(int id, int channel, int *nwords);
 int  mpdFIFO_IsEmpty(int id, int channel, int *empty);
 int  mpdFIFO_ClearAll(int id);
 int  mpdFIFO_WaitNotEmpty(int id, int channel, int max_retry);
-#ifdef NOTDONE
+
 int  mpdFIFO_ReadAll(int id, int *timeout, int *global_fifo_error);
-#endif /* NOTDONE */
+
 
 int  mpdSearchEndMarker(uint32_t *b, int i0, int i1);
 void mpdApvShiftDataBuffer(int id, int k, int i0);
-#ifdef NOTDONE
-int  mpdFIFO_ReadAllNew(int id, int *timeout, int *global_fifo_error);
-#endif /* NOTDONE */
 int  mpdDAQ_Enable(int id);
 int  mpdDAQ_Disable(int id);
 int  mpdDAQ_Config(int id);
@@ -446,6 +465,8 @@ int  *mpdGetApvThr(int id, int ach);
 void mpdSetPedThrCommon(int id, int p, int t);
 int  mpdGetPedCommon(int id);
 int  mpdGetThrCommon(int id);
+
+int mpdGetNumberMPD(); 
 
 #ifdef NOTDONE
 int  mpdReadPedThr(int id, std::string pname);

@@ -1,5 +1,6 @@
 #ifndef __MPDCONFIG_H_
 #define __MPDCONFIG_H_
+#include "libconfig.h"
 /*----------------------------------------------------------------------------*/
 /**
  * @mainpage
@@ -17,14 +18,15 @@
  *----------------------------------------------------------------------------*/
 
 int   mpdConfigInit(char *confFileName);
-
+int mpdConfigLoad();
 int   mpdReadCfgInt(config_t *cfg, char *name, int index);
 float mpdReadCfgFloat(config_t *cfg, char *name, int index);
 const char *mpdReadCfgString(config_t *cfg, char *name, int index);
 int   mpdReadSettingSize(config_setting_t *setting, char *name);
-int   mpdReadSettingInt(config_setting_t *setting, char *name, int index);
-double mpdReadSettingFloat(config_setting_t *setting, char *name, int index);
-const char *mpdReadSettingString(config_setting_t *setting, char *name, int index);
+int   mpdReadSettingInt(config_setting_t **setting, char *name, int index);
+int   mpdReadSettingBool(config_setting_t **setting, char *name, int index);
+double mpdReadSettingFloat(config_setting_t **setting, char *name, int index);
+const char *mpdReadSettingString(config_setting_t **setting, char *name, int index);
 
 
 
