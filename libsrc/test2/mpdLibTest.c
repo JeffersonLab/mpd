@@ -61,7 +61,7 @@ main(int argc, char *argv[])
    */
 
   // discover MPDs and initialize memory mapping
-  mpdInit(0x80000,0x80000,21,0x0);
+  mpdInit(0x80000,0x80000,21,MPD_INIT_SKIP_FIRMWARE_CHECK);
 
   fnMPD = mpdGetNumberMPD();
 

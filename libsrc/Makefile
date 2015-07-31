@@ -49,8 +49,8 @@ LINUXVME_INC	?= ${CODA}/linuxvme/include
 CODALIB 	= $(CODA)/$(OSNAME)/lib
 CODAINC 	= $(CODA)/common/include
 CFLAGS 		= -O $(DEFS) \
-		-I. -I${LINUXVME_INC}  \
-		-L. -L${LINUXVME_LIB} -DJLAB
+		-I. -Ilibconfig -I${LINUXVME_INC}  \
+		-L. -Llibconfig -L${LINUXVME_LIB} -DJLAB
 ifdef DEBUG
 CFLAGS		+= -Wall -g
 else
@@ -115,7 +115,7 @@ links: libmpd.a
 	ln -sf $(PWD)/libmpd.so $(LINUXVME_LIB)/libmpd.so
 	ln -sf $(PWD)/mpdLib.h $(LINUXVME_INC)/mpdLib.h
 
-install: libmpd.a
+install: libmpd.a libmpd.so
 	@cp -v $(PWD)/$< $(LINUXVME_LIB)/$<
 	@cp -v $(PWD)/$(<:%.a=%.so) $(LINUXVME_LIB)/$(<:%.a=%.so)
 	@cp -v ${PWD}/*Lib.h $(LINUXVME_INC)

@@ -129,6 +129,19 @@ static const uint8_t error_addr = 0x00;
 /*static*/ int  I2C_SendStop(int id);
 /*static*/ int  I2C_SendNack(int id);
 
+uint32_t
+mpdRead32(volatile uint32_t *reg)
+{
+  uint32_t read=0;
+  read = vmeBusRead32(0x09,(uint32_t)reg);
+  return read;
+}
+
+void
+mpdWrite32(volatile uint32_t *reg, uint32_t val)
+{
+  vmeBusWrite32(0x09,(uint32_t)reg, val);
+}
 
 /**
  * @defgroup Config Initialization/Configuration
@@ -219,16 +232,16 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
       /* get the MPD address */
       // CSR access AM=0x2F or any AM_A24 such as 0x39
 #ifdef VXWORKS
-      res = sysBusToLocalAdrs(0x39,(char *)addr,(char **)&laddr_csr);
+      res = sysBusToLocalAdrs(0x2f,(char *)addr,(char **)&laddr_csr);
 #else
-      res = vmeBusToLocalAdrs(0x39,(char *)addr,(char **)&laddr_csr); // CSR space
+      res = vmeBusToLocalAdrs(0x2f,(char *)addr,(char **)&laddr_csr); // CSR space
 #endif
       if (res != 0) 
 	{
 #ifdef VXWORKS
-	  printf("mpdInit: ERROR in sysBusToLocalAdrs(0x39,0x%x,&laddr_csr) \n",addr);
+	  printf("mpdInit: ERROR in sysBusToLocalAdrs(0x2f,0x%x,&laddr_csr) \n",addr);
 #else
-	  printf("mpdInit: ERROR in vmeBusToLocalAdrs(0x39,0x%x,&laddr_csr) \n",addr);
+	  printf("mpdInit: ERROR in vmeBusToLocalAdrs(0x2f,0x%x,&laddr_csr) \n",addr);
 #endif
 	  return(ERROR);
 	}
@@ -381,6 +394,8 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
 	  //	  mpdA32Offset = laddr - mpdA32Base; // ??? (EC)
 	}
 #else
+
+#ifdef OLDWAY
       res = vmeBusToLocalAdrs(0x09,(char *)a32addr,(char **)&laddr);
       if (res != 0) 
 	{
@@ -392,12 +407,14 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
 	{
 	  //	  mpdA32Offset = laddr - mpdA32Base; // ??? (EC)
 	}
+#else
+      laddr = a32addr;
+#endif /* OLDWAY */
 #endif
 
       MPDp[boardID] = (struct mpd_struct *)(laddr); // MPD A32 memory map
 
-
-      printf("Initialized MPD %2d  Slot #%2d at VME address 0x%06x (local 0x%08x) \n",
+      printf("Initialized MPD %2d  Slot #%2d at VME address 0x%08x (local 0x%08x) \n",
 	     impd,boardID,
 	     (UINT32) a32addr, // (UINT32) MPDp[boardID]-mpdA24Offset, // ??
 	     (UINT32) MPDp[boardID]);
@@ -405,6 +422,8 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
       
       /* Program an A32 access address for this MPD's FIFO */      
       MPDpd[boardID] = (uint32_t *)(laddr);  /* Set a pointer to the FIFO */
+
+
 
       if(!noBoardInit)
 	{
@@ -460,9 +479,9 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
       if(!noBoardInit)
 	{
 	  //	  vmeWrite32(&(MPDp[minSlot]->ctrl1),
-	  //	     vmeRead32(&(MPDp[minSlot]->ctrl1)) | MPD_FIRST_BOARD);
+	  //	     mpdRead32(&(MPDp[minSlot]->ctrl1)) | MPD_FIRST_BOARD);
 	  // vmeWrite32(&(MPDp[maxSlot]->ctrl1),
-	  //	     vmeRead32(&(MPDp[maxSlot]->ctrl1)) | MPD_LAST_BOARD);
+	  //	     mpdRead32(&(MPDp[maxSlot]->ctrl1)) | MPD_LAST_BOARD);
 	}    
     }
 
@@ -762,8 +781,8 @@ mpdI2C_ApvReset(int id)
     }
 
   MPDUNLOCK;
-  vmeWrite32(&MPDp[id]->I2C.ApvReset, MPD_I2C_APVRESET_ASYNC_CLEAR);
-  vmeWrite32(&MPDp[id]->I2C.ApvReset, MPD_I2C_APVRESET_ASYNC_SET);
+  mpdWrite32(&MPDp[id]->I2C.ApvReset, MPD_I2C_APVRESET_ASYNC_CLEAR);
+  mpdWrite32(&MPDp[id]->I2C.ApvReset, MPD_I2C_APVRESET_ASYNC_SET);
   MPDUNLOCK;
 
   return OK;
@@ -791,21 +810,21 @@ mpdI2C_Init(int id)
 
   
   MPDLOCK;
-  vmeWrite32(&MPDp[id]->I2C.Control, 0); /* Disable I2C Core and interrupts */
+  mpdWrite32(&MPDp[id]->I2C.Control, 0); /* Disable I2C Core and interrupts */
 
   int ispeed = mpdGetI2CSpeed(id);
 
   data = (ispeed & 0xFF);
-  vmeWrite32(&MPDp[id]->I2C.Clock_Prescaler_low, data);
+  mpdWrite32(&MPDp[id]->I2C.Clock_Prescaler_low, data);
   
-  rdata = vmeRead32(&MPDp[id]->I2C.Clock_Prescaler_low);
+  rdata = mpdRead32(&MPDp[id]->I2C.Clock_Prescaler_low);
 
   printf("%s: i2c low prescaler register set/read : %d / %d\n",
 	 __FUNCTION__,data,rdata);
 
   data = (ispeed>>8) & 0xff;
-  vmeWrite32(&MPDp[id]->I2C.Clock_Prescaler_high, data);
-  rdata = vmeRead32(&MPDp[id]->I2C.Clock_Prescaler_high);
+  mpdWrite32(&MPDp[id]->I2C.Clock_Prescaler_high, data);
+  rdata = mpdRead32(&MPDp[id]->I2C.Clock_Prescaler_high);
 
   printf("%s: i2c high prescaler register set/read : %d / %d\n",
 	 __FUNCTION__,data,rdata);
@@ -813,7 +832,7 @@ mpdI2C_Init(int id)
   printf("%s: i2c speed prescale = %d, (period = %f us, frequency = %f kHz)\n",
 	 __FUNCTION__,ispeed, ispeed/10., 10000./ispeed);
   
-  vmeWrite32(&MPDp[id]->I2C.Control, MPD_I2C_CONTROL_ENABLE_CORE);
+  mpdWrite32(&MPDp[id]->I2C.Control, MPD_I2C_CONTROL_ENABLE_CORE);
 
 
   MPDUNLOCK;
@@ -972,12 +991,12 @@ I2C_SendByte(int id, uint8_t byteval, int start)
 
   MPDLOCK;
   //  printf(" MPD addr I2C.txrx : 0x%x\n", &MPDp[id]->I2C.TxRx - &MPDp[id]->SdramFifo[0]);
-  vmeWrite32(&MPDp[id]->I2C.TxRx, byteval);
+  mpdWrite32(&MPDp[id]->I2C.TxRx, byteval);
 
   if( start )
-    vmeWrite32(&MPDp[id]->I2C.CommStat, MPD_I2C_COMMSTAT_START_WRITE);
+    mpdWrite32(&MPDp[id]->I2C.CommStat, MPD_I2C_COMMSTAT_START_WRITE);
   else
-    vmeWrite32(&MPDp[id]->I2C.CommStat, MPD_I2C_COMMSTAT_WRITE);
+    mpdWrite32(&MPDp[id]->I2C.CommStat, MPD_I2C_COMMSTAT_WRITE);
 
   retry_count = 0;
   data = 0x00000002;
@@ -985,7 +1004,7 @@ I2C_SendByte(int id, uint8_t byteval, int start)
   while( (data & 0x00000002) != 0 && retry_count < mpdGetI2CMaxRetry(id) )
     {
       usleep(10);
-      data = vmeRead32(&MPDp[id]->I2C.CommStat);
+      data = mpdRead32(&MPDp[id]->I2C.CommStat);
 
       retry_count++;
     }
@@ -1016,14 +1035,14 @@ I2C_ReceiveByte(int id, uint8_t *byteval)
     }
 
   MPDLOCK;
-  vmeWrite32(&MPDp[id]->I2C.CommStat, MPD_I2C_COMMSTAT_READ);
+  mpdWrite32(&MPDp[id]->I2C.CommStat, MPD_I2C_COMMSTAT_READ);
 
   retry_count = 0;
   data = 0x00000002;
   while( (data & 0x00000002) != 0 && retry_count < mpdGetI2CMaxRetry(id) )
     {
       usleep(100);
-      data = vmeRead32(&MPDp[id]->I2C.CommStat);
+      data = mpdRead32(&MPDp[id]->I2C.CommStat);
       retry_count++;
     }
 
@@ -1033,7 +1052,7 @@ I2C_ReceiveByte(int id, uint8_t *byteval)
   if( data & MPD_I2C_COMMSTAT_NACK_RECV )	/* NACK received */
     rval = -20;
 
-  data = vmeRead32(&MPDp[id]->I2C.TxRx);
+  data = mpdRead32(&MPDp[id]->I2C.TxRx);
   
   *byteval = data;
   MPDUNLOCK;
@@ -1054,7 +1073,7 @@ I2C_SendStop(int id)
     }
 
   MPDLOCK;
-  vmeWrite32(&MPDp[id]->I2C.CommStat, MPD_I2C_COMMSTAT_STOP);
+  mpdWrite32(&MPDp[id]->I2C.CommStat, MPD_I2C_COMMSTAT_STOP);
   MPDUNLOCK;
 
   return OK;
@@ -1072,7 +1091,7 @@ I2C_SendNack(int id)
     }
   
   MPDLOCK;
-  vmeWrite32(&MPDp[id]->I2C.CommStat, MPD_I2C_COMMSTAT_NACK);
+  mpdWrite32(&MPDp[id]->I2C.CommStat, MPD_I2C_COMMSTAT_NACK);
   MPDUNLOCK;
   
   return OK;
@@ -1149,17 +1168,17 @@ mpdAPV_Reset101(int id)
 
   MPDLOCK;
 
-  data = vmeRead32(&MPDp[id]->ApvDaq.Trig_Gen_Config);
+  data = mpdRead32(&MPDp[id]->ApvDaq.Trig_Gen_Config);
 
   data |= MPD_APVDAQ_TRIGCONFIG_ENABLE_MACH;	// Enable trig machine
   data |= SOFTWARE_CLEAR_MASK;
 
-  vmeWrite32(&MPDp[id]->ApvDaq.Trig_Gen_Config, data);
+  mpdWrite32(&MPDp[id]->ApvDaq.Trig_Gen_Config, data);
 
   data &= ~SOFTWARE_CLEAR_MASK;
   data &= ~MPD_APVDAQ_TRIGCONFIG_ENABLE_MACH;	// Disable trig machine
 
-  vmeWrite32(&MPDp[id]->ApvDaq.Trig_Gen_Config, data);
+  mpdWrite32(&MPDp[id]->ApvDaq.Trig_Gen_Config, data);
 
   MPDUNLOCK;
 
@@ -1727,7 +1746,7 @@ mpdTRIG_Enable(int id)
   printf("%s: Control Addr = 0x%x\n",__FUNCTION__,data);
 
   MPDLOCK;
-  vmeWrite32(&MPDp[id]->ApvDaq.Control, data);
+  mpdWrite32(&MPDp[id]->ApvDaq.Control, data);
 
   // FIXME: make sure there are no locks in here.
 
@@ -1749,13 +1768,13 @@ mpdTRIG_Enable(int id)
 
   printf("%s: Trig Gen = 0x%x\n",__FUNCTION__,data);
 
-  vmeWrite32(&MPDp[id]->ApvDaq.Trig_Gen_Config, data);
+  mpdWrite32(&MPDp[id]->ApvDaq.Trig_Gen_Config, data);
 
   data = (mpdGetOneLevel(id) << 16) | mpdGetZeroLevel(id);
 
   printf("%s: Logic Threshold = 0x%x\n",__FUNCTION__,data);
 
-  vmeWrite32(&MPDp[id]->ApvDaq.Logic_Thresholds, data);
+  mpdWrite32(&MPDp[id]->ApvDaq.Logic_Thresholds, data);
   MPDUNLOCK;
 
   return OK;
@@ -1773,9 +1792,9 @@ mpdTRIG_Disable(int id)
     }
   
   MPDLOCK;
-  vmeWrite32(&MPDp[id]->ApvDaq.Control, 0);
+  mpdWrite32(&MPDp[id]->ApvDaq.Control, 0);
 
-  vmeWrite32(&MPDp[id]->ApvDaq.Trig_Gen_Config, 0);
+  mpdWrite32(&MPDp[id]->ApvDaq.Trig_Gen_Config, 0);
   MPDUNLOCK;
 
   return OK;
@@ -1794,7 +1813,7 @@ mpdTRIG_GetMissed(int id, uint32_t *missed)
     }
   
   MPDLOCK;
-  *missed = vmeRead32(&MPDp[id]->ApvDaq.Missed_Trigger);
+  *missed = mpdRead32(&MPDp[id]->ApvDaq.Missed_Trigger);
   MPDUNLOCK;
 
   return OK;
@@ -1907,7 +1926,7 @@ mpdADS5281_Set(int id, int adc, uint32_t val)
   data |= val;
 
   MPDLOCK;
-  vmeWrite32(&MPDp[id]->AdcConfig, data);
+  mpdWrite32(&MPDp[id]->AdcConfig, data);
   usleep(MPD_ADC_USLEEP);
   MPDUNLOCK;
 
@@ -2140,7 +2159,7 @@ mpdHISTO_Clear(int id, int ch, int val)	/* ch == 0, 15 */
   int ntimes = 4096 / 64;
   for(i = 0; i<ntimes; i++) {
     for(j = 0; j<64; j++) {	/* single word transfer */
-      vmeWrite32(&MPDp[id]->Histo.block[block].Memory[i*64+j], data[i*64+j]);
+      mpdWrite32(&MPDp[id]->Histo.block[block].Memory[i*64+j], data[i*64+j]);
     }
   }
 #endif
@@ -2167,7 +2186,7 @@ mpdHISTO_Start(int id, int ch)	/* ch == 0, 15 */
   data = 0x80 | (ch & 0x07);
 
   MPDLOCK;
-  vmeWrite32(&MPDp[id]->Histo.block[block].CSR, data);
+  mpdWrite32(&MPDp[id]->Histo.block[block].CSR, data);
   MPDUNLOCK;
 
   return OK;
@@ -2192,7 +2211,7 @@ mpdHISTO_Stop(int id, int ch)	/* ch == 0, 15 */
   data = (ch & 0x07);
 
   MPDLOCK;
-  vmeWrite32(&MPDp[id]->Histo.block[block].CSR, data);
+  mpdWrite32(&MPDp[id]->Histo.block[block].CSR, data);
   MPDUNLOCK;
 
   return OK;
@@ -2214,7 +2233,7 @@ mpdHISTO_GetIntegral(int id, int ch, uint32_t *integral)	/* ch == 0, 15 */
   if(ch >= 8) block = 1;
   
   MPDLOCK;
-  *integral = vmeRead32(&MPDp[id]->Histo.block[block].Histo_Count);
+  *integral = mpdRead32(&MPDp[id]->Histo.block[block].Histo_Count);
   MPDUNLOCK;
 
   return OK;
@@ -2246,7 +2265,7 @@ mpdHISTO_Read(int id, int ch, uint32_t *histogram)	/* ch == 0, 15; uint32_t hist
   int ntimes = 4096 / 64;
   for(i = 0; i<ntimes; i++) {
     for(j = 0; j<64; j++) {	/* single word transfer */
-      histogram[i*64+j] = vmeRead32(&MPDp[id]->Histo.block[block].Memory[i*64+j]);
+      histogram[i*64+j] = mpdRead32(&MPDp[id]->Histo.block[block].Memory[i*64+j]);
     }
   }
 #endif
@@ -2314,7 +2333,7 @@ mpdFIFO_ReadSingle(int id,
   MPD_DBG("Block Read fifo ch = %d, words requested = %d, returned = %d\n", channel, size, wrec);
 #else
   for(i=0; i<size; i++) {
-    dbuf[i] = vmeRead32(&MPDp[id]->ApvDaq.Data_Ch[channel][i*4]);
+    dbuf[i] = mpdRead32(&MPDp[id]->ApvDaq.Data_Ch[channel][i*4]);
     *wrec+=1;
   }
   MPD_DBG("Read apv = %d, wrec = %d, success = %d\n", channel, *wrec, success);
@@ -2372,7 +2391,7 @@ mpdFIFO_ReadSingle0(int id, int channel, int blen, uint32_t *event, int *nread)
     rval = BUS_BlockRead(fifo_addr, size, event, &n_part);
 #else
     for(i=0; i<size; i++) {
-      event[i] = vmeRead32(&MPDp[id]->ApvDaq.Data_Ch[channel][i*4]);
+      event[i] = mpdRead32(&MPDp[id]->ApvDaq.Data_Ch[channel][i*4]);
       n_part++;
     }
 #endif
@@ -2428,7 +2447,7 @@ mpdFIFO_Samples(int id,
   success = BUS_BlockRead(fifo_addr, nwords, event, nread);
 #else
   for(i=0; i<nwords; i++)
-    event[i] = vmeRead32(&MPDp[id]->ApvDaq.Data_Ch[channel][i*4]);
+    event[i] = mpdRead32(&MPDp[id]->ApvDaq.Data_Ch[channel][i*4]);
 
   *nread = nwords*4;
 #endif
@@ -2460,7 +2479,7 @@ mpdFIFO_IsSynced(int id, int channel, int *synced)
   synced_mask = channel_mask << 16;	/* @ error_addr */
 
   MPDLOCK;
-  data = vmeRead32(&MPDp[id]->ApvDaq.Sync_Status);
+  data = mpdRead32(&MPDp[id]->ApvDaq.Sync_Status);
   MPDUNLOCK;
 
   if( data & synced_mask )
@@ -2489,7 +2508,7 @@ mpdFIFO_AllSynced(int id, int *synced)
     }
 
   MPDLOCK;
-  data = vmeRead32(&MPDp[id]->ApvDaq.Sync_Status);
+  data = mpdRead32(&MPDp[id]->ApvDaq.Sync_Status);
   MPDUNLOCK;
 
   *synced = (data>>16);
@@ -2517,7 +2536,7 @@ mpdFIFO_HasError(int id, int channel, int *error)
   error_mask = channel_mask;			/* @ error_addr */
 
   MPDLOCK;
-  data = vmeRead32(&MPDp[id]->ApvDaq.Sync_Status);
+  data = mpdRead32(&MPDp[id]->ApvDaq.Sync_Status);
   MPDUNLOCK;
 
   if( data & error_mask )
@@ -2543,7 +2562,7 @@ mpdFIFO_GetAllFlags(int id, uint16_t *full, uint16_t *empty)
     }
 
   MPDLOCK;
-  data = vmeRead32(&MPDp[id]->ApvDaq.FIFO_Status);
+  data = mpdRead32(&MPDp[id]->ApvDaq.FIFO_Status);
   MPDUNLOCK;
 
   *full =  data >> 16;
@@ -2571,7 +2590,7 @@ mpdFIFO_IsFull(int id, int channel, int *full)
   full_mask = channel_mask << 16;		/* @ flag_addr */
 
   MPDLOCK;
-  data = vmeRead32(&MPDp[id]->ApvDaq.FIFO_Status);
+  data = mpdRead32(&MPDp[id]->ApvDaq.FIFO_Status);
   MPDUNLOCK;
 
   if( data & full_mask )
@@ -2599,7 +2618,7 @@ mpdFIFO_GetNwords(int id, int channel, int *nwords) // can be optimized reading 
     }
 
   MPDLOCK;
-  data = vmeRead32(&MPDp[id]->ApvDaq.Used_Word_Ch_Pair[nwords_addr_offset[channel]]);
+  data = mpdRead32(&MPDp[id]->ApvDaq.Used_Word_Ch_Pair[nwords_addr_offset[channel]]);
   MPDUNLOCK;
 
   printf("EC: nwords from fifo %d 0x%x\n",channel,data);
@@ -2630,7 +2649,7 @@ mpdFIFO_IsEmpty(int id, int channel, int *empty)
   empty_mask = channel_mask;			/* @ flag_addr */
 
   MPDLOCK;
-  data = vmeRead32(&MPDp[id]->ApvDaq.FIFO_Status);
+  data = mpdRead32(&MPDp[id]->ApvDaq.FIFO_Status);
   MPDUNLOCK;
 
   if( data & empty_mask )
@@ -2658,14 +2677,14 @@ mpdFIFO_ClearAll(int id)
   // Issue a pulse on READOUT_CONFIG[31]
 
   MPDLOCK;
-  oldval = vmeRead32(&MPDp[id]->ApvDaq.Readout_Config);
+  oldval = mpdRead32(&MPDp[id]->ApvDaq.Readout_Config);
   data = oldval | 0x80000000;
 
-  vmeWrite32(&MPDp[id]->ApvDaq.Readout_Config, data);
+  mpdWrite32(&MPDp[id]->ApvDaq.Readout_Config, data);
 
   data = oldval & 0x7FFFFFFF;
 
-  vmeWrite32(&MPDp[id]->ApvDaq.Readout_Config, data);
+  mpdWrite32(&MPDp[id]->ApvDaq.Readout_Config, data);
   MPDUNLOCK;
 
   return success;
@@ -2696,7 +2715,7 @@ mpdFIFO_WaitNotEmpty(int id, int channel, int max_retry)
   while( fifo_empty && success == OK && retry_count <= max_retry )
     {
       MPDLOCK;
-      data = vmeRead32(&MPDp[id]->ApvDaq.FIFO_Status);
+      data = mpdRead32(&MPDp[id]->ApvDaq.FIFO_Status);
       MPDUNLOCK;
 
       if( max_retry > 0 )
@@ -2958,7 +2977,7 @@ mpdDAQ_Disable(int id)
   data = 0;
 
   MPDLOCK;
-  vmeWrite32(&MPDp[id]->ApvDaq.Readout_Config, data);
+  mpdWrite32(&MPDp[id]->ApvDaq.Readout_Config, data);
   MPDUNLOCK;
 
 
@@ -2995,7 +3014,7 @@ mpdDAQ_Config(int id)
 
   printf("%s : ReadoutConfig = 0x%x\n",__FUNCTION__,data);
   MPDLOCK;
-  vmeWrite32(&MPDp[id]->ApvDaq.Readout_Config, data);
+  mpdWrite32(&MPDp[id]->ApvDaq.Readout_Config, data);
   MPDUNLOCK;
 
   for (i=0;i<nApv[id];i++) {
@@ -3034,7 +3053,7 @@ mpdPED_Write0(int id, int ch, int *ped_even, int *ped_odd)	//
   for(i=0; i<128; i++)
     {
       data = ped_even[i] | (ped_odd[i] << 16);
-      vmeWrite32(&MPDp[id]->ApvDaq.Ped[ch].ram[i], data);
+      mpdWrite32(&MPDp[id]->ApvDaq.Ped[ch].ram[i], data);
     }
   MPDUNLOCK;
 
@@ -3100,7 +3119,7 @@ mpdTHR_Write0(int id, int ch, int *thr_even, int *thr_odd)	// ch = 0..7
   for(i=0; i<128; i++)
     {
       data = thr_even[i] | (thr_odd[i] << 16);
-      vmeWrite32(&MPDp[id]->ApvDaq.Thres[ch].ram[i], data);
+      mpdWrite32(&MPDp[id]->ApvDaq.Thres[ch].ram[i], data);
     }
   MPDUNLOCK;
 
@@ -3251,3 +3270,4 @@ mpdReadPedThr(int id, std::string pname)
 
 }
 #endif /* NOTDONE */
+
