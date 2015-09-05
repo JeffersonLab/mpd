@@ -1,0 +1,18 @@
+mpdLibTest Syntax:
+
+ ./mpdLibTest [out_file_name mode events]
+
+out_file_name = name of the output file with the acquired data in hex format
+mode = 1 - event mode (external trigger, standard acq mode)
+mode = 2 - try to estimate sample frequency
+mode = 4 - do histo run (for testing)
+events = number of events in event mode 
+
+Output file format:
+VERSION_TAG
+EVENT_TAG
+MPD_TAG
+ADC_TAG
+HEADER_TAG
+data of 
+TRAILER_TAG

@@ -1,0 +1,155 @@
+
+MPD Library Tests
+----------------------------
+Opening A32 Window (opened at [0xb7f93000,0xb7fa3000])
+Opening A32Blt Window (opened at [0x87f93000,0xb7f93000])
+Opening A24 Window (opened at [0x86f93000,0x87f93000])
+Opening A16 Window (opened at [0x86f83000,0x86f93000])
+jlabgefMapTsi: Tempe Chip Userspace map successful
+VME Bus Error IRQ Disabled
+vmeBusCreateLockShm: vmeBus shared memory mutex created
+mpdConfigInit: cfg/config_apv.txt: Version = 0.3
+Number of MPDs in config file = 1
+mpdConfigLoad_workaround: Loading MPD settings =  0 rotary =  5
+mpdSetTriggerMode: Calib Latency = 0, Trigger Mode = 0x2
+mpdSetAcqMode: Acquisition Mode = 0x1 (event)
+mpdConfigLoad_workaround: 5 APV elements in given MPD 5
+mpdAddApv: APV 0 added to list of FECs
+mpdAddApv: APV 1 added to list of FECs
+mpdAddApv: APV 2 added to list of FECs
+mpdAddApv: APV 3 added to list of FECs
+mpdAddApv: APV 4 added to list of FECs
+mpdConfigLoad_workaround:  5 APV loaded in Slot=5 MPD settings
+ MPD Slot 0 - Firmware Revision ID = 0x4003
+ MPD Slot 0 - Firmware Revision Time: 352230 (s)
+ -- MPD in slot 0 is NOT in config file, drop it
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x10001c
+mpdInit: WARN: No addressable board at VME addr=0x100000 (local 0x87093000)
+ MPD Slot 2 - Firmware Revision ID = 0x4003
+ MPD Slot 2 - Firmware Revision Time: 359290 (s)
+ -- MPD in slot 2 is NOT in config file, drop it
+ MPD Slot 3 - Firmware Revision ID = 0x4003
+ MPD Slot 3 - Firmware Revision Time: 359290 (s)
+ -- MPD in slot 3 is NOT in config file, drop it
+ MPD Slot 4 - Firmware Revision ID = 0x4003
+ MPD Slot 4 - Firmware Revision Time: 359290 (s)
+ -- MPD in slot 4 is NOT in config file, drop it
+ MPD Slot 5 - Firmware Revision ID = 0x4003
+ MPD Slot 5 - Firmware Revision Time: 359290 (s)
+ ++ MPD in slot 5 is in config file, INIT IT
+Initialized MPD  0  Slot # 5 at VME address 0x30000000 (local 0xaff93000) 
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x38001c
+mpdInit: WARN: No addressable board at VME addr=0x380000 (local 0x87313000)
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x40001c
+mpdInit: WARN: No addressable board at VME addr=0x400000 (local 0x87393000)
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x48001c
+mpdInit: WARN: No addressable board at VME addr=0x480000 (local 0x87413000)
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x50001c
+mpdInit: WARN: No addressable board at VME addr=0x500000 (local 0x87493000)
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x58001c
+mpdInit: WARN: No addressable board at VME addr=0x580000 (local 0x87513000)
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x60001c
+mpdInit: WARN: No addressable board at VME addr=0x600000 (local 0x87593000)
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x68001c
+mpdInit: WARN: No addressable board at VME addr=0x680000 (local 0x87613000)
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x70001c
+mpdInit: WARN: No addressable board at VME addr=0x700000 (local 0x87693000)
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x78001c
+mpdInit: WARN: No addressable board at VME addr=0x780000 (local 0x87713000)
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x80001c
+mpdInit: WARN: No addressable board at VME addr=0x800000 (local 0x87793000)
+mpdInit: WARN: for board at 0x87813000, invalid csr data code 0x0 (expected 0x43)
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x90001c
+mpdInit: WARN: No addressable board at VME addr=0x900000 (local 0x87893000)
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x98001c
+mpdInit: WARN: No addressable board at VME addr=0x980000 (local 0x87913000)
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0xa0001c
+mpdInit: WARN: No addressable board at VME addr=0xa00000 (local 0x87993000)
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0xa8001c
+mpdInit: WARN: No addressable board at VME addr=0xa80000 (local 0x87a13000)
+mpdInit: 1 MPD(s) initialized, 5 discovered
+mpdInit: WARN: Unable to initialize all requested MPD Modules (1)
+ MPD discovered = 1
+ test mpd 5 histo memory
+HISTO Read/Write test SUCCESS on MPD slot 5
+ try initialize mpd in slot 5
+mpdI2C_Init: i2c low prescaler register set/read : 176 / 176
+mpdI2C_Init: i2c high prescaler register set/read : 4 / 4
+mpdI2C_Init: i2c speed prescale = 1200, (period = 120.000000 us, frequency = 8.333333 kHz)
+Board temperatures: core=128.87 air=128.87 (dec celsius)
+Try APV discovery and init on MPD slot 5
+mpdAPV_Scan: MPD 5 Blind scan on 31 apvs: 
+mpdAPV_Try: timeout 20 : 32 ret = -20
+mpdAPV_Try: timeout 20 : 33 ret = -20
+mpdAPV_Try: timeout 20 : 34 ret = -20
+mpdAPV_Try: timeout 20 : 35 ret = -20
+mpdAPV_Try: timeout 20 : 36 ret = -20
+mpdAPV_Try: timeout 20 : 37 ret = -20
+mpdAPV_Try: timeout 20 : 38 ret = -20
+mpdAPV_Try: timeout 20 : 39 ret = -20
+mpdAPV_Try: timeout 20 : 40 ret = -20
+mpdAPV_Try: timeout 20 : 41 ret = -20
+mpdAPV_Try: timeout 20 : 42 ret = -20
+mpdAPV_Try: timeout 20 : 43 ret = -20
+mpdAPV_Try: timeout 20 : 44 ret = -20
+mpdAPV_Try: timeout 20 : 45 ret = -20
+mpdAPV_Try: timeout 20 : 46 ret = -20
+mpdAPV_Try: timeout 20 : 47 ret = -20
+mpdAPV_Try: timeout 20 : 48 ret = -20
+mpdAPV_Try: timeout 20 : 49 ret = -20
+mpdAPV_Try: timeout 20 : 50 ret = -20
+mpdAPV_Try: timeout 20 : 51 ret = -20
+mpdAPV_Try: timeout 20 : 52 ret = -20
+mpdAPV_Try: timeout 20 : 53 ret = -20
+mpdAPV_Try: timeout 20 : 54 ret = -20
+mpdAPV_Try: timeout 20 : 55 ret = -20
+mpdAPV_Try: timeout 20 : 56 ret = -20
+mpdAPV_Try: timeout 20 : 57 ret = -20
+mpdAPV_Try: timeout 20 : 58 ret = -20
+mpdAPV_Try: timeout 20 : 59 ret = -20
+mpdAPV_Try: timeout 20 : 60 ret = -20
+mpdAPV_Try: timeout 20 : 61 ret = -20
+mpdAPV_Try: timeout 20 : 62 ret = -20
+mpdAPV_Scan: MPD 5 Blind scan done
+mpdAPV_Scan: Try  0  0 : mpdAPV_Try: timeout 20 : 32 ret = -20
+mpdAPV_Scan: 0 matched in MPD in slot 5
+mpdAPV_Scan: APV enable mask 0x0001
+mpdAPV_Scan: Try  1  1 : mpdAPV_Try: timeout 20 : 33 ret = -20
+mpdAPV_Scan: 1 matched in MPD in slot 5
+mpdAPV_Scan: APV enable mask 0x0003
+mpdAPV_Scan: Try  2  2 : mpdAPV_Try: timeout 20 : 33 ret = -20
+mpdAPV_Scan: 2 matched in MPD in slot 5
+mpdAPV_Scan: APV enable mask 0x0007
+mpdAPV_Scan: Try  3  3 : mpdAPV_Try: timeout 20 : 33 ret = -20
+mpdAPV_Scan: 3 matched in MPD in slot 5
+mpdAPV_Scan: APV enable mask 0x000f
+mpdAPV_Scan: Try  4  4 : mpdAPV_Try: timeout 20 : 33 ret = -20
+mpdAPV_Scan: 4 matched in MPD in slot 5
+mpdAPV_Scan: APV enable mask 0x001f
+mpdAPV_Scan: 5 APV found matching settings
+Do DELAY setting on MPD slot 5
+mpdDELAY25_Set: start
+mpdDELAY25_Set: end
+Do APV reset on MPD slot 5
+Configure single APV on MPD slot 5
+APV card i2c=0 to ADC (fifo)=0 (from config file)
+APV card i2c=1 to ADC (fifo)=1 (from config file)
+APV card i2c=2 to ADC (fifo)=2 (from config file)
+APV card i2c=3 to ADC (fifo)=3 (from config file)
+APV card i2c=4 to ADC (fifo)=4 (from config file)
+Configure ADC on MPD slot 5
+mpdADS5281_Normal: Board= 0 ADC= 0 No Pattern (Normal Acq)
+mpdADS5281_InvertChannels: Board= 0 ADC= 0 Inverted Polarity
+mpdADS5281_SetGain: Board= 0 ADC= 0 Set Gain 5 5 5 5 5 5 5 5
+mpdADS5281_Normal: Board= 0 ADC= 1 No Pattern (Normal Acq)
+mpdADS5281_InvertChannels: Board= 0 ADC= 1 Inverted Polarity
+mpdADS5281_SetGain: Board= 0 ADC= 1 Set Gain 5 5 5 5 5 5 5 5
+Do 101 Reset on MPD slot 5
+mpdSetAcqMode: Acquisition Mode = 0x2 (sample)
+mpdDELAY25_Set: start
+mpdDELAY25_Set: end
+Closing A16 Window
+Closing A24 Window
+Closing A32Blt Window
+Closing A32 Window
+Calling gefVmeClose
