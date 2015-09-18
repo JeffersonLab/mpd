@@ -268,7 +268,7 @@ static void __end()
   printf("secondary __poll loops %d\n",iwait++);
 
 
-  tiStatus();
+  tiStatus(0);
   dmaPStatsAll();
   tiIntDisable();
   tiIntDisconnect();
