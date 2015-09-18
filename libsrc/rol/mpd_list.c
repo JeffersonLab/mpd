@@ -21,7 +21,7 @@
 #define TI_DATA_READOUT
 
 #define FIBER_LATENCY_OFFSET 0x4A  /* measured longest fiber length */
-
+#include "mpdLib.h"
 #include "dmaBankTools.h"
 #include "tiprimary_list.c" /* source required for CODA */
 
