@@ -79,8 +79,8 @@ default:
 	Csel = 0;    // Seems very few effects at scope level: at least 1 bit = 0
 	CalPulse = 0; // Calibration Pulse  : 0=off, 1=on
 
-	Latency = 34;// 0..191, suggested less than 160 (?) A Reset101 is needed after changing this value
-	Muxgain = 1; // 1(-20%), 2(-10%), 4(nominal), 8(+10%), 16(+20%)
+	Latency = 14;// 34---0..191, suggested less than 160 (?) A Reset101 is needed after changing this value
+	Muxgain = 4; // 1(-20%), 2(-10%), 4(nominal), 8(+10%), 16(+20%)
 
 	Polarization = 0; // Preamp Polarization: 0=non-inverting, 1=inverting
         ReadOutMode  = 1; // Readout Mode       : 0=Deconvolution, 1=Peak
