@@ -121,6 +121,8 @@ main(int argc, char *argv[])
     } else {
       printf("HISTO Read/Write test SUCCESS on MPD slot %d\n",i);
     }
+    // END of first test MPD histo memory write/read
+
 
     printf(" Try initialize I2C mpd in slot %d\n",i);
     if (mpdI2C_Init(i) != OK) {
@@ -168,11 +170,11 @@ main(int argc, char *argv[])
 
   } // end loop on mpds
 
-    /*
+    /**********************************
      * SAMPLES TEST
      * sample APV output at 40 MHz
      * only for testing not for normal daq
-     */
+     **********************************/
   if (acq_mode & 0x2) { 
   
     for (k=0;k<fnMPD;k++) { // only active mpd set
@@ -230,10 +232,10 @@ main(int argc, char *argv[])
 
   } // sample check mode
 
-    /*
+    /********************************************
      * HISTO Mode; sampled data are histogrammed
      * only for testing, non for normal daq
-     */
+     ********************************************/
 
   if (acq_mode & 0x4) { 
 
@@ -296,15 +298,15 @@ main(int argc, char *argv[])
 
   } // histo mode
 
-    /*
+    /**************************
      * "Event" readout
      *  normal DAQ starts here
-     */
+     **************************/
 
   if (acq_mode & 1) { 
 
 #define MPD_TIMEOUT 100
-#define FILE_VERSION 0x1
+//Output file TAG
 #define VERSION_TAG 0xE0000000
 #define EVENT_TAG   0x10000000
 #define MPD_TAG     0x20000000
@@ -312,12 +314,14 @@ main(int argc, char *argv[])
 #define HEADER_TAG  0x40000000
 #define DATA_TAG    0x0
 #define TRAILER_TAG 0x50000000
-  
+
+#define FILE_VERSION 0x1
     // open out file
     FILE *fout;
     fout = fopen(outfile,"w");
     if (fout == NULL) { fout = stdout; }
     fprintf(fout,"%x\n", FILE_VERSION | VERSION_TAG);
+
     for (k=0;k<fnMPD;k++) { // only active mpd set
       i = mpdSlot(k);
 
@@ -353,14 +357,24 @@ main(int argc, char *argv[])
       for (kk=0;kk<fnMPD;kk++) { // only active mpd set
 	i = mpdSlot(kk);
 
+	  mpdFIFO_ClearAll(i);
+          mpdTRIG_Disable(i);
+	  mpdTRIG_PauseEnable(i,5000);
+
 	do { // wait for data in MPD
+	  mpdTRIG_PauseEnable(i,1000);
 	  
 	  rdone = mpdFIFO_ReadAll(i,&rtout,&error_count);
 	  
 	  printf(" Rdone/Tout/error = %d %d %d\n", rdone, rtout, error_count);
 	  rtout++;
-	  usleep(400);
-	} while ((rdone == 0) && (error_count == 0) && (rtout < MPD_TIMEOUT)); // timeout can be changed
+
+	} while ((rdone == 0) && (error_count == -1) && (rtout < MPD_TIMEOUT)); // timeout can be changed
+	//	mpdTRIG_Disable(i);
+
+
+
+
 	if ((error_count != 0) || (rtout > MPD_TIMEOUT)) { // reset MPD on error or timeout
 	  printf("%s: ERROR in readout, clear fifo\n",__FUNCTION__);
 	  mpdFIFO_ClearAll(i);

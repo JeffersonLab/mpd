@@ -8,11 +8,11 @@
 
 /* Event Buffer definitions */
 #define MAX_EVENT_POOL     10
-#define MAX_EVENT_LENGTH   1024*60      /* Size in Bytes */
+#define MAX_EVENT_LENGTH   1024*600      /* Size in Bytes */
 
 /* Define Interrupt source and address */
-#define TI_MASTER
-#define TI_READOUT TI_READOUT_EXT_POLL  /* Poll for available data, external triggers */
+#define TI_SLAVE
+#define TI_READOUT TI_READOUT_TS_POLL  /* Poll for available data, external triggers */
 #define TI_ADDR    (21<<19)          /* GEO slot 21 */
 
 /* Decision on whether or not to readout the TI for each block 
@@ -24,8 +24,41 @@
 
 #include "dmaBankTools.h"
 #include "tiprimary_list.c" /* source required for CODA */
+#include "mpdLib.h".
+#include "mpdConfig.h"
 
-/* Default block level */
+/*MPD Definitions*/
+
+int h,i,j,k,kk,m, evt;
+  int fnMPD=10;
+  int error_count;
+  int rdone, rtout;
+
+  uint16_t mfull,mempty;
+  uint32_t e_head, e_head0, e_size;
+  uint32_t e_data32[130];
+  uint32_t e_trai, e_eblo;
+
+  char outfile[1000];
+  int acq_mode = 1;
+  int n_event=10;
+
+#define MPD_TIMEOUT 100
+//Output file TAG
+#define VERSION_TAG 0xE0000000
+#define EVENT_TAG   0x10000000
+#define MPD_TAG     0x20000000
+#define ADC_TAG     0x30000000
+#define HEADER_TAG  0x40000000
+#define DATA_TAG    0x0
+#define TRAILER_TAG 0x50000000
+
+#define FILE_VERSION 0x1
+// End of MPD definition
+
+
+
+/* Default Global block level (Number of events per block)*/
 unsigned int BLOCKLEVEL=1;
 #define BUFFERLEVEL 3
 
@@ -107,6 +140,80 @@ rocDownload()
 
   tiStatus(0);
 
+  /*****************
+   *   MPD SETUP
+   *****************/
+
+  if(vmeOpenDefaultWindows()!=OK)
+    {
+      printf("ERROR opening default VME windows\n");
+      goto CLOSE;
+    }
+
+  /*Read config file and fill internal variables*/
+  mpdConfigInit("mpdcfg/config_apv.txt");
+  mpdConfigLoad();
+
+  /* Init and config MPD+APV */
+
+  // discover MPDs and initialize memory mapping
+  mpdInit(0x80000,0x80000,21,0x0);
+  fnMPD = mpdGetNumberMPD();
+
+  if (fnMPD<=0) { // test all possible vme slot ?
+    printf("ERR: no MPD discovered, cannot continue\n");
+    return -1;
+  } 
+
+  printf(" MPD discovered = %d\n",fnMPD);
+
+  // APV configuration on all active MPDs
+  for (k=0;k<fnMPD;k++) { // only active mpd set
+    i = mpdSlot(k);
+
+    printf(" Try initialize I2C mpd in slot %d\n",i);
+    if (mpdI2C_Init(i) != OK) {
+      printf("WRN: I2C fails on MPD %d\n",i);
+    }
+
+    printf("Try APV discovery and init on MPD slot %d\n",i);
+    if (mpdAPV_Scan(i)<=0) { // no apd found, skip next 
+        continue;
+    }
+      
+    // board configuration (APV-ADC clocks phase)
+    printf("Do DELAY setting on MPD slot %d\n",i);
+    mpdDELAY25_Set(i, mpdGetAdcClockPhase(i,0), mpdGetAdcClockPhase(i,1));
+
+    // apv reset----this check will never fail...see "mpdI2C_ApvReset()"
+    printf("Do APV reset on MPD slot %d\n",i);
+    if (mpdI2C_ApvReset(i) != OK) {
+      printf("ERR: apv resert faild on mpd %d\n",i);
+    }
+
+    // apv configuration
+    printf("Configure single APV on MPD slot %d\n",i);
+    for (j=0; j < mpdGetNumberAPV(i); j++) {
+      if (mpdAPV_Config(i,j) != OK) {
+	printf("ERR: config apv card %d failed in mpd %d\n",j,i);
+      }
+    }
+
+    // configure adc on MPD 
+    printf("Configure ADC on MPD slot %d\n",i);
+    mpdADS5281_Config(i);
+
+    // configure fir
+    // not implemented yet
+
+    // 101 reset on the APV
+    printf("Do 101 Reset on MPD slot %d\n",i);
+    mpdAPV_Reset101(i);
+
+    // <- MPD+APV initialization ends here
+
+  } // end loop on mpds
+  //END of MPD configure
 
   printf("rocDownload: User Download Executed\n");
 
@@ -121,6 +228,23 @@ rocPrestart()
   unsigned short iflag;
   int stat;
   int islot;
+
+
+  /*Enable MPD*/
+    for (k=0;k<fnMPD;k++) { // only active mpd set
+      i = mpdSlot(k);
+
+      // mpd latest configuration before trigger is enabled
+      mpdSetAcqMode(i, "event");
+
+      // load pedestal and thr default values
+      mpdPEDTHR_Write(i);    
+    
+      // enable acq
+      mpdDAQ_Enable(i);      
+
+    }  
+
 
   tiStatus(0);
 
@@ -195,6 +319,51 @@ rocTrigger(int arg)
   BANKCLOSE;
 #endif
 
+  /* Readout MPD */
+
+      rtout=0;
+
+      for (k=0;k<fnMPD;k++) { // only active mpd set
+	i = mpdSlot(k);
+	mpdArmReadout(i); // prepare internal variables for readout
+      }
+
+      rdone = 1;
+
+      fprintf(fout,"%x\n", evt | EVENT_TAG ); // event number
+      for (kk=0;kk<fnMPD;kk++) { // only active mpd set
+	i = mpdSlot(kk);
+
+	do { // wait for data in MPD
+	  
+	  rdone = mpdFIFO_ReadAll(i,&rtout,&error_count);
+	  
+	  printf(" Rdone/Tout/error = %d %d %d\n", rdone, rtout, error_count);
+	  rtout++;
+	  usleep(400);
+	} while ((rdone == 0) && (error_count == 0) && (rtout < MPD_TIMEOUT)); // timeout can be changed
+	if ((error_count != 0) || (rtout > MPD_TIMEOUT)) { // reset MPD on error or timeout
+	  printf("%s: ERROR in readout, clear fifo\n",__FUNCTION__);
+	  mpdFIFO_ClearAll(i);
+	  mpdTRIG_Enable(i);
+	}
+
+	//dma_dabufp=...to be added
+
+
+      }
+
+
+
+
+
+
+
+
+
+
+
+  /* Turn off all output ports */
   tiSetOutputPort(0,0,0,0);
 
 }
