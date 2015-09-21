@@ -1272,7 +1272,7 @@ mpdAPV_Scan(int id)
     {
       printf("%s: Try %2d %2d : ", __FUNCTION__, fApv[id][iapv].i2c, fApv[id][iapv].adc);
       
-      if ( mpdAPV_Try(id, fApv[id][iapv].i2c && fApv[id][iapv].adc>-1 ) ) 
+      if ( mpdAPV_Try(id, fApv[id][iapv].i2c)>-1 && fApv[id][iapv].adc>-1 ) 
 	{
 	  printf("%s: %d matched in MPD in slot %d\n",
 		 __FUNCTION__, fApv[id][iapv].i2c, id);
@@ -1800,6 +1800,18 @@ mpdTRIG_Disable(int id)
   return OK;
 
 }
+
+int
+mpdTRIG_PauseEnable(int id, int time)
+{
+  mpdTRIG_Enable(id);
+  usleep(time);
+  MPDLOCK;
+  mpdWrite32(&MPDp[id]->ApvDaq.Trig_Gen_Config, 0);
+  MPDUNLOCK;
+  return OK;
+}
+
 
 int 
 mpdTRIG_GetMissed(int id, uint32_t *missed)
