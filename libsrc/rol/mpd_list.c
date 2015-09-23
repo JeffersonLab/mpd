@@ -155,15 +155,9 @@ rocDownload()
    *   MPD SETUP
    *****************/
 
-  if(vmeOpenDefaultWindows()!=OK)
-    {
-      printf("ERROR opening default VME windows\n");
-      vmeCloseDefaultWindows();
-      exit(0);
-    }
 
   /*Read config file and fill internal variables*/
-  mpdConfigInit("mpdcfg/config_apv.txt");
+  mpdConfigInit("cfg/config_apv.txt");
   mpdConfigLoad();
 
   /* Init and config MPD+APV */
@@ -289,9 +283,7 @@ rocEnd()
 
   tiStatus(0);
   //mpd close
-  vmeCloseDefaultWindows();
   
-  exit(0);
   //mpd close
   printf("rocEnd: Ended after %d blocks\n",tiGetIntCount());
   
@@ -333,11 +325,8 @@ rocTrigger(int arg)
 /* Readout MPD */
     // open out file
   mpdTRIG_Disable(i);
-  FILE *fout;
-  fout = fopen(outfile,"w");
-  if (fout == NULL) { fout = stdout; }
-  fprintf(fout,"%x\n", FILE_VERSION | VERSION_TAG);
-  
+ BANKOPEN(10,BT_UI4,0);
+ 
   rtout=0;
 
   for (k=0;k<fnMPD;k++) { // only active mpd set
@@ -347,7 +336,6 @@ rocTrigger(int arg)
   
   rdone = 1;
 
-  fprintf(fout,"%x\n", evt | EVENT_TAG ); // event number
   for (kk=0;kk<fnMPD;kk++) { // only active mpd set
     i = mpdSlot(kk);
 
@@ -357,7 +345,6 @@ rocTrigger(int arg)
 		  
       printf(" Rdone/Tout/error = %d %d %d\n", rdone, rtout, error_count);
       rtout++;
-      usleep(400);
     } while ((rdone == 0) && (error_count == -1) && (rtout < MPD_TIMEOUT)); // timeout can be changed
     if ((error_count != 0) || (rtout > MPD_TIMEOUT)) { // reset MPD on error or timeout
 	  printf("%s: ERROR in readout, clear fifo\n",__FUNCTION__);
@@ -367,18 +354,16 @@ rocTrigger(int arg)
 
     if(rdone){ // data need to be written on file
 
-	  printf("%d",i); // slot
-	  fprintf(fout,"%x\n", i | MPD_TAG);
-	  ////CODA buf
-	  *dma_dabufp=i |MPD_TAG;
+       	  ////CODA buf
+      *dma_dabufp=LSWAP(i |MPD_TAG);
 	  dma_dabufp++;		
 	  ////CODA buf
 
 	  for (j=0; j < mpdGetNumberAPV(i); j++) { // loop on APV (ADC channels)
 
-	    fprintf(fout,"%x\n", (mpdApvGetAdc(i,j) | ADC_TAG));
+	
 	    ////CODA buf
-	    *dma_dabufp=mpdApvGetAdc(i,j) | ADC_TAG;
+	    *dma_dabufp=LSWAP(mpdApvGetAdc(i,j) | ADC_TAG);
 	    dma_dabufp++;		
 	  ////CODA buf
 	    k=0; // buffer element index
@@ -387,17 +372,15 @@ rocTrigger(int arg)
 	      e_head0 = mpdApvGetBufferElement(i, j, k);
 	      k++;
 	      e_head = ((e_head0 & 0xfff) << 4) | (mpdApvGetAdc(i,j) & 0xf);
-	      fprintf(fout,"%x\n", e_head0 | HEADER_TAG);
 	      ////CODA buf
-		*dma_dabufp=e_head0 | HEADER_TAG;
+	      *dma_dabufp=LSWAP(e_head0 | HEADER_TAG);
 	      dma_dabufp++;		
 	      ////CODA buf
 
 	      for (m=0;m<e_size-2;m++) {
 		e_data32[m] = 0x80000 | ((i<<12) & 0x7F000) | (mpdApvGetBufferElement(i,j,k) & 0xfff);
-		fprintf(fout,"%x\n",(mpdApvGetBufferElement(i,j,k) & 0xfff) | DATA_TAG );
 		////CODA buf
-		*dma_dabufp=(mpdApvGetBufferElement(i,j,k) & 0xfff) | DATA_TAG ;
+		*dma_dabufp=LSWAP((mpdApvGetBufferElement(i,j,k) & 0xfff) | DATA_TAG);
 	      dma_dabufp++;		
 	      ////CODA buf
 k++;
@@ -405,7 +388,6 @@ k++;
 	      // fwire e_data32 (e_size-2)
 	      e_trai = 0x100000 | ((i & 0x1F) << 12) | (mpdApvGetBufferElement(i,j,k)& 0xfff);
 	      e_eblo = 0x180000 | (e_size & 0xff);
-	      fprintf(fout,"%x\n",(mpdApvGetBufferElement(i,j,k) & 0xfff) | TRAILER_TAG);
 	      k++;
 	      // fwrite e_trai // trailer
 	      // fwrite e_eblo // end sample block
@@ -414,11 +396,9 @@ k++;
 	  } // end loop on apv
 	  
 	}
-
-	
     evt++;
       }
-
+ BANKCLOSE;
   tiSetOutputPort(0,0,0,0);
 
 }
