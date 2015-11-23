@@ -202,6 +202,8 @@ typedef struct apvparm_struct // actually a structure
   // runtime variables
   int fReadCount;
   uint32_t *fBuffer; // data buffer
+  GEF_VME_DMA_HDL dmaHdl;
+  unsigned long physMemBase;
   int fBufSize;
   int fBi0, fBi1, fBs;
 

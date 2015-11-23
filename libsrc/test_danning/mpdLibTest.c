@@ -77,6 +77,8 @@ main(int argc, char *argv[])
       goto CLOSE;
     }
 
+  vmeDmaConfig(2,2,0);
+
   /**
    * Read config file and fill internal variables
    *
@@ -163,8 +165,8 @@ main(int argc, char *argv[])
     // not implemented yet
 
     // 101 reset on the APV
-    printf("Do 101 Reset on MPD slot %d\n",i);
-    mpdAPV_Reset101(i);
+    //printf("Do 101 Reset on MPD slot %d\n",i);
+    //mpdAPV_Reset101(i);
 
     // <- MPD+APV initialization ends here
 
@@ -356,10 +358,11 @@ main(int argc, char *argv[])
       fprintf(fout,"%x\n", evt | EVENT_TAG ); // event number
       for (kk=0;kk<fnMPD;kk++) { // only active mpd set
 	i = mpdSlot(kk);
-
-	  mpdFIFO_ClearAll(i);
-          mpdTRIG_Disable(i);
-	  mpdTRIG_PauseEnable(i,5000);
+	//usleep(10000);
+	mpdFIFO_ClearAll(i);
+	mpdTRIG_Disable(i);
+	//	  	  mpdDAQ_Enable(i);
+	mpdTRIG_PauseEnable(i,5000);
 
 	do { // wait for data in MPD
 	  mpdTRIG_PauseEnable(i,1000);
@@ -371,7 +374,7 @@ main(int argc, char *argv[])
 
 	} while ((rdone == 0) && (error_count == -1) && (rtout < MPD_TIMEOUT)); // timeout can be changed
 	//	mpdTRIG_Disable(i);
-
+	
 
 
 
@@ -414,12 +417,13 @@ main(int argc, char *argv[])
 	  } // end loop on apv
 	  
 	} // if rdone 
-	
+	  
       } // end mpd loop
 
 	// e_head = 0x40000;
 	// fwrite end block when loop on MPD
       evt++;
+      //  mpdFIFO_ClearAll(i);
     } while (evt<n_event); // end loop on events
      
     if (fout != stdout)  fclose(fout);

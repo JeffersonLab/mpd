@@ -276,6 +276,8 @@ mpdConfigLoad()
 
 	  gApv.Latency = mpdReadSettingInt(apvset, "Latency",0);
 
+	  gApv.Muxgain = mpdReadSettingInt(apvset, "Muxgain",0);
+
 	  //	  gApv.CalPulse = mpdReadSettingInt(apvset, "CalPulse",0);
 	  //	  if(mpdReadSettingInt(apvset, "CalPulse",0)==-1){
 	  //	  gApv.CalPulse = mpdReadSettingInt(d_apvset, "CalPulse",0);}

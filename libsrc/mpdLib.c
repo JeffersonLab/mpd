@@ -14,6 +14,11 @@
  *          Evaristo Cisbani, Paolo Musico
  *          INFN
  *          July 2015
+ *
+ *          Danning Di
+ *          University of Virginia
+ *          Email:Danning@jlab.org
+ *          Nov 2015
  * </pre>
  *----------------------------------------------------------------------------*/
 
@@ -97,6 +102,7 @@ ApvParameters fApv[(MPD_MAX_BOARDS)+1][MPD_MAX_APV];
 mpdParameters fMpd[(MPD_MAX_BOARDS)+1];
 unsigned short fApvEnableMask[(MPD_MAX_BOARDS)+1];
 int nApv[(MPD_MAX_BOARDS)+1];
+extern GEF_VME_BUS_HDL vmeHdl;
 
 /* */
 #define MPD_VERSION_MASK 0xf00f
@@ -246,7 +252,7 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
 	  return(ERROR);
 	}
       
-      //      mpdA24Offset = laddr_csr - addr; //??
+            mpdA24Offset = laddr_csr - addr;
     }
 
   printf("%s: A24 mapping: VME addr=0x%x -> Local 0x%x\n", __FUNCTION__, addr, laddr_csr);
@@ -857,8 +863,8 @@ mpdI2C_ByteWrite(int id, uint8_t dev_addr, uint8_t int_addr,
       return ERROR;
     }
   
-  if( (success = I2C_SendByte(id, (uint8_t)(dev_addr & 0xFE), 1)) != OK )
-    {
+  if( (success = I2C_SendByte(id,(uint8_t)(dev_addr & 0xFE), 1)) != OK )
+    {//printf("%d",success);
       if( success <= -10 )
 	{
 	  I2C_SendStop(id);
@@ -870,7 +876,7 @@ mpdI2C_ByteWrite(int id, uint8_t dev_addr, uint8_t int_addr,
   //  usleep(300);
 
   if( (success = I2C_SendByte(id, int_addr, 0)) != OK )
-    {
+    {//printf(":%d",success);
       if( success <= -10 )
 	{
 	  I2C_SendStop(id);
@@ -882,7 +888,7 @@ mpdI2C_ByteWrite(int id, uint8_t dev_addr, uint8_t int_addr,
   //  usleep(300);
   for(i=0; i<ndata; i++)
     if( (success = I2C_SendByte(id, data[i], 0)) != OK )
-      {
+      {//printf(":%d\n",success);
 	if( success <= -10 )
 	  {
 	    I2C_SendStop(id);
@@ -912,12 +918,15 @@ mpdI2C_ByteRead(int id, uint8_t dev_addr, uint8_t int_addr,
       return ERROR;
     }
   
-  if( (success = I2C_SendByte(id, (uint8_t)(dev_addr | 0x01), 1)) != OK )
+  if( (success = I2C_SendByte(id, (uint8_t)(dev_addr), 1)) != OK )
     return I2C_SendStop(id);
   
   if( (success = I2C_SendByte(id, int_addr, 0)) != OK )
     return I2C_SendStop(id);
   
+  if( (success = I2C_SendByte(id, (uint8_t)(dev_addr |0x01), 1)) != OK )
+    return I2C_SendStop(id);
+
   for(i=0; i<ndata; i++)
     if( (success = I2C_ReceiveByte(id, data+i)) != OK )
       return I2C_SendStop(id);
@@ -992,6 +1001,7 @@ I2C_SendByte(int id, uint8_t byteval, int start)
   MPDLOCK;
   //  printf(" MPD addr I2C.txrx : 0x%x\n", &MPDp[id]->I2C.TxRx - &MPDp[id]->SdramFifo[0]);
   mpdWrite32(&MPDp[id]->I2C.TxRx, byteval);
+  //printf("Data:%d %d %08x \n",byteval,mpdRead32(&MPDp[id]->I2C.TxRx),mpdRead32(&MPDp[id]->I2C.TxRx));
 
   if( start )
     mpdWrite32(&MPDp[id]->I2C.CommStat, MPD_I2C_COMMSTAT_START_WRITE);
@@ -1000,12 +1010,13 @@ I2C_SendByte(int id, uint8_t byteval, int start)
 
   retry_count = 0;
   data = 0x00000002;
+  //printf("data:%d",mpdRead32(&MPDp[id]->I2C.TxRx));
 
   while( (data & 0x00000002) != 0 && retry_count < mpdGetI2CMaxRetry(id) )
     {
       usleep(10);
       data = mpdRead32(&MPDp[id]->I2C.CommStat);
-
+      //printf("data:%0--8x %08x\n",data,MPD_I2C_COMMSTAT_NACK_RECV);
       retry_count++;
     }
 
@@ -1193,8 +1204,8 @@ int
 mpdAPV_Try(int id, uint8_t apv_addr) // i2c addr
 {
 
-  int timeout;
-  uint8_t x = apv_addr+32;
+   int timeout;
+  uint8_t x = 96;//apv_addr+32;
   int ret;
 
   //  if(id==0) id=mpdID[0];
@@ -1214,7 +1225,8 @@ mpdAPV_Try(int id, uint8_t apv_addr) // i2c addr
 
   printf("%s: timeout %d : %d ret = %d\n",__FUNCTION__,timeout,x, ret);
 
-  //  return ((mpdAPV_Read(id, apv_addr, mode_addr, &x) == OK) ? 1 : 0);
+  //mpdAPV_Read(id, apv_addr, latency_addr, &x);
+  //printf("laterncy read: %0x\n",x);
   //	return APV_Write(apv_addr, mode_addr, def_Mode);
 
   return ret;
@@ -1328,12 +1340,13 @@ mpdAPV_Read(int id, uint8_t apv_addr, uint8_t reg_addr, uint8_t *val)
 
   usleep(500);
 
-  success = mpdI2C_ByteWrite(id, (uint8_t)((0x20 | apv_addr)<<1), (reg_addr|0x01), 1, val);
-  if( success != OK )
-    return success;
+  // success = mpdI2C_ByteWrite(id, (uint8_t)((0x20 | apv_addr)<<1), (reg_addr|0x01), 1, val);
+  // if( success != OK )
+  //   return success;
   
   usleep(500);
-  success = mpdI2C_ByteRead1(id, (uint8_t)((0x20 | apv_addr)<<1), &rval);
+  success = mpdI2C_ByteRead(id, (uint8_t)((0x20 | apv_addr)<<1), reg_addr, 1, val);
+
 
   printf("%s: Set / Get = 0x%x 0x%x\n",
 	 __FUNCTION__,*val,rval);
@@ -1564,20 +1577,60 @@ mpdApvGetMaxLatency(int id)
 void
 mpdApvBufferAlloc(int id, int ia) 
 {
+  GEF_STATUS status;
+  GEF_MAP_PTR mapPtr;
+  GEF_VME_DMA_HDL dma_hdl;
+
   fApv[id][ia].fBufSize = 15*fApv[id][ia].fNumberSample*(EVENT_SIZE+2); // at least 6 times larger @@@ increased to 15 -- need improvement
+
+#define PHYSMEM
+#ifdef PHYSMEM  
+  status = gefVmeAllocDmaBuf (vmeHdl,fApv[id][ia].fBufSize,	
+			    &dma_hdl,&mapPtr);
+  if(status != GEF_STATUS_SUCCESS) 
+    {
+      MPD_ERR("id=%d, ia=%d\n\tgefVmeAllocDmaBuf returned 0x%x\n",id,ia,status);
+    }
+  fApv[id][ia].fBuffer     = mapPtr;
+  fApv[id][ia].physMemBase = dmaHdl_to_PhysAddr(dma_hdl);
+  fApv[id][ia].dmaHdl      = dma_hdl;
+  // fApv[id][ia].fBuffer = (uint32_t *) malloc(fApv[id][ia].fBufSize*sizeof(uint32_t));
+  fApv[id][ia].fBi1 = 0;
+  MPD_DBG("Fifo %d, buffer allocated with word size %d\n\t id=%d  ia=%d  dmaHdl = 0x%08x  physMemBase = 0x%08x  fBuffer = 0x%08x\n",
+	  fApv[id][ia].adc, 
+	  fApv[id][ia].fBufSize,
+	  id,
+	  ia,
+	  fApv[id][ia].dmaHdl,
+	  fApv[id][ia].physMemBase,
+	  fApv[id][ia].fBuffer);
+#else
   fApv[id][ia].fBuffer = (uint32_t *) malloc(fApv[id][ia].fBufSize*sizeof(uint32_t));
   fApv[id][ia].fBi1 = 0;
-  MPD_DBG("Fifo %d, buffer allocated with word size %d\n",fApv[id][ia].adc, fApv[id][ia].fBufSize);
+  MPD_DBG("id=%d  ia=%d  Fifo %d, buffer allocated with word size %d\n",id,ia,fApv[id][ia].adc, fApv[id][ia].fBufSize);
+#endif
 }
 
 void 
-mpdApvBufferFree(int id, int ia) {
-  if (fApv[id][ia].fBuffer != 0) {
-    free(fApv[id][ia].fBuffer);
-    MPD_DBG("Fifo %d, buffer released\n",fApv[id][ia].adc);
-  };
+mpdApvBufferFree(int id, int ia) 
+{
+#ifdef PHYSMEM
+  GEF_STATUS status;
+#endif
+  if (fApv[id][ia].fBuffer != 0) 
+    {
+#ifdef PHYSMEM
+      status = gefVmeFreeDmaBuf(fApv[id][ia].dmaHdl);
+      if(status != GEF_STATUS_SUCCESS) 
+	{
+	  MPD_ERR("id=%d, ia=%d\n\tgefVmeFreeDmaBuf returned 0x%x\n",id,ia,status);
+	}
+#else
+      free(fApv[id][ia].fBuffer);
+#endif
+      MPD_DBG("Fifo %d, buffer released\n",fApv[id][ia].adc);
+    }
 }
-
 void 
 mpdApvIncBufferPointer(int id, int ia, int b) {
   fApv[id][ia].fBi1 += b;
@@ -1586,7 +1639,7 @@ mpdApvIncBufferPointer(int id, int ia, int b) {
 uint32_t*
 mpdApvGetBufferPointer(int id, int ia, int ib) 
 {
-  MPD_DBG("Fifo %d, retrieved pointer from position %d , size is %d\n",fApv[id][ia].adc, ib, fApv[id][ia].fBufSize);
+  //MPD_DBG("Fifo %d, retrieved pointer from position %d , size is %d\n",fApv[id][ia].adc, ib, fApv[id][ia].fBufSize);
   if (ib<fApv[id][ia].fBufSize) { // probably not required !!
     return &(fApv[id][ia].fBuffer[ib]);
   }
@@ -1598,7 +1651,7 @@ int
 mpdApvGetBufferSample(int id, int ia) 
 {
   int ix = fApv[id][ia].fBi1 / EVENT_SIZE;
-  MPD_DBG("Fifo = %d has %d samples (%d bytes) stored\n",fApv[id][ia].adc, ix, fApv[id][ia].fBi1);
+  //MPD_DBG("Fifo = %d has %d samples (%d bytes) stored\n",fApv[id][ia].adc, ix, fApv[id][ia].fBi1);
   return ix;
 
 }
@@ -2308,7 +2361,8 @@ mpdFIFO_ReadSingle(int id,
   int success=OK, i, size;
   int nwords; // words available in fifo
   int wmax; // maximum word acceptable
-
+  uint32_t vmeAdrs=0; // Vme address of channel data
+  int retVal=0;
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
@@ -2316,39 +2370,95 @@ mpdFIFO_ReadSingle(int id,
 	     __FUNCTION__,id);
       return ERROR;
     }
-
+  
   wmax = *wrec;
   *wrec=0; // returned words
-
+  
   nwords = 0;
-
+  
   i = 0;
   while( (nwords <= 0) && (i <= max_retry) ) {
     if( max_retry > 0 ) i++;
     success = mpdFIFO_GetNwords(id, channel, &nwords);
     if( success != OK ) return success;
   }
-
-  printf("%s: number of words to be read %d\n",__FUNCTION__,nwords);
+  
+  //printf("%s: number of words to be read %d\n",__FUNCTION__,nwords);
   size = (nwords < wmax) ? nwords : wmax;
-
-  MPD_DBG("fifo ch = %d, words in fifo= %d, retries= %d (max %d)\n",channel, nwords,i, max_retry);
-
+  
+  //MPD_DBG("fifo ch = %d, words in fifo= %d, retries= %d (max %d)\n",channel, nwords,i, max_retry);
+  MPD_DBG("  id=%d  channel=%d  physMemBase = 0x%08x   dbuf = 0x%08x\n\n",
+	  id,channel,fApv[id][0].physMemBase, &dbuf[0]);
+  
   if( i > max_retry ) {
     MPD_ERR(" max retry = %d, count=%d nword=%d\n", max_retry, i, nwords);
     return ERROR;
   }
-
+  
   MPDLOCK;
-#ifdef BLOCK_TRANSFER
-  success = BUS_BlockRead(fifo_addr, size, dbuf, &wrec); // trasfer 4 byte words!!
-  MPD_DBG("Block Read fifo ch = %d, words requested = %d, returned = %d\n", channel, size, wrec);
+#define BLOCK_TRANSFER1
+#ifdef BLOCK_TRANSFER1
+  /*   unsigned long offset = ((unsigned long)&dbuf - (unsigned long)&fApv[id][0].fBuffer); */
+  unsigned long offset = 0;
+  MPD_DBG("dbuf addr = 0x%lx  fBuffer = 0x%lx  offset = 0x%lx\n",
+  	  (unsigned long)dbuf, (unsigned long)fApv[id][0].fBuffer, (unsigned long)offset);
+
+  vmeAdrs = &MPDp[id]->ApvDaq.Data_Ch[channel][0];
+  retVal = vmeDmaSendPhys(fApv[id][0].physMemBase+offset,vmeAdrs,(size<<2));
+  if(retVal != 0) 
+    {
+      MPD_ERR("ERROR in DMA transfer Initialization (returned 0x%x)\n",retVal);
+      MPD_ERR("  id=%d  channel=%d  physMemBase = 0x%08x\n",
+	      id,channel,fApv[id][channel].physMemBase);
+      *wrec=0;
+      MPDUNLOCK;
+      return(retVal);
+    }
+
+  /* Wait until Done or Error */
+  retVal = vmeDmaDone();
+  if(retVal==0)
+    {
+      *wrec=0;
+      MPD_ERR("vmeDmaDone returned zero word count\n");
+      MPDUNLOCK;
+      return ERROR;
+    }
+  else if(retVal==ERROR)
+    {
+      *wrec=0;
+      MPD_ERR("vmeDmaDone returned ERROR\n");
+      MPDUNLOCK;
+      return ERROR;
+    }
+  else
+    {
+      *wrec   = (retVal>>2);
+      MPD_DBG("vmeDmaDone returned 0x%x (%d)  wrec = %d\n",
+	      retVal, retVal, *wrec);
+      int iword=0;
+      for(iword =0; iword<*wrec; iword++)
+	{
+#ifdef DEBUG_BLOCKREAD
+	  if((iword%4)==0)
+	    printf("\n%4d:  ",iword);
+	  
+	  printf("0x%08x   ",LSWAP(fApv[id][0].fBuffer[iword]));
+#endif
+	  /* Byte swap necessary for block transfers */
+	  fApv[id][0].fBuffer[iword] = LSWAP(fApv[id][0].fBuffer[iword]);
+	}
+#ifdef DEBUG_BLOCKREAD
+      printf("\n");
+#endif
+    }
+
 #else
   for(i=0; i<size; i++) {
-    dbuf[i] = mpdRead32(&MPDp[id]->ApvDaq.Data_Ch[channel][i*4]);
+    dbuf[i] = mpdRead32(&MPDp[id]->ApvDaq.Data_Ch[channel][i]);//changed from [channel][i*4] to [channel][i]--Danning_Sep_30_2015
     *wrec+=1;
-  }
-  MPD_DBG("Read apv = %d, wrec = %d, success = %d\n", channel, *wrec, success);
+    }
+  //MPD_DBG("Read apv = %d, wrec = %d, success = %d\n", channel, *wrec, success);
 #endif
   MPDUNLOCK;
 
@@ -2633,7 +2743,7 @@ mpdFIFO_GetNwords(int id, int channel, int *nwords) // can be optimized reading 
   data = mpdRead32(&MPDp[id]->ApvDaq.Used_Word_Ch_Pair[nwords_addr_offset[channel]]);
   MPDUNLOCK;
 
-  printf("EC: nwords from fifo %d 0x%x\n",channel,data);
+  //printf("EC: nwords from fifo %d 0x%x\n",channel,data);
   if( channel % 2 )	// if odd
     *nwords =  ((data & 0xFFFF0000) >> 16) & 0xFFFF;
   else
@@ -2755,54 +2865,51 @@ mpdFIFO_ReadAll(int id, int *timeout, int *global_fifo_error) {
   int sample_left;
 
   int nread, err;
-
-  //  if(id==0) id=mpdID[0];
-  if((MPDp[id]==NULL) || (id<0) || (id>21))
+  
+  
+   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
       printf("%s: ERROR: MPD in slot %d is not initialized.\n",
 	     __FUNCTION__,id);
       return ERROR;
     }
-
+  
   sample_left = 0;
   *global_fifo_error = 0;
-
+  
   if (fMpd[id].fReadDone == 0) { // at least one MPD FIFO needs to be read
     for(k=0; k<nApv[id]; k++) { // loop on ADC channels on single board
 
       if (mpdApvReadDone(id, k) == 0) { // APV FIFO has data to be read
 
 	nread = mpdApvGetBufferAvailable(id, k);
-	printf(" EC: card %d buffer size available = %d\n",k,nread);
+	//printf(" EC: card %d buffer size available = %d\n",k,nread);
 	if (nread>0) { // space in memory buffer
-	  err = mpdFIFO_ReadSingle(id, fApv[id][k].adc, 
-				   mpdApvGetBufferPWrite(id, k), &nread, 1); 
+	  err = mpdFIFO_ReadSingle(id, fApv[id][k].adc,mpdApvGetBufferPWrite(id, k), &nread, 20); //not this
 
 	  mpdApvIncBufferPointer(id, k, nread);
 
 	  *global_fifo_error |= err; // ???
-	  printf(" EC: card %d readsingle done nread=%d, err=%d\n",k,nread,err);
-	} else { // no space in memory buffer
-	  MPD_ERR("MPD/APV(i2c)/(adc) = %d/%d, no space in memory buffer adc=%d\n", 
-		  id, k, fApv[id][k].adc);
+	  //printf(" EC: card %d readsingle done nread=%d, err=%d\n",k,nread,err);
+	  } else { // no space in memory buffer
+	    MPD_ERR("MPD/APV(i2c)/(adc) = %d/%d, no space in memory buffer adc=%d\n",id, k, fApv[id][k].adc);
 	}
-
+  
 	if ((err == ERROR) || (nread == 0)) *timeout++; // timeout
 
-	int n = mpdApvGetBufferSample(id,k);
+       	int n = mpdApvGetBufferSample(id,k);
 
-	MPD_DBG("FIFO= %d, word read= %d, event/sample read= %d, error=%d\n",fApv[id][k].adc,nread ,n, *global_fifo_error);
+	MPD_DBG("APV_No= %d, ADC_No= %d, word read= %d, event/sample read= %d, error=%d\n",k,fApv[id][k].adc,nread ,n, *global_fifo_error);
 
 	sample_left += mpdApvGetSampleLeft(id, k);
 
       }
 
-      MPD_DBG("Fifo= %d, total sample left= %d (<0 means more samples than requested)\n",k, sample_left);
+      //MPD_DBG("Fifo= %d, total sample left= %d (<0 means more samples than requested)\n",k, sample_left);
 
     } // loop on ADC
-    fMpd[id].fReadDone = (sample_left>0) ? 0 : 1;  
+     fMpd[id].fReadDone = (sample_left>0) ? 0 : 1;  
   } // if fReadDone
-  
   return fMpd[id].fReadDone;
 
 }
@@ -2855,7 +2962,7 @@ mpdApvShiftDataBuffer(int id, int k, int i0) {
   b = mpdApvGetBufferPointer(id, k, 0);
   int delta = fApv[id][k].fBi1 - i0;
 
-  MPD_DBG("Move block of %d words from %d to 0\n",delta,i0);
+  //MPD_DBG("Move block of %d words from %d to 0\n",delta,i0);
 
   if (delta>0) {
     memmove(&b[0],&b[i0],sizeof(uint32_t)*delta); // areas may overlap
@@ -2864,7 +2971,7 @@ mpdApvShiftDataBuffer(int id, int k, int i0) {
   fApv[id][k].fBi0 = 0; // to be removed
   fApv[id][k].fBi1 = delta;
   
-  MPD_DBG("Fifo= %d cleaned (data shifted) write pointer at=%d\n",fApv[id][k].adc,fApv[id][k].fBi1);
+  //MPD_DBG("Fifo= %d cleaned (data shifted) write pointer at=%d\n",fApv[id][k].adc,fApv[id][k].fBi1);
 
 }
 

@@ -14,10 +14,10 @@ default:
 
       calib_latency = 0;     // 0..255: 0: disabled, > 0 issue a calib followed by trigger after given latency, trigger - calibration pulse delay
 
-      trigger_number = 2;	// 0..15 0: disabled, 1: normal, >1: N trigger issued every 3 clock cycles, (that is number of samples)
+      trigger_number = 1;	// 0..15 0: disabled, 1: normal, >1: N trigger issued every 3 clock cycles, (that is number of samples)
 
       apv_Frequency  = 1; // Readout Frequency  : 0=20 MHz, 1=40 MHz
-      apv_SampleMode = 0; // Sampling Mode      : 0=3 samples, 1=1 sample / trigger
+      apv_SampleMode = 1; // Sampling Mode      : 0=3 samples, 1=1 sample / trigger
 
       input_0_level = 0; // LEMO input 0 digital level (0=NIM, 1=TTL)
       input_1_level = 0; // LEMO input 1 digital level (0=NIM, 1=TTL)
@@ -79,7 +79,7 @@ default:
 	Csel = 0;    // Seems very few effects at scope level: at least 1 bit = 0
 	CalPulse = 0; // Calibration Pulse  : 0=off, 1=on
 
-	Latency = 14;// 34---0..191, suggested less than 160 (?) A Reset101 is needed after changing this value
+	Latency = 34;// 34---0..191, suggested less than 160 (?) A Reset101 is needed after changing this value
 	Muxgain = 4; // 1(-20%), 2(-10%), 4(nominal), 8(+10%), 16(+20%)
 
 	Polarization = 0; // Preamp Polarization: 0=non-inverting, 1=inverting
