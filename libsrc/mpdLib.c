@@ -103,6 +103,8 @@ mpdParameters fMpd[(MPD_MAX_BOARDS)+1];
 unsigned short fApvEnableMask[(MPD_MAX_BOARDS)+1];
 int nApv[(MPD_MAX_BOARDS)+1];
 extern GEF_VME_BUS_HDL vmeHdl;
+static int mpdSSPMode=0;
+
 
 /* */
 #define MPD_VERSION_MASK 0xf00f
@@ -139,14 +141,22 @@ uint32_t
 mpdRead32(volatile uint32_t *reg)
 {
   uint32_t read=0;
-  read = vmeBusRead32(0x09,(uint32_t)reg);
+
+  if(mpdSSPMode)
+    read = vmeBusRead32(0x09,(uint32_t)reg); // TO BE DEFINED
+  else
+    read = vmeRead32(reg);
+
   return read;
 }
 
 void
 mpdWrite32(volatile uint32_t *reg, uint32_t val)
 {
-  vmeBusWrite32(0x09,(uint32_t)reg, val);
+  if(mpdSSPMode)
+    vmeBusWrite32(0x09,(uint32_t)reg, val); // TO BE DEFINED
+  else
+    vmeWrite32(reg, val);
 }
 
 /**
@@ -156,6 +166,16 @@ mpdWrite32(volatile uint32_t *reg, uint32_t val)
  * @defgroup IntPoll Interrupt/Polling
  * @defgroup Deprec Deprecated - To be removed
  */
+int
+mpdSetSSPMode_preInit(int enable)
+{
+  if(enable)
+    mpdSSPMode=1;
+  else
+    mpdSSPMode=0;
+
+  return mpdSSPMode;
+}
 
 /**
  *  @ingroup Config
@@ -192,17 +212,13 @@ STATUS
 mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
 {
 
-  int i, ii, impd, impd_disc,res, errFlag = 0;
+  int ii, impd, impd_disc,res, errFlag = 0;
   int boardID = 0;
   int maxSlot = 1;
   int minSlot = 21;
-  int trigSrc=0, clkSrc=0, srSrc=0;
-  uint32_t csrdata;
-  uint32_t csr_const[9]={'C','R',0x08,0x00,0x30,0x00,0x03,0x09,0x04};
-  uint32_t rdata, laddr, laddr_inc, laddr_csr, a32addr, a16addr=0;
+  uint32_t magic_const = 0x43524F4D; 
+  uint32_t rdata, laddr, laddr_inc;
   volatile struct mpd_struct *mpd;
-  volatile struct mpd_struct_csr *mpd_csr;
-  uint16_t sdata;
   int noBoardInit=0;
   int useList=0;
   int noFirmwareCheck=0;
@@ -236,26 +252,25 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
 	nmpd = 1; /* assume only one MPD to initialize */
       
       /* get the MPD address */
-      // CSR access AM=0x2F or any AM_A24 such as 0x39
 #ifdef VXWORKS
-      res = sysBusToLocalAdrs(0x2f,(char *)addr,(char **)&laddr_csr);
+      res = sysBusToLocalAdrs(0x39,(char *)addr,(char **)&laddr);
 #else
-      res = vmeBusToLocalAdrs(0x2f,(char *)addr,(char **)&laddr_csr); // CSR space
+      res = vmeBusToLocalAdrs(0x39,(char *)addr,(char **)&laddr);
 #endif
       if (res != 0) 
 	{
 #ifdef VXWORKS
-	  printf("mpdInit: ERROR in sysBusToLocalAdrs(0x2f,0x%x,&laddr_csr) \n",addr);
+	  printf("mpdInit: ERROR in sysBusToLocalAdrs(0x39,0x%x,&laddr_csr) \n",addr);
 #else
-	  printf("mpdInit: ERROR in vmeBusToLocalAdrs(0x2f,0x%x,&laddr_csr) \n",addr);
+	  printf("mpdInit: ERROR in vmeBusToLocalAdrs(0x39,0x%x,&laddr_csr) \n",addr);
 #endif
 	  return(ERROR);
 	}
       
-            mpdA24Offset = laddr_csr - addr;
+            mpdA24Offset = laddr - addr;
     }
 
-  printf("%s: A24 mapping: VME addr=0x%x -> Local 0x%x\n", __FUNCTION__, addr, laddr_csr);
+  printf("%s: A24 mapping: VME addr=0x%x -> Local 0x%x\n", __FUNCTION__, addr, laddr);
   impd = 0;
   impd_disc = 0;
   for (ii=0;ii<nmpd;ii++) 
@@ -268,44 +283,43 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
 	}
       else
 	{
-	  laddr_inc = laddr_csr +ii*addr_inc;
+	  laddr_inc = laddr +ii*addr_inc;
 	}
-      mpd_csr = (struct mpd_struct_csr *) laddr_inc;
+      mpd = (struct mpd_struct *) laddr_inc;
       
       // #ifdef NOTSURE
       /* Check if Board exists at that address */
 
       errFlag = 0;
-      for (i=0;i<9; i++) {
 #ifdef VXWORKS
-	res = vxMemProbe((char *) mpd_csr,VX_READ,sizeof(struct mpd_struct_csr),(char *)csrdata);
+      res = vxMemProbe((char *) mpd->magic_value,VX_READ,4,(char *)&rdata);
 #else
-	res = vmeMemProbe((char *) &mpd_csr->crcode[0]+4*i,4,(char *) &csrdata);
+      res = vmeMemProbe((char *) &mpd->magic_value,4,(char *) &rdata);
 #endif
-	
-	if(res < 0) 
-	  {
+      
+      if(res < 0) 
+	{
 #ifdef VXWORKS
-	    printf("mpdInit: WARN: No addressable board at addr=0x%x\n",(UINT32) mpd_csr);
+	  printf("mpdInit: WARN: No addressable board at addr=0x%x\n",(UINT32) mpd);
 #else
-	    printf("mpdInit: WARN: No addressable board at VME addr=0x%x (local 0x%x)\n",
-		   (UINT32) addr+ii*addr_inc, (UINT32) mpd_csr);
+	  printf("mpdInit: WARN: No addressable board at VME addr=0x%x (local 0x%x)\n",
+		 (UINT32) addr+ii*addr_inc, (UINT32) mpd);
 #endif
-	    errFlag = 1;
-	    break;
-	  }
-	else 
-	  {
-	    if (csrdata != csr_const[i]) {
-	      printf("%s: WARN: for board at 0x%x, invalid csr data code 0x%x (expected 0x%x)\n",
+	  errFlag = 1;
+	  break;
+	}
+      else 
+	{
+	  if (rdata != magic_const) 
+	    {
+	      printf("%s: WARN: for board at 0x%x, invalid data code 0x%x (expected 0x%x)\n",
 		     __FUNCTION__,
-		     (UINT32) mpd_csr - mpdA24Offset, csrdata, csr_const[i]);
+		     (UINT32) mpd - mpdA24Offset, rdata, magic_const);
 	      errFlag = 2;
 	      break;
 	    }
-	  }
-      } // loop on first csr words
-
+	}
+      
       if (errFlag>0) { continue; } 
       // discovered new board
       impd_disc++;
@@ -315,17 +329,13 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
       if((boardID < 0)||(boardID >21)) 
 	{
 	  printf("%s: ERROR: For Board at 0x%x,  Slot number is not in range: %d\n",
-		 __FUNCTION__,(UINT32) mpd_csr - mpdA24Offset, boardID);
+		 __FUNCTION__,(UINT32) mpd - mpdA24Offset, boardID);
 	  continue;
 	}
 
 
       /* read firmware revision */
-      rdata = 0;
-      for (i=0;i<4;i++) {
-	csrdata = vmeRead32( &mpd_csr->revisionID[i]);
-	rdata |= ((csrdata&0xff) << (4*(3-i)));
-      }
+      rdata = vmeRead32( &mpd->revision_id);
 
       printf(" MPD Slot %d - Firmware Revision ID = 0x%x\n", boardID, rdata);
 
@@ -356,20 +366,17 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
       fMpd[boardID].FpgaRevision = rdata;
 
       /* time revision */
-      rdata = 0;
-      for (i=0;i<4;i++) {
-	csrdata = vmeRead32( &mpd_csr->revisionTime[i]);
-	rdata |= ((csrdata&0xff) << (4*(3-i))); 
-      }
+      rdata = vmeRead32(&mpd->compile_time);
 	
-      fMpd[boardID].FpgaCompileTime |= rdata;
+      fMpd[boardID].FpgaCompileTime = rdata;
       printf(" MPD Slot %d - Firmware Revision Time: %d (s)\n", boardID, fMpd[boardID].FpgaCompileTime);
 
       // set it, if it is presents in config file
-      if (mpdGetNumberAPV(boardID)<=0) { // not in config file (to be improved)
-	printf(" -- MPD in slot %d is NOT in config file, drop it\n",boardID);
-	continue;
-      }
+      if (mpdGetNumberAPV(boardID)<=0) 
+	{ // not in config file (to be improved)
+	  printf(" -- MPD in slot %d is NOT in config file, drop it\n",boardID);
+	  continue;
+	}
       printf(" ++ MPD in slot %d is in config file, INIT IT\n",boardID);
       // MPDp[boardID] = (struct mpd_struct *)(laddr_inc);
       //	  mpdRev[boardID] = rdata&MPD_VERSION_MASK;
@@ -383,53 +390,12 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
       //    } // loop on mpd slots
   
 
-      /* Hard Reset of all MPD boards in the Crate */
-
-      /* Calculate the A32 Offset for MPD mapping*/
-      a32addr = mpdA32Base + boardID*mpdA32Offset;
-#ifdef VXWORKS
-      res = sysBusToLocalAdrs(0x09,(char *)a32addr,(char **)&laddr);
-      if (res != 0) 
-	{
-	  printf("mpdInit: ERROR in sysBusToLocalAdrs(0x09,0x%x,&laddr) \n",mpdA32Base);
-	  //	  return(ERROR);
-	  continue;
-	} 
-      else 
-	{
-	  //	  mpdA32Offset = laddr - mpdA32Base; // ??? (EC)
-	}
-#else
-
-#ifdef OLDWAY
-      res = vmeBusToLocalAdrs(0x09,(char *)a32addr,(char **)&laddr);
-      if (res != 0) 
-	{
-	  printf("mpdInit: ERROR in vmeBusToLocalAdrs(0x09,0x%x,&laddr) \n",a32addr);
-	  //	  return(ERROR);
-	  continue;
-	} 
-      else 
-	{
-	  //	  mpdA32Offset = laddr - mpdA32Base; // ??? (EC)
-	}
-#else
-      laddr = a32addr;
-#endif /* OLDWAY */
-#endif
-
       MPDp[boardID] = (struct mpd_struct *)(laddr); // MPD A32 memory map
 
       printf("Initialized MPD %2d  Slot #%2d at VME address 0x%08x (local 0x%08x) \n",
-	     impd,boardID,
-	     (UINT32) a32addr, // (UINT32) MPDp[boardID]-mpdA24Offset, // ??
+	     impd, boardID,
+	     (UINT32) MPDp[boardID]-mpdA24Offset, // ??
 	     (UINT32) MPDp[boardID]);
-
-      
-      /* Program an A32 access address for this MPD's FIFO */      
-      MPDpd[boardID] = (uint32_t *)(laddr);  /* Set a pointer to the FIFO */
-
-
 
       if(!noBoardInit)
 	{
@@ -445,51 +411,6 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
 
   nmpd = impd;
   mpdBlockLevel=1;
-
-
-  /* If there are more than 1 MPD in the crate then setup the Multiblock Address
-     window. This must be the same on each board in the crate */
-
-  if(nmpd > 100)  // not implemented  
-    {
-#define MPD_MAX_A32_MEM 0x8000000 // should be mpdA32Offset
-      a32addr = mpdA32Base + (nmpd+1)*MPD_MAX_A32_MEM; /* set MB base above individual board base */
-#ifdef VXWORKS
-      res = sysBusToLocalAdrs(0x09,(char *)a32addr,(char **)&laddr);
-      if (res != 0) 
-	{
-	  printf("mpdInit: ERROR in sysBusToLocalAdrs(0x09,0x%x,&laddr)/for multiblock\n",a32addr);
-	  return(ERROR);
-	}
-#else
-      res = vmeBusToLocalAdrs(0x09,(char *)a32addr,(char **)&laddr);
-      if (res != 0) 
-	{
-	  printf("mpdInit: ERROR in vmeBusToLocalAdrs(0x09,0x%x,&laddr) \n",a32addr);
-	  return(ERROR);
-	}
-#endif
-      MPDpmb = (uint32_t *)(laddr);  /* Set a pointer to the FIFO */
-      if(!noBoardInit)
-	{
-	  for (ii=0;ii<nmpd;ii++) 
-	    {
-	      /* Write the register and enable */
-	      //	      vmeWrite32(&(MPDp[impd]->adr_mb),
-	      //		 (a32addr+MPD_MAX_A32MB_SIZE) + (a32addr>>16) + MPD_A32_ENABLE);
-	    }
-	}    
-      /* Set First Board and Last Board */
-      mpdMaxSlot = maxSlot;
-      mpdMinSlot = minSlot;
-      if(!noBoardInit)
-	{
-	  //	  vmeWrite32(&(MPDp[minSlot]->ctrl1),
-	  //	     mpdRead32(&(MPDp[minSlot]->ctrl1)) | MPD_FIRST_BOARD);
-	  // vmeWrite32(&(MPDp[maxSlot]->ctrl1),
-	  //	     mpdRead32(&(MPDp[maxSlot]->ctrl1)) | MPD_LAST_BOARD);
-	}    
-    }
 
   if(!noBoardInit)
     mpdInited = nmpd;
@@ -523,29 +444,76 @@ mpdCheckAddresses(int id)
 {
   uint32_t offset=0, expected=0, base=0;
   
-  //  if(id==0) id=mpdID[0];
-  if((id<0) || (id>21) || (MPDp[id] == NULL)) 
-    {
-      printf("%s: ERROR : ADC in slot %d is not initialized \n",
-	     __FUNCTION__,id);
-      return ERROR;
-    }
-
-  printf("%s:\n\t ---------- Checking mpd250 address space ---------- \n",__FUNCTION__);
+  printf("%s:\n\t ---------- Checking mpd address space ---------- \n",__FUNCTION__);
 
   base = (uint32_t) &MPDp[id]->magic_value;
 
   offset = ((uint32_t) &MPDp[id]->reset_reg) - base;
   expected = 0x100;
   if(offset != expected)
-    printf("%s: ERROR MPDp[id]->reset_reg not at offset = 0x%x (@ 0x%x)\n",
+    printf("%s: ERROR MPDp[id]->reset_reg \n not at offset = 0x%x (@ 0x%x)\n",
 	   __FUNCTION__,expected,offset);
 
   offset = ((uint32_t) &MPDp[id]->a24_bar) - base;
   expected = 0x180;
   if(offset != expected)
-    printf("%s: ERROR MPDp[id]->a24_bar not at offset = 0x%x (@ 0x%x)\n",
+    printf("%s: ERROR MPDp[id]->a24_bar \n not at offset = 0x%x (@ 0x%x)\n",
 	   __FUNCTION__,expected,offset);
+
+  offset = ((uint32_t) &MPDp[id]->ob_status.evb_fifo_word_count) - base;
+  expected = 0x200;
+  if(offset != expected)
+    printf("%s: ERROR MPDp[id]->ob_status.evb_fifo_word_count \n not at offset = 0x%x (@ 0x%x)\n",
+	   __FUNCTION__,expected,offset);
+
+  offset = ((uint32_t) &MPDp[id]->adc_config) - base;
+  expected = 0x300;
+  if(offset != expected)
+    printf("%s: ERROR MPDp[id]->adc_config \n not at offset = 0x%x (@ 0x%x)\n",
+	   __FUNCTION__,expected,offset);
+
+  offset = ((uint32_t) &MPDp[id]->i2c.clock_prescaler_low) - base;
+  expected = 0x400;
+  if(offset != expected)
+    printf("%s: ERROR MPDp[id]->i2c.clock_prescaler_low \n not at offset = 0x%x (@ 0x%x)\n",
+	   __FUNCTION__,expected,offset);
+
+  offset = ((uint32_t) &MPDp[id]->histo[0].csr) - base;
+  expected = 0x1000;
+  if(offset != expected)
+    printf("%s: ERROR MPDp[id]->histo[0].csr \n not at offset = 0x%x (@ 0x%x)\n",
+	   __FUNCTION__,expected,offset);
+
+  offset = ((uint32_t) &MPDp[id]->histo_memory[0][0]) - base;
+  expected = 0x4000;
+  if(offset != expected)
+    printf("%s: ERROR MPDp[id]->histo_memory[0][0] \n not at offset = 0x%x (@ 0x%x)\n",
+	   __FUNCTION__,expected,offset);
+
+  offset = ((uint32_t) &MPDp[id]->data_ch[0][0]) - base;
+  expected = 0x10000;
+  if(offset != expected)
+    printf("%s: ERROR MPDp[id]->data_ch[0][0] \n not at offset = 0x%x (@ 0x%x)\n",
+	   __FUNCTION__,expected,offset);
+
+  offset = ((uint32_t) &MPDp[id]->ch_flags.used_word_ch_pair[0]) - base;
+  expected = 0x30000;
+  if(offset != expected)
+    printf("%s: ERROR MPDp[id]->ch_flags.used_word_ch_pair[0] \n not at offset = 0x%x (@ 0x%x)\n",
+	   __FUNCTION__,expected,offset);
+
+  offset = ((uint32_t) &MPDp[id]->ped[0][0]) - base;
+  expected = 0x34000;
+  if(offset != expected)
+    printf("%s: ERROR MPDp[id]->ped[0][0] \n not at offset = 0x%x (@ 0x%x)\n",
+	   __FUNCTION__,expected,offset);
+
+  offset = ((uint32_t) &MPDp[id]->thres[0][0]) - base;
+  expected = 0x36000;
+  if(offset != expected)
+    printf("%s: ERROR MPDp[id]->thres[0][0] \n not at offset = 0x%x (@ 0x%x)\n",
+	   __FUNCTION__,expected,offset);
+
 
   return OK;
 }
@@ -1304,7 +1272,7 @@ int
 mpdAPV_Read(int id, uint8_t apv_addr, uint8_t reg_addr, uint8_t *val)
 {
   int success;
-  uint8_t rval;
+  uint8_t rval=0;
 
   if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
@@ -1567,7 +1535,7 @@ mpdApvBufferAlloc(int id, int ia)
     {
       MPD_ERR("id=%d, ia=%d\n\tgefVmeAllocDmaBuf returned 0x%x\n",id,ia,status);
     }
-  fApv[id][ia].fBuffer     = mapPtr;
+  fApv[id][ia].fBuffer     = (uint32_t *)mapPtr;
   fApv[id][ia].physMemBase = dmaHdl_to_PhysAddr(dma_hdl);
   fApv[id][ia].dmaHdl      = dma_hdl;
   // fApv[id][ia].fBuffer = (uint32_t *) malloc(fApv[id][ia].fBufSize*sizeof(uint32_t));
@@ -1577,9 +1545,9 @@ mpdApvBufferAlloc(int id, int ia)
 	  fApv[id][ia].fBufSize,
 	  id,
 	  ia,
-	  fApv[id][ia].dmaHdl,
-	  fApv[id][ia].physMemBase,
-	  fApv[id][ia].fBuffer);
+	  (uint32_t)fApv[id][ia].dmaHdl,
+	  (uint32_t)fApv[id][ia].physMemBase,
+	  (uint32_t)fApv[id][ia].fBuffer);
 #else
   fApv[id][ia].fBuffer = (uint32_t *) malloc(fApv[id][ia].fBufSize*sizeof(uint32_t));
   fApv[id][ia].fBi1 = 0;
@@ -2355,7 +2323,7 @@ mpdFIFO_ReadSingle(int id,
   
   //MPD_DBG("fifo ch = %d, words in fifo= %d, retries= %d (max %d)\n",channel, nwords,i, max_retry);
   MPD_DBG("  id=%d  channel=%d  physMemBase = 0x%08x   dbuf = 0x%08x\n\n",
-	  id,channel,fApv[id][0].physMemBase, &dbuf[0]);
+	  id,channel,(uint32_t)fApv[id][0].physMemBase, (uint32_t)&dbuf[0]);
   
   if( i > max_retry ) {
     MPD_ERR(" max retry = %d, count=%d nword=%d\n", max_retry, i, nwords);
@@ -2370,13 +2338,13 @@ mpdFIFO_ReadSingle(int id,
   MPD_DBG("dbuf addr = 0x%lx  fBuffer = 0x%lx  offset = 0x%lx\n",
   	  (unsigned long)dbuf, (unsigned long)fApv[id][0].fBuffer, (unsigned long)offset);
 
-  vmeAdrs = &MPDp[id]->data_ch[channel][0];
+  vmeAdrs = (uint32_t)&MPDp[id]->data_ch[channel][0];
   retVal = vmeDmaSendPhys(fApv[id][0].physMemBase+offset,vmeAdrs,(size<<2));
   if(retVal != 0) 
     {
       MPD_ERR("ERROR in DMA transfer Initialization (returned 0x%x)\n",retVal);
       MPD_ERR("  id=%d  channel=%d  physMemBase = 0x%08x\n",
-	      id,channel,fApv[id][channel].physMemBase);
+	      id,channel,(uint32_t)fApv[id][channel].physMemBase);
       *wrec=0;
       MPDUNLOCK;
       return(retVal);

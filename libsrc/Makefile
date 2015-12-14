@@ -48,8 +48,9 @@ LINUXVME_INC	?= ${CODA}/linuxvme/include
 
 CODALIB 	= $(CODA)/$(OSNAME)/lib
 CODAINC 	= $(CODA)/common/include
+INCS		= -I. -Ilibconfig -I${LINUXVME_INC}
 CFLAGS 		= -O $(DEFS) \
-		-I. -Ilibconfig -I${LINUXVME_INC}  \
+		  $(INCS) \
 		-L. -Llibconfig -L${LINUXVME_LIB} -DJLAB
 ifdef DEBUG
 CFLAGS		+= -Wall -g
@@ -80,6 +81,8 @@ endif
 
 SRC		= mpdLib.c mpdConfig.c
 OBJ		= $(SRC:.c=.o)
+DEPS		= $(SRC:.c=.d)
+LIBS		= libmpd.a
 
 ifeq ($(ARCH),Linux)
 all: echoarch libmpd.a libmpd.so
@@ -94,16 +97,17 @@ echoarch:
 	@echo "Make for $(ARCH)"
 
 ifeq ($(OSNAME),Linux)
-libmpd.a: $(OBJ)
-	@echo
-	@echo "Building "$@
-	$(AR) ruv $(@) $(OBJ) 
-	$(RANLIB) $(@)
+$(LIBS): $(OBJ)
+	$(CC) -fpic -shared $(CFLAGS) $(INCS) -o $(@:%.a=%.so) $(SRC)
+	$(AR) ruv $@ $<
+	$(RANLIB) $@
 
-libmpd.so: $(SRC)
-	@echo
-	@echo "Building "$@
-	$(CC) -fpic -shared $(CFLAGS) -o $(@) $(OBJ)
+%.d: %.c
+	@echo "Building $@ from $<"
+	@set -e; rm -f $@; \
+	$(CC) -MM -shared $(INCS) $< > $@.$$$$; \
+	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
 
 %.o: %.c
 	@echo
@@ -119,6 +123,9 @@ install: libmpd.a libmpd.so
 	@cp -v $(PWD)/$< $(LINUXVME_LIB)/$<
 	@cp -v $(PWD)/$(<:%.a=%.so) $(LINUXVME_LIB)/$(<:%.a=%.so)
 	@cp -v ${PWD}/*Lib.h $(LINUXVME_INC)
+
+-include $(DEPS)
+
 
 endif
 

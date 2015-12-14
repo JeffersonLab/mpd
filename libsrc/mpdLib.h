@@ -48,10 +48,6 @@
 #define MPD_DBG(format, ...) {printf("%s: DEBUG: ",__FUNCTION__); printf(format, ## __VA_ARGS__);} 
 #define MPD_ERR(format, ...) {fprintf(stderr,"%s: ERROR: ",__FUNCTION__); fprintf(stderr,format, ## __VA_ARGS__);} 
 
-//////////////////////////////////////////////////////////////////////
-// NEW MAP
-//////////////////////////////////////////////////////////////////////
-
 struct output_buffer_struct
 {
   /* 0x0200 */  volatile uint32_t evb_fifo_word_count;
@@ -126,43 +122,30 @@ struct mpd_struct
   /* 0x00194 */ volatile uint32_t obuf_base_addr;
   /* 0x00198 */ volatile uint32_t sdram_base_addr;
   /* 0x0019C */ volatile uint32_t sdram_bank;
+  /* 0x001A0 */          uint32_t blank2[(0x200-0x1A0)>>2];
 
   /* 0x00200 */ struct output_buffer_struct ob_status;
-  /* 0x00230 */          uint32_t blank2[(0x300-0x230)>>2];
+  /* 0x00230 */          uint32_t blank3[(0x300-0x230)>>2];
   /* 0x00300 */ volatile uint32_t adc_config;
+  /* 0x00304 */          uint32_t blank4[(0x380-0x304)>>2];
   /* 0x00380 */ volatile uint32_t serial_memory_if[4];
   /* 0x00390 */ volatile uint32_t remote_update[4];
+  /* 0x003A0 */          uint32_t blank5[(0x400-0x3A0)>>2];
   /* 0x00400 */ struct mpd_i2c_control_struct i2c;
-  /* 0x00420 */          uint32_t blank3[(0x1000-0x420)>>2];
+  /* 0x00420 */          uint32_t blank6[(0x1000-0x420)>>2];
 
   /* 0x01000 */ struct mpd_histogrammer_struct histo[2];
-  /* 0x01010 */ volatile uint32_t blank4[(0x4000-0x1010)>>2];
+  /* 0x01010 */          uint32_t blank7[(0x4000-0x1010)>>2];
   /* 0x04000 */ volatile uint32_t histo_memory[2][(0x4000)>>2];
-
+  /* 0x0C000 */          uint32_t blank8[(0x10000-0xC000)>>2];
   /* 0x10000 */ volatile uint32_t data_ch[16][(0x1000-0x0)>>2];
+  /* 0x20000 */          uint32_t blank9[(0x30000-0x20000)>>2];
   /* 0x30000 */ struct mpd_channel_flags_struct ch_flags;
-  /* 0x30048 */          uint32_t blank5[(0x34000-0x30048)>>2];
+  /* 0x30048 */          uint32_t blank10[(0x34000-0x30048)>>2];
   /* 0x34000 */ volatile uint32_t ped[16][(0x200)>>2];
   /* 0x36000 */ volatile uint32_t thres[16][(0x200)>>2];
 
 };
-
-
-
-#ifdef OLDMAP
-struct mpd_i2c_control_struct
-{
-  volatile uint32_t Clock_Prescaler_low;///* 0x0000 */
-  volatile uint32_t Clock_Prescaler_high;// /* 0x0004 */
-  volatile uint32_t Control; ///* 0x0008 */
-  volatile uint32_t TxRx; ///* 0x000C */
-  volatile uint32_t CommStat;// /* 0x0010 */
-  uint32_t blank0; ///* 0x0014 */ 
-  uint32_t blank1; ///* 0x0018 */ 
-  volatile uint32_t ApvReset;///* 0x001C */
-  // /* 0x0020 */
-};
-#endif /* OLDMAP */
 
 #define MPD_I2C_CONTROL_ENABLE_CORE  0x80
 
@@ -175,48 +158,6 @@ struct mpd_i2c_control_struct
 
 #define MPD_I2C_APVRESET_ASYNC_SET   0x00
 #define MPD_I2C_APVRESET_ASYNC_CLEAR 0x01
-
-#ifdef OLDMAP
-struct mpd_hist_block_struct
-{
-  /* 0x0000 */ volatile uint32_t Memory[(0x4000-0x0)>>2];
-  /* 0x4000 */ volatile uint32_t CSR;
-  /* 0x4004 */ volatile uint32_t Histo_Count;
-  /* 0x4008 */          uint32_t blank0[(0x8000-0x4008)>>2];
-  /* 0x8000 */
-};
-
-struct mpd_histogrammer_struct
-{
-  /* 0x000000 */ struct mpd_hist_block_struct block[2];
-  /* 0x010000 */
-};
-
-struct mpd_ped_thres_apv_pair_struct
-{
-  /* 0x0000 */ volatile uint32_t ram[(0x0200-0x0)>>2];
-  /* 0x0200 */          uint32_t blank0[(0x4000-0x0200)>>2];
-  /* 0x4000 */
-};
-
-struct mpd_apv_daq_struct
-{
-  /* 0x000000 */ volatile uint32_t Data_Ch[16][(0x4000-0x0)>>2];
-  /* 0x040000 */ struct   mpd_ped_thres_apv_pair_struct Ped[8];
-  /* 0x060000 */ struct   mpd_ped_thres_apv_pair_struct Thres[8];
-  /* 0x080000 */ volatile uint32_t Used_Word_Ch_Pair[8];
-  /* 0x080020 */ volatile uint32_t FIFO_Status;
-  /* 0x080024 */ volatile uint32_t Sync_Status;
-  /* 0x080028 */ volatile uint32_t Missed_Trigger;
-  /* 0x08002C */          uint32_t blank1;
-  /* 0x080030 */ volatile uint32_t Readout_Config;
-  /* 0x080034 */ volatile uint32_t Trig_Gen_Config;
-  /* 0x080038 */ volatile uint32_t Logic_Thresholds;
-  /* 0x08003C */ volatile uint32_t Control;
-  /* 0x080040 */ volatile uint32_t Fir_Params[6]; // 12 taps
-  /* 0x080044 */
-};
-#endif /* OLDMAP */
 
 #define MPD_APVDAQ_TRIGCONFIG_ENABLE_MACH 0x00001000
 #define SOFTWARE_CLEAR_MASK	 0x00080000	// @ TRIG_CONFIG_ADDR
@@ -241,20 +182,6 @@ struct mpd_struct_csr
   volatile uint32_t revisionTime[4];
 };
 
-struct mpd_struct 
-{
-  /* 0x00000000 */ volatile uint32_t            SdramFifo[(0x01000000-0x0)>>2];
-  /* 0x01000000 */ volatile uint32_t            AdcConfig;
-  /* 0x01000004 */          uint32_t            blank1[(0x02000000-0x01000004)>>2];
-  /* 0x02000000 */ struct   mpd_i2c_control_struct  I2C;
-  /* 0x02000004 */          uint32_t            blank2[(0x03000000-0x02000020)>>2];
-  /* 0x03000000 */ struct   mpd_histogrammer_struct Histo;
-  /* 0x03010000 */          uint32_t            blank3[(0x04000000-0x03010000)>>2];
-  /* 0x04000000 */ struct   mpd_apv_daq_struct      ApvDaq;
-  /* 0x04080044 */          uint32_t            blank4[(0x05000000-0x04080044)>>2];
-  /* 0x05000000 */ volatile uint32_t            SdramChip0[(0x06000000-0x05000000)>>2];
-  /* 0x06000000 */ volatile uint32_t            SdramChip1[(0x07000000-0x06000000)>>2];
-};
 #endif /* OLDMAP */
 
 #define MPD_ADS5281_PAT_NONE    0
