@@ -111,8 +111,8 @@ struct mpd_struct
   /* 0x0012C */ volatile uint32_t channel_enable;
   /* 0x00130 */ volatile uint32_t zero_threshold;
   /* 0x00134 */ volatile uint32_t one_threshold;
-  /* 0x00138 */ volatile uint32_t fir_coefficients;
-  /* 0x0013C */          uint32_t blank1[(0x180-0x13C)>>2];
+  /* 0x00138 */ volatile uint32_t fir_coefficients[8];
+  /* 0x00158 */          uint32_t blank1[(0x180-0x158)>>2];
 
   /* 0x00180 */ volatile uint32_t a24_bar;
   /* 0x00184 */ volatile uint32_t multiboard_config;
@@ -508,4 +508,15 @@ int mpdGetNumberMPD();
 int  mpdReadPedThr(int id, std::string pname);
 #endif /* NOTDONE */
 
+int  mpdGetEBWordCount(int id);
+int  mpdGetEventCount(int id);
+int  mpdGetBlockCount(int id);
+int  mpdGetTriggerCount(int id);
+int  mpdGetTriggerReceivedCount(int id);
+int  mpdSetFiberTestMode(int id, int enable, int period);
+int  mpdSetSamplesPerEvent(int id, int samples);
+int  mpdSetBlocklevel(int id, int blocklevel);
+int  mpdSetBusyThreshold(int id, int thres);
+int  mpdSetLocalBusyThreshold(int id, int thres);
+int  mpdSetTriggerDelay(int id, int delay);
 #endif /* __MPDLIB__ */

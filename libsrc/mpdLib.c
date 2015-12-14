@@ -3323,3 +3323,241 @@ mpdReadPedThr(int id, std::string pname)
 }
 #endif /* NOTDONE */
 
+int
+mpdGetEBWordCount(int id)
+{
+  int rval=0;
+  if((MPDp[id]==NULL) || (id<0) || (id>21))
+    {
+      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
+	     __FUNCTION__,id);
+      return ERROR;
+    }
+
+  MPDLOCK;
+  rval = mpdRead32(&MPDp[id]->ob_status.evb_fifo_word_count);
+  MPDUNLOCK;
+
+  return rval;
+}
+
+int
+mpdGetEventCount(int id)
+{
+  int rval=0;
+  if((MPDp[id]==NULL) || (id<0) || (id>21))
+    {
+      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
+	     __FUNCTION__,id);
+      return ERROR;
+    }
+
+  MPDLOCK;
+  rval = mpdRead32(&MPDp[id]->ob_status.event_count);
+  MPDUNLOCK;
+
+  return rval;
+}
+
+int
+mpdGetBlockCount(int id)
+{
+  int rval=0;
+  if((MPDp[id]==NULL) || (id<0) || (id>21))
+    {
+      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
+	     __FUNCTION__,id);
+      return ERROR;
+    }
+
+  MPDLOCK;
+  rval = mpdRead32(&MPDp[id]->ob_status.block_count);
+  MPDUNLOCK;
+
+  return rval;
+}
+
+int
+mpdGetTriggerCount(int id)
+{
+  int rval=0;
+  if((MPDp[id]==NULL) || (id<0) || (id>21))
+    {
+      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
+	     __FUNCTION__,id);
+      return ERROR;
+    }
+
+  MPDLOCK;
+  rval = mpdRead32(&MPDp[id]->ob_status.trigger_count);
+  MPDUNLOCK;
+
+  return rval;
+}
+
+int
+mpdGetTriggerReceivedCount(int id)
+{
+  int rval=0;
+  if((MPDp[id]==NULL) || (id<0) || (id>21))
+    {
+      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
+	     __FUNCTION__,id);
+      return ERROR;
+    }
+
+  MPDLOCK;
+  rval = mpdRead32(&MPDp[id]->ob_status.incoming_trigger);
+  MPDUNLOCK;
+
+  return rval;
+}
+
+int
+mpdSetFiberTestMode(int id, int enable, int period)
+{
+  unsigned int data=0;
+  if((MPDp[id]==NULL) || (id<0) || (id>21))
+    {
+      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
+	     __FUNCTION__,id);
+      return ERROR;
+    }
+
+  if((period<0) || (period>0xff))
+    {
+      MPD_ERR("Invalid period (%d)",period);
+      return ERROR;
+    }
+
+
+  if(enable)
+    {
+      data |= (1<<8);
+
+      if(period)
+	data |= (period<<16);
+    }
+
+
+  MPDLOCK;
+  mpdWrite32(&MPDp[id]->io_config,data);
+  MPDUNLOCK;
+
+  return OK;
+}
+
+int
+mpdSetSamplesPerEvent(int id, int samples)
+{
+  if((MPDp[id]==NULL) || (id<0) || (id>21))
+    {
+      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
+	     __FUNCTION__,id);
+      return ERROR;
+    }
+
+  if((samples<0) || (samples>31))
+    {
+      MPD_ERR("Invalid samples (%d)",samples);
+      return ERROR;
+    }
+
+  MPDLOCK;
+  mpdWrite32(&MPDp[id]->sample_per_event,samples);
+  MPDUNLOCK;
+
+  return OK;
+}
+
+int
+mpdSetBlocklevel(int id, int blocklevel)
+{
+  if((MPDp[id]==NULL) || (id<0) || (id>21))
+    {
+      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
+	     __FUNCTION__,id);
+      return ERROR;
+    }
+
+  if((blocklevel<0) || (blocklevel>255))
+    {
+      MPD_ERR("Invalid blocklevel (%d)",blocklevel);
+      return ERROR;
+    }
+
+  MPDLOCK;
+  mpdWrite32(&MPDp[id]->event_per_block,blocklevel);
+  MPDUNLOCK;
+
+  return OK;
+}
+
+int
+mpdSetBusyThreshold(int id, int thres)
+{
+  if((MPDp[id]==NULL) || (id<0) || (id>21))
+    {
+      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
+	     __FUNCTION__,id);
+      return ERROR;
+    }
+
+  if((thres<0) || (thres>0xffff))
+    {
+      MPD_ERR("Invalid thres (%d)",thres);
+      return ERROR;
+    }
+
+  MPDLOCK;
+  mpdWrite32(&MPDp[id]->busy_thr,thres);
+  MPDUNLOCK;
+
+  return OK;
+}
+
+int
+mpdSetLocalBusyThreshold(int id, int thres)
+{
+  if((MPDp[id]==NULL) || (id<0) || (id>21))
+    {
+      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
+	     __FUNCTION__,id);
+      return ERROR;
+    }
+
+  if((thres<0) || (thres>0xffff))
+    {
+      MPD_ERR("Invalid thres (%d)",thres);
+      return ERROR;
+    }
+
+  MPDLOCK;
+  mpdWrite32(&MPDp[id]->busy_thr_local,thres);
+  MPDUNLOCK;
+
+  return OK;
+}
+
+int
+mpdSetTriggerDelay(int id, int delay)
+{
+  if((MPDp[id]==NULL) || (id<0) || (id>21))
+    {
+      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
+	     __FUNCTION__,id);
+      return ERROR;
+    }
+
+  if((delay<0) || (delay>0xffff))
+    {
+      MPD_ERR("Invalid delay (%d)",delay);
+      return ERROR;
+    }
+
+  MPDLOCK;
+  mpdWrite32(&MPDp[id]->trigger_delay,delay);
+  MPDUNLOCK;
+
+  return OK;
+}
