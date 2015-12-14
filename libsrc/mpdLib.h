@@ -48,7 +48,108 @@
 #define MPD_DBG(format, ...) {printf("%s: DEBUG: ",__FUNCTION__); printf(format, ## __VA_ARGS__);} 
 #define MPD_ERR(format, ...) {fprintf(stderr,"%s: ERROR: ",__FUNCTION__); fprintf(stderr,format, ## __VA_ARGS__);} 
 
+//////////////////////////////////////////////////////////////////////
+// NEW MAP
+//////////////////////////////////////////////////////////////////////
 
+struct output_buffer_struct
+{
+  /* 0x0200 */  volatile uint32_t evb_fifo_word_count;
+  /* 0x0204 */  volatile uint32_t event_count;
+  /* 0x0208 */  volatile uint32_t block_count;
+  /* 0x020C */  volatile uint32_t trigger_count;
+  /* 0x0210 */  volatile uint32_t missed_trigger;
+  /* 0x0214 */  volatile uint32_t incoming_trigger;
+  /* 0x0218 */  volatile uint32_t sdram_fifo_wr_addr;
+  /* 0x021C */  volatile uint32_t sdram_fifo_rd_addr;
+  /* 0x0220 */  volatile uint32_t sdram_flag_wc;
+  /* 0x0224 */  volatile uint32_t output_buffer_flag_wc;
+  /* 0x0228 */  volatile uint32_t output_buffer_rd_addr;
+  /* 0x022C */  volatile uint32_t output_buffer_wr_addr;
+};
+
+struct mpd_i2c_control_struct
+{
+  /* 0x0400 */ volatile uint32_t clock_prescaler_low;
+  /* 0x0404 */ volatile uint32_t clock_prescaler_high;
+  /* 0x0408 */ volatile uint32_t control;
+  /* 0x040C */ volatile uint32_t tx_rx;
+  /* 0x0410 */ volatile uint32_t comm_stat;
+  /* 0x0414 */          uint32_t blank[2]; 
+  /* 0x041C */ volatile uint32_t apv_reset;
+};
+
+struct mpd_channel_flags_struct
+{
+  /* 0x30000 */ volatile uint32_t used_word_ch_pair[16];
+  /* 0x30040 */ volatile uint32_t fifo_status;
+  /* 0x30044 */ volatile uint32_t sync_status;
+};
+
+struct mpd_histogrammer_struct
+{
+  /* 0x01000 */ volatile uint32_t csr;
+  /* 0x01004 */ volatile uint32_t count;
+};
+
+struct mpd_struct
+{
+  /* 0x00000 */ volatile uint32_t magic_value;
+  /* 0x00004 */ volatile uint32_t manuf_id;
+  /* 0x00008 */ volatile uint32_t board_id;
+  /* 0x0000C */ volatile uint32_t revision_id;
+  /* 0x00010 */ volatile uint32_t compile_time;
+  /* 0x00014 */          uint32_t blank0[(0x100-0x14)>>2];
+
+  /* 0x00100 */ volatile uint32_t reset_reg;
+  /* 0x00104 */ volatile uint32_t io_config;
+  /* 0x00108 */ volatile uint32_t sample_per_event;
+  /* 0x0010C */ volatile uint32_t event_per_block;
+  /* 0x00110 */ volatile uint32_t busy_thr;
+  /* 0x00114 */ volatile uint32_t busy_thr_local;
+  /* 0x00118 */ volatile uint32_t readout_config;
+  /* 0x0011C */ volatile uint32_t trigger_config;
+  /* 0x00120 */ volatile uint32_t trigger_delay;
+  /* 0x00124 */ volatile uint32_t sync_period;
+  /* 0x00128 */ volatile uint32_t marker_channel;
+  /* 0x0012C */ volatile uint32_t channel_enable;
+  /* 0x00130 */ volatile uint32_t zero_threshold;
+  /* 0x00134 */ volatile uint32_t one_threshold;
+  /* 0x00138 */ volatile uint32_t fir_coefficients;
+  /* 0x0013C */          uint32_t blank1[(0x180-0x13C)>>2];
+
+  /* 0x00180 */ volatile uint32_t a24_bar;
+  /* 0x00184 */ volatile uint32_t multiboard_config;
+  /* 0x00188 */ volatile uint32_t multiboard_add_low;
+  /* 0x0018C */ volatile uint32_t multiboard_add_high;
+  /* 0x00190 */ volatile uint32_t fiber_status_ctrl;
+  /* 0x00194 */ volatile uint32_t obuf_base_addr;
+  /* 0x00198 */ volatile uint32_t sdram_base_addr;
+  /* 0x0019C */ volatile uint32_t sdram_bank;
+
+  /* 0x00200 */ struct output_buffer_struct ob_status;
+  /* 0x00230 */          uint32_t blank2[(0x300-0x230)>>2];
+  /* 0x00300 */ volatile uint32_t adc_config;
+  /* 0x00380 */ volatile uint32_t serial_memory_if[4];
+  /* 0x00390 */ volatile uint32_t remote_update[4];
+  /* 0x00400 */ struct mpd_i2c_control_struct i2c;
+  /* 0x00420 */          uint32_t blank3[(0x1000-0x420)>>2];
+
+  /* 0x01000 */ struct mpd_histogrammer_struct histo[2];
+  /* 0x01010 */ volatile uint32_t blank4[(0x4000-0x1010)>>2];
+  /* 0x04000 */ volatile uint32_t histo_memory[2][(0x4000)>>2];
+
+  /* 0x10000 */ volatile uint32_t data_ch[16][(0x1000-0x0)>>2];
+  /* 0x30000 */ struct mpd_channel_flags_struct ch_flags;
+  /* 0x30048 */          uint32_t blank5[(0x34000-0x30048)>>2];
+  /* 0x34000 */ volatile uint32_t ped[16][(0x200)>>2];
+  /* 0x36000 */ volatile uint32_t thres[16][(0x200)>>2];
+
+};
+
+
+
+#ifdef OLDMAP
 struct mpd_i2c_control_struct
 {
   volatile uint32_t Clock_Prescaler_low;///* 0x0000 */
@@ -61,6 +162,7 @@ struct mpd_i2c_control_struct
   volatile uint32_t ApvReset;///* 0x001C */
   // /* 0x0020 */
 };
+#endif /* OLDMAP */
 
 #define MPD_I2C_CONTROL_ENABLE_CORE  0x80
 
@@ -74,6 +176,7 @@ struct mpd_i2c_control_struct
 #define MPD_I2C_APVRESET_ASYNC_SET   0x00
 #define MPD_I2C_APVRESET_ASYNC_CLEAR 0x01
 
+#ifdef OLDMAP
 struct mpd_hist_block_struct
 {
   /* 0x0000 */ volatile uint32_t Memory[(0x4000-0x0)>>2];
@@ -113,6 +216,7 @@ struct mpd_apv_daq_struct
   /* 0x080040 */ volatile uint32_t Fir_Params[6]; // 12 taps
   /* 0x080044 */
 };
+#endif /* OLDMAP */
 
 #define MPD_APVDAQ_TRIGCONFIG_ENABLE_MACH 0x00001000
 #define SOFTWARE_CLEAR_MASK	 0x00080000	// @ TRIG_CONFIG_ADDR
@@ -125,6 +229,7 @@ struct mpd_apv_daq_struct
 #define MPD_IN_P0    0
 #define MPD_IN_FRONT 1
 
+#ifdef OLDMAP
 struct mpd_struct_csr
 {
   uint32_t blank0[7];
@@ -150,6 +255,7 @@ struct mpd_struct
   /* 0x05000000 */ volatile uint32_t            SdramChip0[(0x06000000-0x05000000)>>2];
   /* 0x06000000 */ volatile uint32_t            SdramChip1[(0x07000000-0x06000000)>>2];
 };
+#endif /* OLDMAP */
 
 #define MPD_ADS5281_PAT_NONE    0
 #define MPD_ADS5281_PAT_SYNC    1
