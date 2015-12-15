@@ -51,7 +51,9 @@ int h,i,j,k,kk,m, evt=0;
   int acq_mode = 1;
   int n_event=10;
 
-#define MPD_TIMEOUT 100
+  int vint_data;
+  uint32_t v_data;
+#define MPD_TIMEOUT 10
 
 //Output file TAG
 #define VERSION_TAG 0xE0000000
@@ -283,7 +285,7 @@ rocEnd()
 
   tiStatus(0);
   //mpd close
-  
+    mpdTRIG_Disable(i);
   //mpd close
   printf("rocEnd: Ended after %d blocks\n",tiGetIntCount());
   
@@ -324,7 +326,7 @@ rocTrigger(int arg)
 #endif
 /* Readout MPD */
     // open out file
-  mpdTRIG_Disable(i);
+
  BANKOPEN(10,BT_UI4,0);
  
   rtout=0;
@@ -337,10 +339,8 @@ rocTrigger(int arg)
   rdone = 1;
 
   for (kk=0;kk<fnMPD;kk++) { // only active mpd set
-    i = mpdSlot(kk);
-
+     i = mpdSlot(kk);
     do { // wait for data in MPD
-      mpdTRIG_PauseEnable(i,1000);
       rdone = mpdFIFO_ReadAll(i,&rtout,&error_count);
 		  
       printf(" Rdone/Tout/error = %d %d %d\n", rdone, rtout, error_count);
@@ -350,52 +350,54 @@ rocTrigger(int arg)
 	  printf("%s: ERROR in readout, clear fifo\n",__FUNCTION__);
 	  mpdFIFO_ClearAll(i);
 	  mpdTRIG_Enable(i);
-	}
+	  }
+    
+    if(rdone)
+      { // data need to be written on file
 
-    if(rdone){ // data need to be written on file
+	//CODA buf_MPDNumber
+	*dma_dabufp=LSWAP(i |MPD_TAG);
+	dma_dabufp++;		
+	//CODA buf_MPDNumber
 
-       	  ////CODA buf
-      *dma_dabufp=LSWAP(i |MPD_TAG);
-	  dma_dabufp++;		
-	  ////CODA buf
-
-	  for (j=0; j < mpdGetNumberAPV(i); j++) { // loop on APV (ADC channels)
-
-	
-	    ////CODA buf
-	    *dma_dabufp=LSWAP(mpdApvGetAdc(i,j) | ADC_TAG);
+	for (j=0; j < mpdGetNumberAPV(i); j++) // loop on APV (ADC channels)
+	  { 
+	    //CODA buf_apvNumber
+	    v_data = mpdApvGetAdc(i,j);
+	    *dma_dabufp=LSWAP(v_data| ADC_TAG);
 	    dma_dabufp++;		
-	  ////CODA buf
+	    //CODA buf_apvNumber
 	    k=0; // buffer element index
-	    for (h=0; h<mpdApvGetBufferSample(i,j); h++) { // loop on samples
-	      e_size = mpdApvGetEventSize(i,j);
-	      e_head0 = mpdApvGetBufferElement(i, j, k);
-	      k++;
-	      e_head = ((e_head0 & 0xfff) << 4) | (mpdApvGetAdc(i,j) & 0xf);
-	      ////CODA buf
-	      *dma_dabufp=LSWAP(e_head0 | HEADER_TAG);
-	      dma_dabufp++;		
-	      ////CODA buf
-
-	      for (m=0;m<e_size-2;m++) {
-		e_data32[m] = 0x80000 | ((i<<12) & 0x7F000) | (mpdApvGetBufferElement(i,j,k) & 0xfff);
-		////CODA buf
-		*dma_dabufp=LSWAP((mpdApvGetBufferElement(i,j,k) & 0xfff) | DATA_TAG);
-	      dma_dabufp++;		
-	      ////CODA buf
-k++;
+	    v_data=mpdApvGetBufferSample(i,j);
+	    for (h=0; h<v_data; h++)// loop on samples 
+	      { e_size=130;
+		e_head0 = mpdApvGetBufferElement(i, j, k);
+		k++;
+		//CODA buf_header
+		*dma_dabufp=LSWAP(e_head0 | HEADER_TAG);
+		dma_dabufp++;		
+		//CODA buf_header
+		for (m=0;m<e_size-2;m++)
+		  {
+		    //CODA buf_128Channel
+		    v_data=mpdApvGetBufferElement(i,j,k);
+		    *dma_dabufp=LSWAP((v_data & 0xfff) | DATA_TAG);
+		    dma_dabufp++;		
+		    //CODA buf_128Channel
+		    k++;
+		  }
+		// CODA buf_trailer_TSNumber
+		v_data=mpdApvGetBufferElement(i,j,k);
+		*dma_dabufp=LSWAP((v_data & 0xfff) | TRAILER_TAG);
+		dma_dabufp++;
+		// CODA buf_trailer_TSNumber
+		k++;
 	      }
-	      // fwire e_data32 (e_size-2)
-	      e_trai = 0x100000 | ((i & 0x1F) << 12) | (mpdApvGetBufferElement(i,j,k)& 0xfff);
-	      e_eblo = 0x180000 | (e_size & 0xff);
-	      k++;
-	      // fwrite e_trai // trailer
-	      // fwrite e_eblo // end sample block
-	    }
 	    mpdApvShiftDataBuffer(i,j,k);
 	  } // end loop on apv
 	  
 	}
+    
     evt++;
       }
  BANKCLOSE;
