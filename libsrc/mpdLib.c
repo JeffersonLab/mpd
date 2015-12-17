@@ -104,11 +104,12 @@ unsigned short fApvEnableMask[(MPD_MAX_BOARDS)+1];
 int nApv[(MPD_MAX_BOARDS)+1];
 extern GEF_VME_BUS_HDL vmeHdl;
 static int mpdSSPMode=0;
-
+static uint32_t mpdSSPFiberMask[(MPD_MAX_BOARDS)+1];
+static int mpdSSPFiberMap[(MPD_MAX_BOARDS)+1];
 
 /* */
 #define MPD_VERSION_MASK 0xf00f
-#define MPD_SUPPORTED_CTRL_FIRMWARE 0x4003
+#define MPD_SUPPORTED_CTRL_FIRMWARE 0x4
 
 /* Internal APV register addresses */
 static const uint8_t ipre_addr = 0x20;
@@ -137,13 +138,19 @@ static const uint8_t error_addr = 0x00;
 /*static*/ int  I2C_SendStop(int id);
 /*static*/ int  I2C_SendNack(int id);
 
+extern uint32_t sspMpdReadReg(int id, int impd, unsigned int reg);
+extern int sspMpdWriteReg(int id, int impd, unsigned int reg, unsigned int value);
+
 uint32_t
 mpdRead32(volatile uint32_t *reg)
 {
   uint32_t read=0;
 
   if(mpdSSPMode)
-    read = vmeBusRead32(0x09,(uint32_t)reg); // TO BE DEFINED
+    {
+      uint32_t newreg = (uint32_t)reg-(uint32_t)MPDp[0];
+      read =sspMpdReadReg(0,0,newreg);
+    }
   else
     read = vmeRead32(reg);
 
@@ -154,7 +161,10 @@ void
 mpdWrite32(volatile uint32_t *reg, uint32_t val)
 {
   if(mpdSSPMode)
-    vmeBusWrite32(0x09,(uint32_t)reg, val); // TO BE DEFINED
+    {
+      uint32_t newreg = (uint32_t)reg-(uint32_t)MPDp[0];
+      sspMpdWriteReg(0,0,newreg,val);
+    }
   else
     vmeWrite32(reg, val);
 }
@@ -166,15 +176,13 @@ mpdWrite32(volatile uint32_t *reg, uint32_t val)
  * @defgroup IntPoll Interrupt/Polling
  * @defgroup Deprec Deprecated - To be removed
  */
-int
-mpdSetSSPMode_preInit(int enable)
-{
-  if(enable)
-    mpdSSPMode=1;
-  else
-    mpdSSPMode=0;
 
-  return mpdSSPMode;
+int
+mpdSetSSPFiberMap_preInit(int id, int *ssp, int nmpd)
+{
+  
+
+  return OK;
 }
 
 /**
@@ -183,6 +191,7 @@ mpdSetSSPMode_preInit(int enable)
  *
  * @param addr
  *  - A24 VME Address of the MPD
+ *  - If using SSP mode, this will represent the mask of fiber connections to use.
  * @param addr_inc
  *  - Amount to increment addr to find the next MPD
  * @param nmpd
@@ -216,87 +225,121 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
   int boardID = 0;
   int maxSlot = 1;
   int minSlot = 21;
-  uint32_t magic_const = 0x43524F4D; 
+  int fiber_number=0;
+  uint32_t magic_const = MPD_MAGIC_VALUE; 
   uint32_t rdata, laddr, laddr_inc;
-  volatile struct mpd_struct *mpd;
+  volatile struct mpd_struct *mpd=NULL;
   int noBoardInit=0;
   int useList=0;
   int noFirmwareCheck=0;
-
-
-  printf("%s: start\n",__FUNCTION__);
+  int noConfigFileCheck=0;
 
   /* Check if we are to exit when pointers are setup */
-  noBoardInit=(iFlag&MPD_INIT_SKIP)>>16;
+  noBoardInit=(iFlag&MPD_INIT_SKIP)?1:0;
   
   /* Check if we're initializing using a list */
-  useList=(iFlag&MPD_INIT_USE_ADDRLIST)>>17;
+  useList=(iFlag&MPD_INIT_USE_ADDRLIST)?1:0;
   
   /* Are we skipping the firmware check? */
-  noFirmwareCheck=(iFlag&MPD_INIT_SKIP_FIRMWARE_CHECK)>>18;
+  noFirmwareCheck=(iFlag&MPD_INIT_SKIP_FIRMWARE_CHECK)?1:0;
+
+  /* Are we using the SSP to access the MPD(s)? */
+  mpdSSPMode=(iFlag&MPD_INIT_SSP_MODE)?1:0;
   
-  /* Check for valid address */
-  if(addr==0) 
-    {
-      printf("mpdInit: ERROR: Must specify a Bus (VME-based A24) address for MPD 0\n");
-      return(ERROR);
-    }
-  else if(addr > 0x00ffffff) 
-    { /* A24 Addressing */
-      printf("mpdInit: ERROR: A32 Addressing not allowed for MPD configuration space\n");
-      return(ERROR);
+  /* Are we skipping the config file check? */
+  noConfigFileCheck=(iFlag&MPD_INIT_NO_CONFIG_FILE_CHECK)?1:0;
+  
+
+  if(mpdSSPMode)
+    { // SSP Mode
+      mpdSSPFiberMask[0] = addr;
+      MPD_MSG("Using Fibermask (0x%08x) scan for MPDs\n",mpdSSPFiberMask[0]);
     }
   else
-    { /* A24 Addressing */
-      if( ((addr_inc==0)||(nmpd==0)) && (useList==0) )
-	nmpd = 1; /* assume only one MPD to initialize */
-      
-      /* get the MPD address */
-#ifdef VXWORKS
-      res = sysBusToLocalAdrs(0x39,(char *)addr,(char **)&laddr);
-#else
-      res = vmeBusToLocalAdrs(0x39,(char *)addr,(char **)&laddr);
-#endif
-      if (res != 0) 
+    { // VME Mode
+      /* Check for valid address */
+      if(addr==0) 
 	{
-#ifdef VXWORKS
-	  printf("mpdInit: ERROR in sysBusToLocalAdrs(0x39,0x%x,&laddr_csr) \n",addr);
-#else
-	  printf("mpdInit: ERROR in vmeBusToLocalAdrs(0x39,0x%x,&laddr_csr) \n",addr);
-#endif
+	  MPD_ERR("Must specify a Bus (VME-based A24) address for MPD 0\n");
 	  return(ERROR);
 	}
+      else if(addr > 0x00ffffff) 
+	{ /* A24 Addressing */
+	  MPD_ERR("A32 Addressing not allowed for MPD configuration space\n");
+	  return(ERROR);
+	}
+      else
+	{ /* A24 Addressing */
+	  if( ((addr_inc==0)||(nmpd==0)) && (useList==0) )
+	    nmpd = 1; /* assume only one MPD to initialize */
       
-            mpdA24Offset = laddr - addr;
+	  /* get the MPD address */
+#ifdef VXWORKS
+	  res = sysBusToLocalAdrs(0x39,(char *)addr,(char **)&laddr);
+#else
+	  res = vmeBusToLocalAdrs(0x39,(char *)addr,(char **)&laddr);
+#endif
+	  if (res != 0) 
+	    {
+#ifdef VXWORKS
+	      MPD_ERR("ERROR in sysBusToLocalAdrs(0x39,0x%x,&laddr_csr) \n",addr);
+#else
+	      MPD_ERR("ERROR in vmeBusToLocalAdrs(0x39,0x%x,&laddr_csr) \n",addr);
+#endif
+	      return(ERROR);
+	    }
+      
+	  mpdA24Offset = laddr - addr;
+	}
+      printf("%s: A24 mapping: VME addr=0x%x -> Local 0x%x\n", __FUNCTION__, addr, laddr);
     }
 
-  printf("%s: A24 mapping: VME addr=0x%x -> Local 0x%x\n", __FUNCTION__, addr, laddr);
   impd = 0;
   impd_disc = 0;
+
   for (ii=0;ii<nmpd;ii++) 
     {
+      errFlag = 0;
 
-      printf("%s: Looking at MPD in slot %d\n",__FUNCTION__,ii);
-      if(useList==1)
+      if(mpdSSPMode)
 	{
-	  laddr_inc = mpdAddrList[ii] + mpdA24Offset; // not tested yet (EC)
+	  rdata = mpdRead32(&mpd->magic_value);
+	  res=1;
 	}
       else
 	{
-	  laddr_inc = laddr +ii*addr_inc;
-	}
-      mpd = (struct mpd_struct *) laddr_inc;
-      
-      // #ifdef NOTSURE
-      /* Check if Board exists at that address */
-
-      errFlag = 0;
+	  MPD_MSG("Looking at MPD in slot %d\n",ii);
+	  if(useList==1)
+	    {
+	      laddr_inc = mpdAddrList[ii] + mpdA24Offset; // not tested yet (EC)
+	    }
+	  else
+	    {
+	      laddr_inc = laddr +ii*addr_inc;
+	    }
+	  mpd = (struct mpd_struct *) laddr_inc;
+	  
 #ifdef VXWORKS
-      res = vxMemProbe((char *) mpd->magic_value,VX_READ,4,(char *)&rdata);
+	  res = vxMemProbe((char *) mpd->magic_value,VX_READ,4,(char *)&rdata);
 #else
-      res = vmeMemProbe((char *) &mpd->magic_value,4,(char *) &rdata);
+	  res = vmeMemProbe((char *) &mpd->magic_value,4,(char *) &rdata);
 #endif
-      
+	  if((res < 0) || (rdata=-1))
+	    {
+	      /* Turn off fiber mode, and try again */
+	      MPD_DBG("Try turning off fiber mode\n");
+	      mpd->fiber_status_ctrl = 0;
+	    }
+
+#ifdef VXWORKS
+	  res = vxMemProbe((char *) mpd->magic_value,VX_READ,4,(char *)&rdata);
+#else
+	  res = vmeMemProbe((char *) &mpd->magic_value,4,(char *) &rdata);
+#endif
+	}
+
+
+
       if(res < 0) 
 	{
 #ifdef VXWORKS
@@ -306,36 +349,36 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
 		 (UINT32) addr+ii*addr_inc, (UINT32) mpd);
 #endif
 	  errFlag = 1;
-	  break;
+	  continue;
 	}
-      else 
+
+      if (rdata != magic_const) 
 	{
-	  if (rdata != magic_const) 
-	    {
-	      printf("%s: WARN: for board at 0x%x, invalid data code 0x%x (expected 0x%x)\n",
-		     __FUNCTION__,
-		     (UINT32) mpd - mpdA24Offset, rdata, magic_const);
-	      errFlag = 2;
-	      break;
-	    }
+	  printf("%s: WARN: for board at 0x%x, invalid data code 0x%x (expected 0x%x)\n",
+		 __FUNCTION__,
+		 (UINT32) mpd - mpdA24Offset, rdata, magic_const);
+	  errFlag = 2;
+	  continue;
 	}
       
-      if (errFlag>0) { continue; } 
       // discovered new board
       impd_disc++;
 
-      boardID=ii;
+      if(mpdSSPMode)
+	boardID=ii;
+      else
+	boardID=mpdRead32(&mpd->a24_bar)>>5;
       
       if((boardID < 0)||(boardID >21)) 
 	{
-	  printf("%s: ERROR: For Board at 0x%x,  Slot number is not in range: %d\n",
-		 __FUNCTION__,(UINT32) mpd - mpdA24Offset, boardID);
+	  MPD_ERR("For Board at 0x%x,  Slot number is not in range: %d\n",
+		 (UINT32) mpd - mpdA24Offset, boardID);
 	  continue;
 	}
 
 
       /* read firmware revision */
-      rdata = vmeRead32( &mpd->revision_id);
+      rdata = mpdRead32(&mpd->revision_id);
 
       printf(" MPD Slot %d - Firmware Revision ID = 0x%x\n", boardID, rdata);
 
@@ -345,8 +388,8 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
 	  // Check FPGA firmware version 
 	  if( (rdata&MPD_VERSION_MASK) < MPD_SUPPORTED_CTRL_FIRMWARE )
 	    {
-	      printf("%s: ERROR: Slot %2d: Control FPGA Firmware (0x%02x) not supported by this driver.\n",
-		     __FUNCTION__,boardID, rdata & MPD_VERSION_MASK);
+	      MPD_ERR("Slot %2d: Control FPGA Firmware (0x%02x) not supported by this driver.\n",
+		     boardID, rdata & MPD_VERSION_MASK);
 	      printf("\tUpdate to 0x%02x to use this driver.\n",MPD_SUPPORTED_CTRL_FIRMWARE);
 	      continue;
 	    }
@@ -366,36 +409,42 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
       fMpd[boardID].FpgaRevision = rdata;
 
       /* time revision */
-      rdata = vmeRead32(&mpd->compile_time);
+      rdata = mpdRead32(&mpd->compile_time);
 	
       fMpd[boardID].FpgaCompileTime = rdata;
-      printf(" MPD Slot %d - Firmware Revision Time: %d (s)\n", boardID, fMpd[boardID].FpgaCompileTime);
+      printf(" MPD Slot %d - Firmware Revision Time: %s\n", 
+	     boardID, ctime((const time_t *)&fMpd[boardID].FpgaCompileTime));
 
-      // set it, if it is presents in config file
-      if (mpdGetNumberAPV(boardID)<=0) 
-	{ // not in config file (to be improved)
-	  printf(" -- MPD in slot %d is NOT in config file, drop it\n",boardID);
-	  continue;
+      if(!noConfigFileCheck)
+	{
+	  // set it, if it is presents in config file
+	  if (mpdGetNumberAPV(boardID)<=0) 
+	    { // not in config file (to be improved)
+	      printf(" -- MPD in slot %d is NOT in config file, drop it\n",boardID);
+	      continue;
+	    }
+	  printf(" ++ MPD in slot %d is in config file, INIT IT\n",boardID);
 	}
-      printf(" ++ MPD in slot %d is in config file, INIT IT\n",boardID);
-      // MPDp[boardID] = (struct mpd_struct *)(laddr_inc);
-      //	  mpdRev[boardID] = rdata&MPD_VERSION_MASK;
-      //	  mpdProcRev[boardID] = proc_version;
+
       mpdID[impd] = boardID; 
+
       if(boardID >= maxSlot) maxSlot = boardID;
       if(boardID <= minSlot) minSlot = boardID;
       
+      MPDp[boardID] = (struct mpd_struct *)(laddr);
 
-      //      impd++;
-      //    } // loop on mpd slots
-  
-
-      MPDp[boardID] = (struct mpd_struct *)(laddr); // MPD A32 memory map
-
-      printf("Initialized MPD %2d  Slot #%2d at VME address 0x%08x (local 0x%08x) \n",
-	     impd, boardID,
-	     (UINT32) MPDp[boardID]-mpdA24Offset, // ??
-	     (UINT32) MPDp[boardID]);
+      if(mpdSSPMode)
+	{
+	  printf("Initialized MPD %2d at SSP Fiber Connection %d\n",
+		 impd, fiber_number);
+	}
+      else
+	{
+	  printf("Initialized MPD %2d  Slot #%2d at VME address 0x%08x (local 0x%08x) \n",
+		 impd, boardID,
+		 (UINT32) MPDp[boardID]-mpdA24Offset,
+		 (UINT32) MPDp[boardID]);
+	}
 
       if(!noBoardInit)
 	{
@@ -443,6 +492,7 @@ int
 mpdCheckAddresses(int id)
 {
   uint32_t offset=0, expected=0, base=0;
+  int rval=OK;
   
   printf("%s:\n\t ---------- Checking mpd address space ---------- \n",__FUNCTION__);
 
@@ -451,71 +501,104 @@ mpdCheckAddresses(int id)
   offset = ((uint32_t) &MPDp[id]->reset_reg) - base;
   expected = 0x100;
   if(offset != expected)
-    printf("%s: ERROR MPDp[id]->reset_reg \n not at offset = 0x%x (@ 0x%x)\n",
-	   __FUNCTION__,expected,offset);
+    {
+      MPD_ERR(" MPDp[id]->reset_reg \n not at offset = 0x%x (@ 0x%x)\n",
+	     expected,offset);
+      rval = ERROR;
+    }
 
   offset = ((uint32_t) &MPDp[id]->a24_bar) - base;
   expected = 0x180;
   if(offset != expected)
-    printf("%s: ERROR MPDp[id]->a24_bar \n not at offset = 0x%x (@ 0x%x)\n",
-	   __FUNCTION__,expected,offset);
+    {
+      MPD_ERR(" MPDp[id]->a24_bar \n not at offset = 0x%x (@ 0x%x)\n",
+	     expected,offset);
+      rval = ERROR;
+    }
 
   offset = ((uint32_t) &MPDp[id]->ob_status.evb_fifo_word_count) - base;
   expected = 0x200;
   if(offset != expected)
-    printf("%s: ERROR MPDp[id]->ob_status.evb_fifo_word_count \n not at offset = 0x%x (@ 0x%x)\n",
-	   __FUNCTION__,expected,offset);
+    {
+      MPD_ERR(" MPDp[id]->ob_status.evb_fifo_word_count \n not at offset = 0x%x (@ 0x%x)\n",
+	     expected,offset);
+      rval = ERROR;
+    }
 
   offset = ((uint32_t) &MPDp[id]->adc_config) - base;
   expected = 0x300;
   if(offset != expected)
-    printf("%s: ERROR MPDp[id]->adc_config \n not at offset = 0x%x (@ 0x%x)\n",
-	   __FUNCTION__,expected,offset);
+    {
+      MPD_ERR(" MPDp[id]->adc_config \n not at offset = 0x%x (@ 0x%x)\n",
+	     expected,offset);
+      rval = ERROR;
+    }
 
   offset = ((uint32_t) &MPDp[id]->i2c.clock_prescaler_low) - base;
   expected = 0x400;
   if(offset != expected)
-    printf("%s: ERROR MPDp[id]->i2c.clock_prescaler_low \n not at offset = 0x%x (@ 0x%x)\n",
-	   __FUNCTION__,expected,offset);
+    {
+      MPD_ERR(" MPDp[id]->i2c.clock_prescaler_low \n not at offset = 0x%x (@ 0x%x)\n",
+	     expected,offset);
+      rval = ERROR;
+    }
 
   offset = ((uint32_t) &MPDp[id]->histo[0].csr) - base;
   expected = 0x1000;
   if(offset != expected)
-    printf("%s: ERROR MPDp[id]->histo[0].csr \n not at offset = 0x%x (@ 0x%x)\n",
-	   __FUNCTION__,expected,offset);
+    {
+      MPD_ERR(" MPDp[id]->histo[0].csr \n not at offset = 0x%x (@ 0x%x)\n",
+	     expected,offset);
+      rval = ERROR;
+    }
 
   offset = ((uint32_t) &MPDp[id]->histo_memory[0][0]) - base;
   expected = 0x4000;
   if(offset != expected)
-    printf("%s: ERROR MPDp[id]->histo_memory[0][0] \n not at offset = 0x%x (@ 0x%x)\n",
-	   __FUNCTION__,expected,offset);
+    {
+      MPD_ERR(" MPDp[id]->histo_memory[0][0] \n not at offset = 0x%x (@ 0x%x)\n",
+	     expected,offset);
+      rval = ERROR;
+    }
 
   offset = ((uint32_t) &MPDp[id]->data_ch[0][0]) - base;
   expected = 0x10000;
   if(offset != expected)
-    printf("%s: ERROR MPDp[id]->data_ch[0][0] \n not at offset = 0x%x (@ 0x%x)\n",
-	   __FUNCTION__,expected,offset);
+    {
+      MPD_ERR(" MPDp[id]->data_ch[0][0] \n not at offset = 0x%x (@ 0x%x)\n",
+	     expected,offset);
+      rval = ERROR;
+    }
 
   offset = ((uint32_t) &MPDp[id]->ch_flags.used_word_ch_pair[0]) - base;
   expected = 0x30000;
   if(offset != expected)
-    printf("%s: ERROR MPDp[id]->ch_flags.used_word_ch_pair[0] \n not at offset = 0x%x (@ 0x%x)\n",
-	   __FUNCTION__,expected,offset);
+    {
+      MPD_ERR(" MPDp[id]->ch_flags.used_word_ch_pair[0] \n not at offset = 0x%x (@ 0x%x)\n",
+	     expected,offset);
+      rval = ERROR;
+    }
 
   offset = ((uint32_t) &MPDp[id]->ped[0][0]) - base;
   expected = 0x34000;
   if(offset != expected)
-    printf("%s: ERROR MPDp[id]->ped[0][0] \n not at offset = 0x%x (@ 0x%x)\n",
-	   __FUNCTION__,expected,offset);
+    {
+      MPD_ERR(" MPDp[id]->ped[0][0] \n not at offset = 0x%x (@ 0x%x)\n",
+	     expected,offset);
+      rval = ERROR;
+    }
 
   offset = ((uint32_t) &MPDp[id]->thres[0][0]) - base;
   expected = 0x36000;
   if(offset != expected)
-    printf("%s: ERROR MPDp[id]->thres[0][0] \n not at offset = 0x%x (@ 0x%x)\n",
-	   __FUNCTION__,expected,offset);
+    {
+      MPD_ERR(" MPDp[id]->thres[0][0] \n not at offset = 0x%x (@ 0x%x)\n",
+	     expected,offset);
+      rval = ERROR;
+    }
 
 
-  return OK;
+  return rval;
 }
 
 /**
@@ -534,8 +617,8 @@ mpdSlot(uint32_t i)
   /*
   if(i>=nmpd)
     {
-      printf("%s: ERROR: Index (%d) >= MPDs initialized (%d).\n",
-	     __FUNCTION__,i,nmpd);
+      MPD_ERR("Index (%d) >= MPDs initialized (%d).\n",
+	     i,nmpd);
       return ERROR;
     }
   */
@@ -675,8 +758,8 @@ mpdLM95235_Read(int id, double *core_t, double *air_t)
   // if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -725,8 +808,8 @@ mpdI2C_ApvReset(int id)
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -748,8 +831,8 @@ mpdI2C_Init(int id)
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
   
@@ -802,8 +885,8 @@ mpdI2C_ByteWrite(int id, uint8_t dev_addr, uint8_t int_addr,
   // if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
   
@@ -857,8 +940,8 @@ mpdI2C_ByteRead(int id, uint8_t dev_addr, uint8_t int_addr,
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
   
@@ -885,8 +968,8 @@ mpdI2C_ByteWriteRead(int id, uint8_t dev_addr, uint8_t int_addr,
   int success, i;
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
   
@@ -911,8 +994,8 @@ mpdI2C_ByteRead1(int id, uint8_t dev_addr, uint8_t *data)
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -937,8 +1020,8 @@ I2C_SendByte(int id, uint8_t byteval, int start)
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -984,8 +1067,8 @@ I2C_ReceiveByte(int id, uint8_t *byteval)
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -1022,8 +1105,8 @@ I2C_SendStop(int id)
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -1040,8 +1123,8 @@ I2C_SendNack(int id)
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
   
@@ -1116,8 +1199,8 @@ mpdAPV_Reset101(int id)
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -1155,8 +1238,8 @@ mpdAPV_Try(int id, uint8_t apv_addr) // i2c addr
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -1203,8 +1286,8 @@ mpdAPV_Scan(int id)
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
   
@@ -1219,7 +1302,7 @@ mpdAPV_Scan(int id)
 		 __FUNCTION__, id, iapv, id);
 	}
     }
-  printf("%s: MPD %d Blind scan done\n",__FUNCTION__,id);
+  MPD_MSG("MPD %d Blind scan done\n",id);
 
   mpdResetApvEnableMask(id);
 
@@ -1259,8 +1342,8 @@ mpdAPV_Write(int id, uint8_t apv_addr, uint8_t reg_addr, uint8_t val)
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -1277,8 +1360,8 @@ mpdAPV_Read(int id, uint8_t apv_addr, uint8_t reg_addr, uint8_t *val)
   if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -1307,8 +1390,8 @@ mpdAPV_Config(int id, int apv_index)
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -1395,16 +1478,15 @@ mpdAPV_Config(int id, int apv_index)
 	  break;
       
 	default:
-	  printf("%s: ERROR: This message should not appear, please check code consistency",
-		 __FUNCTION__);
+	  MPD_ERR("This message should not appear, please check code consistency");
 	}
 
       usleep(300);
       success = mpdAPV_Write(id, apv_addr, reg_addr, val);
 	
       if (success != OK) {
-	printf("%s: ERROR: I2C Bus Error: i/addr/reg/val/err %d/ %d 0x%x 0x%x 0x%x",
-	       __FUNCTION__, i, apv_addr, reg_addr, val, success);
+	MPD_ERR("I2C Bus Error: i/addr/reg/val/err %d/ %d 0x%x 0x%x 0x%x",
+	        i, apv_addr, reg_addr, val, success);
 	return success;
       }
     } // end loop
@@ -1433,8 +1515,8 @@ mpdApvGetPeakMode(int id)
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -1453,8 +1535,8 @@ mpdAddApv(int id, ApvParameters v)
     if(id==0) id=mpdID[0];
     if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-    printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-    __FUNCTION__,id);
+    MPD_ERR("MPD in slot %d is not initialized.\n",
+    id);
     return;
     }
   */
@@ -1481,8 +1563,8 @@ mpdApvGetFrequency(int id)
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -1506,8 +1588,8 @@ mpdApvGetMaxLatency(int id)
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
   
@@ -1641,8 +1723,8 @@ mpdArmReadout(int id)
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -1668,8 +1750,8 @@ mpdTRIG_BitSet(int id)
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 /*
@@ -1695,8 +1777,8 @@ mpdTRIG_BitClear(int id)
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 /*
@@ -1727,8 +1809,8 @@ mpdTRIG_Enable(int id)
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -1775,8 +1857,8 @@ mpdTRIG_Disable(int id)
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
   
@@ -1807,8 +1889,8 @@ mpdTRIG_GetMissed(int id, uint32_t *missed)
   if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
   
@@ -1831,8 +1913,8 @@ mpdDELAY25_Set(int id, int apv1_delay, int apv2_delay)
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -1917,8 +1999,8 @@ mpdADS5281_Set(int id, int adc, uint32_t val)
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -1966,8 +2048,8 @@ mpdADS5281_InvertChannels(int id, int adc)	/* adc == 0, 1 */
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -1982,8 +2064,8 @@ mpdADS5281_NonInvertChannels(int id, int adc)	/* adc == 0, 1 */
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -2001,8 +2083,8 @@ mpdADS5281_SetParameters(int id, int adc)	/* adc == 0, 1 */
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -2026,8 +2108,8 @@ mpdADS5281_Normal(int id, int adc)	/* adc == 0, 1 */
   if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -2045,8 +2127,8 @@ mpdADS5281_Sync(int id, int adc)	/* adc == 0, 1 */
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -2064,8 +2146,8 @@ mpdADS5281_Deskew(int id, int adc)	/* adc == 0, 1 */
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -2083,8 +2165,8 @@ mpdADS5281_Ramp(int id, int adc)	/* adc == 0, 1 */
   if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -2106,8 +2188,8 @@ mpdADS5281_SetGain(int id, int adc,
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -2137,8 +2219,8 @@ mpdHISTO_Clear(int id, int ch, int val)	/* ch == 0, 15 */
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -2176,8 +2258,8 @@ mpdHISTO_Start(int id, int ch)	/* ch == 0, 15 */
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -2201,8 +2283,8 @@ mpdHISTO_Stop(int id, int ch)	/* ch == 0, 15 */
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -2225,8 +2307,8 @@ mpdHISTO_GetIntegral(int id, int ch, uint32_t *integral)	/* ch == 0, 15 */
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -2248,8 +2330,8 @@ mpdHISTO_Read(int id, int ch, uint32_t *histogram)	/* ch == 0, 15; uint32_t hist
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -2301,8 +2383,8 @@ mpdFIFO_ReadSingle(int id,
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
   
@@ -2427,8 +2509,8 @@ mpdFIFO_ReadSingle0(int id, int channel, int blen, uint32_t *event, int *nread)
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -2484,8 +2566,8 @@ mpdFIFO_Samples(int id,
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -2527,8 +2609,8 @@ mpdFIFO_IsSynced(int id, int channel, int *synced)
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -2559,8 +2641,8 @@ mpdFIFO_AllSynced(int id, int *synced)
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -2584,8 +2666,8 @@ mpdFIFO_HasError(int id, int channel, int *error)
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -2613,8 +2695,8 @@ mpdFIFO_GetAllFlags(int id, uint16_t *full, uint16_t *empty)
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -2638,8 +2720,8 @@ mpdFIFO_IsFull(int id, int channel, int *full)
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -2667,8 +2749,8 @@ mpdFIFO_GetNwords(int id, int channel, int *nwords)
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -2691,8 +2773,8 @@ mpdFIFO_IsEmpty(int id, int channel, int *empty)
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -2720,8 +2802,8 @@ mpdFIFO_ClearAll(int id)
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -2752,8 +2834,8 @@ mpdFIFO_WaitNotEmpty(int id, int channel, int max_retry)
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -2798,8 +2880,8 @@ mpdFIFO_ReadAll(int id, int *timeout, int *global_fifo_error) {
   
    if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
   
@@ -2883,8 +2965,8 @@ mpdApvShiftDataBuffer(int id, int k, int i0) {
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return;
     }
 
@@ -2921,8 +3003,8 @@ mpdFIFO_ReadAllNew(int id, int *timeout, int *global_fifo_error)
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -3000,8 +3082,8 @@ mpdDAQ_Enable(int id)
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -3017,8 +3099,8 @@ mpdDAQ_Disable(int id)
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -3043,8 +3125,8 @@ mpdDAQ_Config(int id)
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -3091,8 +3173,8 @@ mpdPED_Write0(int id, int ch, int *ped_even, int *ped_odd)	//
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -3115,8 +3197,8 @@ mpdPED_Write(int id, int ch, int v)	// ch = 0..7
   if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -3136,8 +3218,8 @@ mpdPED_Read(int id, int ch, int *ped_even, int *ped_odd)	// TBD
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -3159,8 +3241,8 @@ mpdTHR_Write0(int id, int ch, int *thr_even, int *thr_odd)	// ch = 0..7
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -3183,8 +3265,8 @@ mpdTHR_Write(int id, int ch, int v)	// ch = 0..7
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -3201,8 +3283,8 @@ mpdTHR_Read(int id, int ch, int *thr_even, int *thr_odd)	// TBD
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -3225,8 +3307,8 @@ mpdPEDTHR_Write(int id)
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -3282,8 +3364,8 @@ mpdReadPedThr(int id, std::string pname)
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -3329,8 +3411,8 @@ mpdGetEBWordCount(int id)
   int rval=0;
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -3347,8 +3429,8 @@ mpdGetEventCount(int id)
   int rval=0;
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -3365,8 +3447,8 @@ mpdGetBlockCount(int id)
   int rval=0;
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -3383,8 +3465,8 @@ mpdGetTriggerCount(int id)
   int rval=0;
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -3401,8 +3483,8 @@ mpdGetTriggerReceivedCount(int id)
   int rval=0;
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -3419,8 +3501,8 @@ mpdSetFiberTestMode(int id, int enable, int period)
   unsigned int data=0;
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -3452,8 +3534,8 @@ mpdSetSamplesPerEvent(int id, int samples)
 {
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -3475,8 +3557,8 @@ mpdSetBlocklevel(int id, int blocklevel)
 {
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -3498,8 +3580,8 @@ mpdSetBusyThreshold(int id, int thres)
 {
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -3521,8 +3603,8 @@ mpdSetLocalBusyThreshold(int id, int thres)
 {
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -3544,8 +3626,8 @@ mpdSetTriggerDelay(int id, int delay)
 {
   if((MPDp[id]==NULL) || (id<0) || (id>21))
     {
-      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
-	     __FUNCTION__,id);
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
       return ERROR;
     }
 
@@ -3557,6 +3639,105 @@ mpdSetTriggerDelay(int id, int delay)
 
   MPDLOCK;
   mpdWrite32(&MPDp[id]->trigger_delay,delay);
+  MPDUNLOCK;
+
+  return OK;
+}
+
+int
+mpdFiberStatus(int id)
+{
+  uint32_t fiber_status_ctrl=0;
+  if((MPDp[id]==NULL) || (id<0) || (id>21))
+    {
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
+      return ERROR;
+    }
+
+  MPDLOCK;
+  fiber_status_ctrl = mpdRead32(&MPDp[id]->fiber_status_ctrl);
+  MPDUNLOCK;
+
+  printf("Fiber Status for SSP in slot %d\n",id);
+  printf("--------------------------------------------------------------------------------\n");
+  printf("\n");
+  printf(" Register = 0x%08x\n",fiber_status_ctrl);
+  printf("\n");
+  
+  printf("  Fiber %s\n",
+	 (fiber_status_ctrl&MPD_FIBER_DISABLED)?"Disabled":"Enabled");
+
+  printf("  SFP transmit %s\n",
+	 (fiber_status_ctrl&MPD_SFP_TRANSMIT_DISABLED)?"Disabled":"Enabled");
+
+  printf("\n");
+
+
+  printf("  SFP %s\n",
+	 (fiber_status_ctrl&MPD_SFP_PRESENT)?"Present":"NOT Present");
+
+  if(fiber_status_ctrl&MPD_SFP_LOS)
+    printf("  SFP -Loss of Signal- DETECTED\n");
+  if(fiber_status_ctrl&MPD_FIBER_FRAME_ERROR)
+    printf("  Frame Error DETECTED\n");
+  if(fiber_status_ctrl&MPD_FIBER_HARD_ERROR)
+    printf("  Hard  Error DETECTED\n");
+
+  printf("  Fiber Channel %s\n",
+	 (fiber_status_ctrl&MPD_FIBER_CHANNEL_UP)?"UP":"DOWN");
+
+  printf("  Error Count  = %d\n",
+	 (fiber_status_ctrl&MPD_FIBER_ERROR_COUNT_MASK)>>4);
+	 
+  printf("\n");
+  printf("--------------------------------------------------------------------------------\n");
+  printf("\n\n");
+
+  return OK;
+}
+
+int
+mpdFiberEnable(int id)
+{
+  if((MPDp[id]==NULL) || (id<0) || (id>21))
+    {
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
+      return ERROR;
+    }
+
+  if(mpdSSPMode)
+    {
+      MPD_ERR("Cannot Enable/Disable Fiber in SSP Mode\n");
+      return ERROR;
+    }
+
+  MPDLOCK;
+  mpdWrite32(&MPDp[id]->fiber_status_ctrl,1);
+  MPDUNLOCK;
+
+  return OK;
+}
+
+int
+mpdFiberDisable(int id)
+{
+  if((MPDp[id]==NULL) || (id<0) || (id>21))
+    {
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
+      return ERROR;
+    }
+
+  if(mpdSSPMode)
+    {
+      MPD_ERR("Cannot Enable/Disable Fiber in SSP Mode\n");
+      return ERROR;
+    }
+
+  MPDLOCK;
+  mpdWrite32(&MPDp[id]->fiber_status_ctrl,0);
   MPDUNLOCK;
 
   return OK;

@@ -14,7 +14,7 @@
  */
 
 #include "stdio.h"
-#define MPD_BOARD_ID       0x12345678
+#define MPD_MAGIC_VALUE       0x43524F4D
 #define MPD_MAX_BOARDS             21
 //#define MPD_MAX_APV                16
 #define MPD_MAX_APV                31
@@ -170,19 +170,15 @@ struct mpd_struct
 #define MPD_IN_P0    0
 #define MPD_IN_FRONT 1
 
-#ifdef OLDMAP
-struct mpd_struct_csr
-{
-  uint32_t blank0[7];
-  volatile uint32_t crcode[2];
-  volatile uint32_t manufactID[3];
-  volatile uint32_t boardID[4];
-  volatile uint32_t revisionID[4];
-  uint32_t blank1[3];
-  volatile uint32_t revisionTime[4];
-};
-
-#endif /* OLDMAP */
+#define MPD_FIBER_DISABLED         (1<<0)
+#define MPD_SFP_TRANSMIT_DISABLED  (1<<1)
+#define MPD_FIBER_RESET            (1<<3)
+#define MPD_FIBER_ERROR_COUNT_MASK 0x00000FF0
+#define MPD_FIBER_FRAME_ERROR      (1<<12)
+#define MPD_FIBER_HARD_ERROR       (1<<13)
+#define MPD_SFP_PRESENT            (1<<14)
+#define MPD_SFP_LOS                (1<<15)
+#define MPD_FIBER_CHANNEL_UP       (1<<31)
 
 #define MPD_ADS5281_PAT_NONE    0
 #define MPD_ADS5281_PAT_SYNC    1
@@ -308,9 +304,11 @@ typedef struct mpd_priv_struct
 } mpdParameters;
 
 /* initialization flags */
-#define MPD_INIT_SKIP                (1<<16)
-#define MPD_INIT_USE_ADDRLIST        (1<<17)
-#define MPD_INIT_SKIP_FIRMWARE_CHECK (1<<18)
+#define MPD_INIT_SKIP                 (1<<16)
+#define MPD_INIT_USE_ADDRLIST         (1<<17)
+#define MPD_INIT_SKIP_FIRMWARE_CHECK  (1<<18)
+#define MPD_INIT_SSP_MODE             (1<<19)
+#define MPD_INIT_NO_CONFIG_FILE_CHECK (1<<20)
 
 /* Function Prototypes */
 STATUS mpdInit (UINT32 addr, UINT32 addr_inc, int nadc, int iFlag);
@@ -519,4 +517,8 @@ int  mpdSetBlocklevel(int id, int blocklevel);
 int  mpdSetBusyThreshold(int id, int thres);
 int  mpdSetLocalBusyThreshold(int id, int thres);
 int  mpdSetTriggerDelay(int id, int delay);
+
+int  mpdFiberStatus(int id);
+int  mpdFiberEnable(int id);
+int  mpdFiberDisable(int id);
 #endif /* __MPDLIB__ */

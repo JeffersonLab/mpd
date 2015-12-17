@@ -24,7 +24,7 @@ ifdef DEBUG
 CFLAGS			+= -Wall -g
 endif
 
-PROGS			= mpdLibTest
+PROGS			= mpdLibTest mpdSSPReadoutTest
 
 all: $(PROGS)
 
@@ -35,6 +35,6 @@ clean distclean:
 
 %: %.c
 	echo "Making $@"
-	$(CC) $(CFLAGS) -o $@ $(@:%=%.c) -lrt -ljvme -lti -lmpd -lconfig
+	$(CC) $(CFLAGS) -o $@ $(@:%=%.c) -lrt -ljvme -lti -lmpd -lconfig -lssp
 
 .PHONY: all clean distclean
