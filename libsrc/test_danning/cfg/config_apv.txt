@@ -1,6 +1,5 @@
-//-*-C-*-
 
-version = "0.3";  // mandatory
+version = "0.35";  // mandatory
 logfile = "out/Daq.log"; // mandatory
 loglevel = 4;	// 0=none, 1=normal, 2=debug, 3=verbose, 4=very verbose ...
 date = "28/03/2012"; // date format: DD/MM/YYYY
@@ -20,7 +19,7 @@ bus: // interface to the MPD
    
     // --- mpd 0
     {
-      rotary = 3; // rotary switch setting
+      rotary = 2; // rotary switch setting
 
       zero_level = 500; // zero logic level
       one_level = 1900;  // one logic level: above this adc value signal is assumed to be a digital "one"
@@ -50,24 +49,25 @@ bus: // interface to the MPD
       );
     apv:
       (
-     //           { adc = 0; i2c = 0; }, 
-       //       { adc = 1; i2c = 1; },
-       //    { adc = 2; i2c = 2; },
-       //   { adc = 3; i2c = 3; },
-	           { adc = 4; i2c = 4; }//,
-       //{ adc = 9; i2c = 8; },
-       //{ adc = 8; i2c = 9; },
-       //{ adc = 7; i2c = 10; },
-       // { adc = 3; i2c = 11; },
-       //    { adc = 4; i2c = 12; }
-      //{ adc = 14; i2c = 16; },
-      //{ adc = 13; i2c = 17; },
-      //{ adc = 12; i2c = 18; },
-      //{ adc = 11; i2c = 19; }
+	{ adc = 13; i2c = 4; }, 
+	{ adc = 12; i2c = 5; },
+	{ adc = 11; i2c = 6; },
+	{ adc = 10; i2c = 7; },
+
+	{ adc = 8; i2c =8; },
+	{ adc = 7; i2c =9; },
+	{ adc = 6; i2c = 10; },
+	{ adc = 5; i2c = 11; },
+
+	{ adc = 3; i2c = 12; },
+	{ adc = 2; i2c = 13; },
+	{ adc = 1; i2c = 14; },
+	{ adc = 0; i2c = 15; }
+
       );
-    }//,
+    },
     //end MPD 0
-    /*     
+         
     // --- mpd 1
     {
       rotary = 4; // rotary switch setting
@@ -100,24 +100,21 @@ bus: // interface to the MPD
     );
     apv:
     (
-     // { adc = 0; i2c = 0; }, 
-        { adc = 1; i2c = 1; },
+	{ adc = 4; i2c = 0; }, 
+        { adc = 3; i2c = 1; },
         { adc = 2; i2c = 2; },
-        { adc = 3; i2c = 3; },
-        { adc = 4; i2c = 4; },
-	//        { adc = 5; i2c = 8; },
-        { adc = 6; i2c = 9; },
+        { adc = 1; i2c = 3; },
+        { adc = 0; i2c = 4; },
+
+        { adc = 9; i2c = 8; },
+        { adc = 8; i2c = 9; },
         { adc = 7; i2c = 10; },
-        { adc = 8; i2c = 11; },
-	{ adc = 9; i2c = 12; },
-        //{ adc = 10; i2c = 16; },
-        { adc = 11; i2c = 17; },
-        { adc = 12; i2c = 18; },
-        { adc = 13; i2c = 19; },
-        { adc = 14; i2c = 20; }
+        { adc = 6; i2c = 11; },
+	{ adc = 5; i2c = 12; }
+    
     );
-    },//end MPD 1
-    */
+    }//,//end MPD 1
+    
     /*   // --- mpd 2
     {
       rotary = 5; // rotary switch setting

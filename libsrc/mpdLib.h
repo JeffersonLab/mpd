@@ -160,6 +160,8 @@ typedef struct apvparm_struct // actually a structure
 {
   uint8_t i2cAddrScan; // i2c address from card discovery (scan)
   uint8_t i2cAddr;
+
+  short enabled; // if 0 card is disabled
   
   // config settings
   short i2c;
@@ -229,7 +231,7 @@ typedef struct mpd_priv_struct
   uint32_t Last1Offset;
 
   uint16_t fApv_enable_mask;
-  uint16_t nAPV; // number of apv in mpd (EC)
+  uint16_t nAPV; // number of apv in mpd config file (EC)
 
   // config settings
   int   fCalibLatency;
@@ -323,8 +325,9 @@ void mpdSetFpgaCompileTime(int id, uint32_t t);
 int  mpdLM95235_Read(int id, double *core_t, double *air_t);
 
 /* service methods */
-int mpdGetNumberAPV(int id); // EC
-void mpdSetNumberAPV(int id, uint16_t v); // EC
+int mpdGetNumberAPV(int id); // get number of apv in config file
+void mpdSetNumberAPV(int id, uint16_t v); // set number of apv in config file 
+int mpdGetNumberConfiguredAPV(int id); // return number of apv properly configured by the hardware
 
 /* I2C methods */
 void mpdSetI2CSpeed(int id, int val);
@@ -364,6 +367,7 @@ int  mpdApvReadDone(int id, int ia);
 int  mpdApvGetSampleLeft(int id, int ia);
 int  mpdApvGetSampleIdx(int id, int ia);
 int  mpdAPV_Reset101(int id);
+int  mpdAPV_SoftTrigger(int id);
 int  mpdAPV_Try(int id, uint8_t apv_addr);
 
 void mpdSetApvEnableMask(int id, uint16_t mask);
@@ -389,6 +393,8 @@ int  mpdApvGetBufferAvailable(int id, int ia);
 int  mpdApvGetBufferLength(int id, int ia);
 int  mpdApvGetEventSize(int id, int ia);
 int mpdApvGetAdc(int id, int ia);
+
+short mpdApvEnabled(int id, int ia);
 
 int  mpdArmReadout(int id);
 

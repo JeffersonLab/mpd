@@ -165,8 +165,8 @@ main(int argc, char *argv[])
     // not implemented yet
 
     // 101 reset on the APV
-    //printf("Do 101 Reset on MPD slot %d\n",i);
-    //mpdAPV_Reset101(i);
+    printf("Do 101 Reset on MPD slot %d\n",i);
+    mpdAPV_Reset101(i);
 
     // <- MPD+APV initialization ends here
 

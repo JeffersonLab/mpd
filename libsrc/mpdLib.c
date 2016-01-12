@@ -513,10 +513,10 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
 int mpdGetNumberMPD() { return mpdInited; };
 
 
-
 int mpdGetNumberAPV(int id) { return (uint16_t) fMpd[id].nAPV; };
-void mpdSetNumberAPV(int id, uint16_t v) { fMpd[id].nAPV = v; };
+void mpdSetNumberAPV(int id, uint16_t v) { fMpd[id].nAPV = v; }; 
 
+int mpdGetNumberConfiguredAPV(int id) { return nApv[id]; }; // return number of enabled APV
 
 int
 mpdCheckAddresses(int id)
@@ -1196,6 +1196,39 @@ mpdAPV_Reset101(int id)
   return OK;
 }
 
+// generate software trigger
+int
+mpdAPV_SoftTrigger(int id)
+{
+  uint32_t data;
+  //  if(id==0) id=mpdID[0];
+  if((MPDp[id]==NULL) || (id<0) || (id>21))
+    {
+      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
+	     __FUNCTION__,id);
+      return ERROR;
+    }
+
+  MPDLOCK;
+
+   data = mpdRead32(&MPDp[id]->ApvDaq.Trig_Gen_Config);
+ 
+
+   //   data |= MPD_APVDAQ_TRIGCONFIG_ENABLE_MACH;	// Enable trig machine
+  data |= SOFTWARE_TRIGGER_MASK;       
+
+  mpdWrite32(&MPDp[id]->ApvDaq.Trig_Gen_Config, data);
+
+  data &= ~SOFTWARE_TRIGGER_MASK;
+  //   data &= ~MPD_APVDAQ_TRIGCONFIG_ENABLE_MACH;	// Disable trig machine
+
+    mpdWrite32(&MPDp[id]->ApvDaq.Trig_Gen_Config, data);
+
+  MPDUNLOCK;
+
+  return OK;
+}
+
 /*
  * return true if apv is present
  *   (EC: to be improved not yet 100% reliable) 
@@ -1282,7 +1315,7 @@ mpdAPV_Scan(int id)
   nApv[id]=0;
   for(iapv=0; iapv<fMpd[id].nAPV; iapv++)
     {
-      printf("%s: Try %2d %2d : ", __FUNCTION__, fApv[id][iapv].i2c, fApv[id][iapv].adc);
+      printf("%s: Try i2c=%2d adc=%2d : ", __FUNCTION__, fApv[id][iapv].i2c, fApv[id][iapv].adc);
       
       if ( mpdAPV_Try(id, fApv[id][iapv].i2c)>-1 && fApv[id][iapv].adc>-1 ) 
 	{
@@ -1292,13 +1325,15 @@ mpdAPV_Scan(int id)
 	  mpdSetApvEnableMask(id, (1 << fApv[id][iapv].adc));
 	  printf("%s: APV enable mask 0x%04x\n", 
 		 __FUNCTION__,mpdGetApvEnableMask(id));
+	  fApv[id][iapv].enabled=1;
 	  nApv[id]++;
 	}
       else 
 	{
-	  printf("%s: MPD %d APV i2c = %d does not respond.  It is removed from db\n",
+	  printf("%s: MPD %d APV i2c = %d does not respond.  It is disabld\n",
 		 __FUNCTION__,id, fApv[id][iapv].i2c);
 	  fApvEnableMask[id] &= ~(1 << fApv[id][iapv].adc);
+	  fApv[id][iapv].enabled=0;
 	}
     }   
       
@@ -1477,6 +1512,12 @@ mpdAPV_Config(int id, int apv_index)
 }
 
 /**
+ * return 0 if card is disable
+ */
+
+short mpdApvEnabled(int id, int ia) { return fApv[id][ia].enabled; }
+
+/**
  * Return the setting value of the number of samples per trigger (1 or 3)
  * this is the same for all Apvs 
  * return -1 if there are no APV connected
@@ -1567,9 +1608,11 @@ mpdApvGetMaxLatency(int id)
       return ERROR;
     }
   
-  for (iapv=0; iapv<nApv[id]; iapv++) 
+  for (iapv=0; iapv<fMpd[id].nAPV; iapv++) 
     {
-      c = (fApv[id][iapv].Latency > c) ? fApv[id][iapv].Latency : c;
+      if (fApv[id][iapv].enabled) {
+	c = (fApv[id][iapv].Latency > c) ? fApv[id][iapv].Latency : c;
+      }
     }
   return c;
 }
@@ -1583,7 +1626,7 @@ mpdApvBufferAlloc(int id, int ia)
 
   fApv[id][ia].fBufSize = 15*fApv[id][ia].fNumberSample*(EVENT_SIZE+2); // at least 6 times larger @@@ increased to 15 -- need improvement
 
-#define PHYSMEM
+  // #define PHYSMEM
 #ifdef PHYSMEM  
   status = gefVmeAllocDmaBuf (vmeHdl,fApv[id][ia].fBufSize,	
 			    &dma_hdl,&mapPtr);
@@ -1643,7 +1686,7 @@ mpdApvGetBufferPointer(int id, int ia, int ib)
   if (ib<fApv[id][ia].fBufSize) { // probably not required !!
     return &(fApv[id][ia].fBuffer[ib]);
   }
-  MPD_ERR("Fifo %d, index %d is out of range (%d)\n",fApv[id][ia].adc, ib, fApv[id][ia].fBufSize);
+  MPD_ERR("MPD %d Fifo %d, index %d is out of range (buf size = %d)\n",id, fApv[id][ia].adc, ib, fApv[id][ia].fBufSize);
   exit(1);
 }
 
@@ -1702,12 +1745,14 @@ mpdArmReadout(int id)
       return ERROR;
     }
 
-  for (iapv=0; iapv<nApv[id]; iapv++) 
+  for (iapv=0; iapv<fMpd[id].nAPV; iapv++) 
     {
-      mpdApvSetSampleLeft(id, iapv); // improve peak mode
-      fApv[id][iapv].fBi0 = 0; // begin of buffer (should be always 0)
-      fApv[id][iapv].fBs = 0;  // end of event (last sample end mark)
-      fApv[id][iapv].fBi1 = 0; // end of buffer
+      if (fApv[id][iapv].enabled) {
+	mpdApvSetSampleLeft(id, iapv); // improve peak mode
+	fApv[id][iapv].fBi0 = 0; // begin of buffer (should be always 0)
+	fApv[id][iapv].fBs = 0;  // end of event (last sample end mark)
+	fApv[id][iapv].fBi1 = 0; // end of buffer
+      }
     }
   fMpd[id].fReadDone = FALSE;
 
@@ -2396,7 +2441,7 @@ mpdFIFO_ReadSingle(int id,
   }
   
   MPDLOCK;
-#define BLOCK_TRANSFER1
+  //#define BLOCK_TRANSFER1
 #ifdef BLOCK_TRANSFER1
   /*   unsigned long offset = ((unsigned long)&dbuf - (unsigned long)&fApv[id][0].fBuffer); */
   unsigned long offset = 0;
@@ -2878,12 +2923,14 @@ mpdFIFO_ReadAll(int id, int *timeout, int *global_fifo_error) {
   *global_fifo_error = 0;
   
   if (fMpd[id].fReadDone == 0) { // at least one MPD FIFO needs to be read
-    for(k=0; k<nApv[id]; k++) { // loop on ADC channels on single board
+    for(k=0; k<fMpd[id].nAPV; k++) { // loop on ADC channels on single board
+
+      if (fApv[id][k].enabled == 0) { continue; }
 
       if (mpdApvReadDone(id, k) == 0) { // APV FIFO has data to be read
 
 	nread = mpdApvGetBufferAvailable(id, k);
-	//printf(" EC: card %d buffer size available = %d\n",k,nread);
+	// printf(" EC: card %d %d buffer size available = %d\n",id, k,nread);
 	if (nread>0) { // space in memory buffer
 	  err = mpdFIFO_ReadSingle(id, fApv[id][k].adc,mpdApvGetBufferPWrite(id, k), &nread, 20); //not this
 
@@ -2899,7 +2946,7 @@ mpdFIFO_ReadAll(int id, int *timeout, int *global_fifo_error) {
 
        	int n = mpdApvGetBufferSample(id,k);
 
-	MPD_DBG("APV_No= %d, ADC_No= %d, word read= %d, event/sample read= %d, error=%d\n",k,fApv[id][k].adc,nread ,n, *global_fifo_error);
+	MPD_DBG("MPD: %d APV_idx= %d, ADC_FIFO= %d, word read= %d, event/sample read= %d, error=%d\n",id, k,fApv[id][k].adc,nread ,n, *global_fifo_error);
 
 	sample_left += mpdApvGetSampleLeft(id, k);
 
@@ -3002,8 +3049,9 @@ mpdFIFO_ReadAllNew(int id, int *timeout, int *global_fifo_error)
   sample_left = 0;
 
   if (fMpd[id].fReadDone == 0) { // MPD fifos need to be read
-    for(k=0; k<nApv[id]; k++) { // loop on ADC channels on single board
+    for(k=0; k<fMpd[id].nAPV; k++) { // loop on ADC channels on single board
 
+      if (fApv[id][k].enabled == 0) { continune; }
       if (mpdApvReadDone(id,k) == 0) { // APV FIFO has data to be read
   
 	//      sample_left += ApvGetSampleLeft(k);
@@ -3136,7 +3184,7 @@ mpdDAQ_Config(int id)
   mpdWrite32(&MPDp[id]->ApvDaq.Readout_Config, data);
   MPDUNLOCK;
 
-  for (i=0;i<nApv[id];i++) {
+  for (i=0;i<fMpd[id].nAPV;i++) {
     fApv[id][i].fBi0 = 0;
     fApv[id][i].fBi1 = 0;
   }
