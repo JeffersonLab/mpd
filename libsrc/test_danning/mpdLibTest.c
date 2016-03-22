@@ -355,24 +355,25 @@ main(int argc, char *argv[])
 
       rdone = 1;
 
-      fprintf(fout,"%x\n", evt | EVENT_TAG ); // event number
+     
       for (kk=0;kk<fnMPD;kk++) { // only active mpd set
 	i = mpdSlot(kk);
 	//usleep(10000);
 	mpdFIFO_ClearAll(i);
-	mpdTRIG_Disable(i);
+	  mpdTRIG_Enable(i);
+	//	mpdTRIG_Disable(i);
 	//	  	  mpdDAQ_Enable(i);
-	mpdTRIG_PauseEnable(i,5000);
+	//mpdTRIG_PauseEnable(i,5000);
 
 	do { // wait for data in MPD
-	  mpdTRIG_PauseEnable(i,1000);
+	  //mpdTRIG_PauseEnable(i,1000);
 	  
 	  rdone = mpdFIFO_ReadAll(i,&rtout,&error_count);
 	  
-	  printf(" Rdone/Tout/error = %d %d %d\n", rdone, rtout, error_count);
+	  //printf(" Rdone/Tout/error = %d %d %d\n", rdone, rtout, error_count);
 	  rtout++;
-
-	} while ((rdone == 0) && (error_count == -1) && (rtout < MPD_TIMEOUT)); // timeout can be changed
+	  usleep(50000);
+	} while (((rdone == 0) | (error_count == -1) )&& (rtout < MPD_TIMEOUT)); // timeout can be changed
 	//	mpdTRIG_Disable(i);
 	
 
@@ -384,8 +385,8 @@ main(int argc, char *argv[])
 	  mpdTRIG_Enable(i);
 	}
 	
-	if (rdone) { // data need to be written on file
-
+	if (rdone==1&&error_count==0) { // data need to be written on file
+	  fprintf(fout,"%x\n", evt | EVENT_TAG ); // event number
 	  printf("%d",i); // slot
 	  fprintf(fout,"%x\n", i | MPD_TAG);
 	  

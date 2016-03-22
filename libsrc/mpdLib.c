@@ -2422,18 +2422,20 @@ mpdFIFO_ReadSingle(int id,
   nwords = 0;
   
   i = 0;
-  while( (nwords <= 0) && (i <= max_retry) ) {
+  while( (nwords !=780 ) && (i <= max_retry) ) {
     if( max_retry > 0 ) i++;
     success = mpdFIFO_GetNwords(id, channel, &nwords);
     if( success != OK ) return success;
   }
-  
+  //printf("%s: Number of words to be read %d\n",__FUNCTION__,nwords);
+  if(nwords!=780){return ERROR;}
+
   //printf("%s: number of words to be read %d\n",__FUNCTION__,nwords);
   size = (nwords < wmax) ? nwords : wmax;
   
   //MPD_DBG("fifo ch = %d, words in fifo= %d, retries= %d (max %d)\n",channel, nwords,i, max_retry);
-  MPD_DBG("  id=%d  channel=%d  physMemBase = 0x%08x   dbuf = 0x%08x\n\n",
-	  id,channel,fApv[id][0].physMemBase, &dbuf[0]);
+  //MPD_DBG("  id=%d  channel=%d  physMemBase = 0x%08x   dbuf = 0x%08x\n\n",
+  //	  id,channel,fApv[id][0].physMemBase, &dbuf[0]);
   
   if( i > max_retry ) {
     MPD_ERR(" max retry = %d, count=%d nword=%d\n", max_retry, i, nwords);
@@ -2498,9 +2500,10 @@ mpdFIFO_ReadSingle(int id,
 #endif
     }
 
-#else
-  for(i=0; i<size; i++) {
-    dbuf[i] = mpdRead32(&MPDp[id]->ApvDaq.Data_Ch[channel][i]);//changed from [channel][i*4] to [channel][i]--Danning_Sep_30_2015
+#else 
+  //size=78;
+  for(i=0; i<size; i++) {//printf("mpdread32 going to be excuted %d\n",i);
+    dbuf[i] = mpdRead32(&MPDp[id]->ApvDaq.Data_Ch[channel][i]);
     *wrec+=1;
     }
   //MPD_DBG("Read apv = %d, wrec = %d, success = %d\n", channel, *wrec, success);
@@ -2921,7 +2924,6 @@ mpdFIFO_ReadAll(int id, int *timeout, int *global_fifo_error) {
   
   sample_left = 0;
   *global_fifo_error = 0;
-  
   if (fMpd[id].fReadDone == 0) { // at least one MPD FIFO needs to be read
     for(k=0; k<fMpd[id].nAPV; k++) { // loop on ADC channels on single board
 
@@ -2932,7 +2934,7 @@ mpdFIFO_ReadAll(int id, int *timeout, int *global_fifo_error) {
 	nread = mpdApvGetBufferAvailable(id, k);
 	// printf(" EC: card %d %d buffer size available = %d\n",id, k,nread);
 	if (nread>0) { // space in memory buffer
-	  err = mpdFIFO_ReadSingle(id, fApv[id][k].adc,mpdApvGetBufferPWrite(id, k), &nread, 20); //not this
+	  err = mpdFIFO_ReadSingle(id, fApv[id][k].adc,mpdApvGetBufferPWrite(id, k), &nread, 100); 
 
 	  mpdApvIncBufferPointer(id, k, nread);
 
@@ -2946,16 +2948,24 @@ mpdFIFO_ReadAll(int id, int *timeout, int *global_fifo_error) {
 
        	int n = mpdApvGetBufferSample(id,k);
 
-	MPD_DBG("MPD: %d APV_idx= %d, ADC_FIFO= %d, word read= %d, event/sample read= %d, error=%d\n",id, k,fApv[id][k].adc,nread ,n, *global_fifo_error);
+	//if(*global_fifo_error==0){MPD_DBG("MPD: %d APV_idx= %d, ADC_FIFO= %d, word read= %d, event/sample read= %d, error=%d\n",id, k,fApv[id][k].adc,nread ,n, *global_fifo_error);}
 
 	sample_left += mpdApvGetSampleLeft(id, k);
 
       }
-
       //MPD_DBG("Fifo= %d, total sample left= %d (<0 means more samples than requested)\n",k, sample_left);
-
     } // loop on ADC
-     fMpd[id].fReadDone = (sample_left>0) ? 0 : 1;  
+
+if(*global_fifo_error==0)
+  {
+    for(k=0; k<fMpd[id].nAPV; k++) 
+      {
+	//MPD_DBG("MPD: %d APV_idx= %d, ADC_FIFO= %d, word read= %d, event/sample read= %d, error=%d\n",id, k,fApv[id][k].adc,nread ,mpdApvGetBufferSample(id,k), *global_fifo_error);
+      }
+  
+
+     fMpd[id].fReadDone = (sample_left==0) ? 1 : 0;  
+  }
   } // if fReadDone
   return fMpd[id].fReadDone;
 

@@ -22,6 +22,9 @@ endif
 LINUXVME_LIB	?= ${CODA}/extensions/linuxvme/libs
 LINUXVME_INC	?= ${CODA}/extensions/linuxvme/include
 
+#LINUXVME_LIB	= /root/git/lib
+#LINUXVME_INC	= /root/git/include
+
 CROSS_COMPILE		=
 CC			= $(CROSS_COMPILE)gcc
 AR                      = ar
