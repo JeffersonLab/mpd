@@ -76,7 +76,7 @@ rocDownload()
   tiSetTriggerSource(TI_TRIGGER_TSINPUTS);
 
   /* Set needed TS input bits */
-  tiEnableTSInput( TI_TSINPUT_1 );
+  tiEnableTSInput( TI_TSINPUT_ALL );
 
   /* Load the trigger table that associates 
      pins 21/22 | 23/24 | 25/26 : trigger1

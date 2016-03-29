@@ -138,7 +138,7 @@ rocDownload()
 
   tiSetBlockBufferLevel(BUFFERLEVEL);
 
-  tiStatus();
+  tiStatus(0);
 
 
   /***************************************
@@ -298,7 +298,7 @@ rocPrestart()
     }
 
   /* TI Status */
-  tiStatus();
+  tiStatus(0);
 
   /*  Enable FADC */
   for(islot=0;islot<NFADC;islot++) 
@@ -374,7 +374,7 @@ rocEnd()
       faStatus(FA_SLOT,0);
     }
 
-  tiStatus();
+  tiStatus(0);
   sdStatus();
 
   printf("rocEnd: Ended after %d blocks\n",tiGetIntCount());
