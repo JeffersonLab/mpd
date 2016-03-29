@@ -430,7 +430,7 @@ int  mpdHISTO_GetIntegral(int id, int ch, uint32_t *integral);
 int  mpdHISTO_Read(int id, int ch, uint32_t *histogram);
 
 // Daq-Readout methods
-int  mpdFIFO_ReadSingle(int id, int channel, uint32_t *dbuf, int *wrec, int max_retry);
+int  mpdFIFO_ReadSingle(int id, int k, int channel, uint32_t *dbuf, int *wrec, int max_retry);
 int  mpdFIFO_ReadSingle0(int id, int channel, int blen, uint32_t *event, int *nread);
 int  mpdFIFO_Samples(int id, 
 		     int channel, 

@@ -1626,7 +1626,7 @@ mpdApvBufferAlloc(int id, int ia)
 
   fApv[id][ia].fBufSize = 15*fApv[id][ia].fNumberSample*(EVENT_SIZE+2); // at least 6 times larger @@@ increased to 15 -- need improvement
 
-  // #define PHYSMEM
+  #define PHYSMEM
 #ifdef PHYSMEM  
   status = gefVmeAllocDmaBuf (vmeHdl,fApv[id][ia].fBufSize,	
 			    &dma_hdl,&mapPtr);
@@ -2395,7 +2395,8 @@ mpdHISTO_Read(int id, int ch, uint32_t *histogram)	/* ch == 0, 15; uint32_t hist
  */
 int 
 mpdFIFO_ReadSingle(int id, 
-		   int channel,     // apv channel (FIFO)
+		   int k,           // apv number
+		   int channel,     // adc channel number(FIFO)
 		   uint32_t *dbuf, // data buffer
 		   int *wrec,      // max number of words to get / return words received 
 		   int max_retry)   // max number of retry for timeout
@@ -2422,16 +2423,18 @@ mpdFIFO_ReadSingle(int id,
   nwords = 0;
   
   i = 0;
+  /*
   while( (nwords !=780 ) && (i <= max_retry) ) {
     if( max_retry > 0 ) i++;
     success = mpdFIFO_GetNwords(id, channel, &nwords);
     if( success != OK ) return success;
   }
+  
   //printf("%s: Number of words to be read %d\n",__FUNCTION__,nwords);
   if(nwords!=780){return ERROR;}
-
+  */
   //printf("%s: number of words to be read %d\n",__FUNCTION__,nwords);
-  size = (nwords < wmax) ? nwords : wmax;
+  size = 780;//(nwords < wmax) ? nwords : wmax;
   
   //MPD_DBG("fifo ch = %d, words in fifo= %d, retries= %d (max %d)\n",channel, nwords,i, max_retry);
   //MPD_DBG("  id=%d  channel=%d  physMemBase = 0x%08x   dbuf = 0x%08x\n\n",
@@ -2443,20 +2446,21 @@ mpdFIFO_ReadSingle(int id,
   }
   
   MPDLOCK;
-  //#define BLOCK_TRANSFER1
+#define BLOCK_TRANSFER1
+  //#define DEBUG_BLOCKREAD
 #ifdef BLOCK_TRANSFER1
   /*   unsigned long offset = ((unsigned long)&dbuf - (unsigned long)&fApv[id][0].fBuffer); */
   unsigned long offset = 0;
   MPD_DBG("dbuf addr = 0x%lx  fBuffer = 0x%lx  offset = 0x%lx\n",
-  	  (unsigned long)dbuf, (unsigned long)fApv[id][0].fBuffer, (unsigned long)offset);
+  	  (unsigned long)dbuf, (unsigned long)fApv[id][k].fBuffer, (unsigned long)offset);
 
   vmeAdrs = &MPDp[id]->ApvDaq.Data_Ch[channel][0];
-  retVal = vmeDmaSendPhys(fApv[id][0].physMemBase+offset,vmeAdrs,(size<<2));
+  retVal = vmeDmaSendPhys(fApv[id][k].physMemBase+offset,vmeAdrs,(size<<2));
   if(retVal != 0) 
     {
       MPD_ERR("ERROR in DMA transfer Initialization (returned 0x%x)\n",retVal);
       MPD_ERR("  id=%d  channel=%d  physMemBase = 0x%08x\n",
-	      id,channel,fApv[id][channel].physMemBase);
+	      id,channel,fApv[id][k].physMemBase);
       *wrec=0;
       MPDUNLOCK;
       return(retVal);
@@ -2479,7 +2483,7 @@ mpdFIFO_ReadSingle(int id,
       return ERROR;
     }
   else
-    {
+    {//success=OK;
       *wrec   = (retVal>>2);
       MPD_DBG("vmeDmaDone returned 0x%x (%d)  wrec = %d\n",
 	      retVal, retVal, *wrec);
@@ -2490,10 +2494,10 @@ mpdFIFO_ReadSingle(int id,
 	  if((iword%4)==0)
 	    printf("\n%4d:  ",iword);
 	  
-	  printf("0x%08x   ",LSWAP(fApv[id][0].fBuffer[iword]));
+	  printf("0xx%08x   ",LSWAP(fApv[id][k].fBuffer[iword]));
 #endif
 	  /* Byte swap necessary for block transfers */
-	  fApv[id][0].fBuffer[iword] = LSWAP(fApv[id][0].fBuffer[iword]);
+	  fApv[id][k].fBuffer[iword] = LSWAP(fApv[id][k].fBuffer[iword]);
 	}
 #ifdef DEBUG_BLOCKREAD
       printf("\n");
@@ -2505,8 +2509,14 @@ mpdFIFO_ReadSingle(int id,
   for(i=0; i<size; i++) {//printf("mpdread32 going to be excuted %d\n",i);
     dbuf[i] = mpdRead32(&MPDp[id]->ApvDaq.Data_Ch[channel][i]);
     *wrec+=1;
+    if((i%4)==0)
+	    printf("\n%4d:  ",i);
+    printf("0x%08x   ",dbuf[i]);
     }
   //MPD_DBG("Read apv = %d, wrec = %d, success = %d\n", channel, *wrec, success);
+
+
+
 #endif
   MPDUNLOCK;
 
@@ -2934,7 +2944,7 @@ mpdFIFO_ReadAll(int id, int *timeout, int *global_fifo_error) {
 	nread = mpdApvGetBufferAvailable(id, k);
 	// printf(" EC: card %d %d buffer size available = %d\n",id, k,nread);
 	if (nread>0) { // space in memory buffer
-	  err = mpdFIFO_ReadSingle(id, fApv[id][k].adc,mpdApvGetBufferPWrite(id, k), &nread, 100); 
+	  err = mpdFIFO_ReadSingle(id, k,fApv[id][k].adc,mpdApvGetBufferPWrite(id, k), &nread, 100); 
 
 	  mpdApvIncBufferPointer(id, k, nread);
 
