@@ -77,7 +77,7 @@ main(int argc, char *argv[])
       goto CLOSE;
     }
 
-  vmeDmaConfig(2,2,0);
+  // vmeDmaConfig(2,2,0); // A32, BLT32
 
   /**
    * Read config file and fill internal variables
@@ -86,6 +86,7 @@ main(int argc, char *argv[])
   mpdConfigInit("cfg/config_apv.txt");
   mpdConfigLoad();
 
+  printf(" CO)NFIGURATIN DFO\n");
   /**
    * Init and config MPD+APV
    */
@@ -165,8 +166,8 @@ main(int argc, char *argv[])
     // not implemented yet
 
     // 101 reset on the APV
-    //printf("Do 101 Reset on MPD slot %d\n",i);
-    //mpdAPV_Reset101(i);
+    printf("Do 101 Reset on MPD slot %d\n",i);
+    mpdAPV_Reset101(i);
 
     // <- MPD+APV initialization ends here
 
@@ -188,7 +189,7 @@ main(int argc, char *argv[])
       mpdPEDTHR_Write(i);
     
       // set clock phase 
-      mpdDELAY25_Set(i, 20, 20); // use 20 as test, but other values may work better
+      mpdDELAY25_Set(i, 23, 23); // use 20 as test, but other values may work better
     
       // enable acq
       mpdDAQ_Enable(i);
@@ -204,8 +205,10 @@ main(int argc, char *argv[])
       
       // read data from FIFOs and estimate synch pulse period
       for (j=0;j<16;j++) { // 16 = number of ADC channel in one MPD
-	if (mpdGetApvEnableMask(i) & (1<<j)) { // apv is enabled
+	if (mpdGetApvEnableMask(i) & (1<<j)) { // apv is enabled  
 	  mpdFIFO_Samples(i,j, sdata, &scount, MAX_SDATA, &error_count);
+
+	  printf("i: %d",i);
 	  if (error_count != 0) {
 	    printf("ERROR returned from FIFO_Samples %d\n",error_count);
 	  }
@@ -214,7 +217,7 @@ main(int argc, char *argv[])
 	  sch1=-1;
 	  sfreq=0;
 	  for (h=0;h<scount;h++) { // detects synch peaks
-	    //	  printf("%04x ", sdata[h]); // output data
+	    //  	  printf("%04d ", sdata[h]); // output data
 	    if (sdata[h]>2500) { // threshold could be lower
 	      if (sch0<0) { sch0=h; sch1=sch0;} else { 
 		if (h==(sch1+1)) { sch1=h; } else {
@@ -298,14 +301,14 @@ main(int argc, char *argv[])
 
     }
 
-  } // histo mode
+  } // histo mode ends
 
     /**************************
      * "Event" readout
      *  normal DAQ starts here
      **************************/
 
-  if (acq_mode & 1) { 
+  if ((acq_mode & 1) && (mpdGetEventBuilding(mpdSlot(0)) == 0)) { 
 
 #define MPD_TIMEOUT 100
 //Output file TAG
@@ -340,7 +343,7 @@ main(int argc, char *argv[])
     // -> now trigger can be enabled
 
     evt=0;
-
+    vmeDmaConfig(1,2,0);
     printf(" ============ START ACQ ===========\n");
     do { // simulate loop on trigger
       sleep(1); // wait for event
@@ -359,13 +362,13 @@ main(int argc, char *argv[])
       for (kk=0;kk<fnMPD;kk++) { // only active mpd set
 	i = mpdSlot(kk);
 	//usleep(10000);
-	mpdFIFO_ClearAll(i);
+	mpdFIFO_ClearAll(i); // @@@ THIS SEEMS TO BE IN THE WRONG PLACE, should go above! before any event @@@
 	mpdTRIG_Disable(i);
 	//	  	  mpdDAQ_Enable(i);
-	mpdTRIG_PauseEnable(i,5000);
+	//mpdTRIG_PauseEnable(i,5000);
 
 	do { // wait for data in MPD
-	  mpdTRIG_PauseEnable(i,1000);
+	  mpdTRIG_PauseEnable(i,200000);
 	  
 	  rdone = mpdFIFO_ReadAll(i,&rtout,&error_count);
 	  
@@ -375,9 +378,6 @@ main(int argc, char *argv[])
 	} while ((rdone == 0) && (error_count == -1) && (rtout < MPD_TIMEOUT)); // timeout can be changed
 	//	mpdTRIG_Disable(i);
 	
-
-
-
 	if ((error_count != 0) || (rtout > MPD_TIMEOUT)) { // reset MPD on error or timeout
 	  printf("%s: ERROR in readout, clear fifo\n",__FUNCTION__);
 	  mpdFIFO_ClearAll(i);
@@ -402,7 +402,7 @@ main(int argc, char *argv[])
 	      // fwrite e_head
 	      for (m=0;m<e_size-2;m++) {
 		e_data32[m] = 0x80000 | ((i<<12) & 0x7F000) | (mpdApvGetBufferElement(i,j,k) & 0xfff);
-		fprintf(fout,"%x\n",(mpdApvGetBufferElement(i,j,k) & 0xfff) | DATA_TAG );
+		fprintf(fout,"%d\n",(mpdApvGetBufferElement(i,j,k) & 0xfff) | DATA_TAG );
 		k++;
 	      }
 	      // fwire e_data32 (e_size-2)
@@ -426,6 +426,129 @@ main(int argc, char *argv[])
       //  mpdFIFO_ClearAll(i);
     } while (evt<n_event); // end loop on events
      
+    if (fout != stdout)  fclose(fout);
+
+  }
+
+  // EVENT_BUILDER ENABLED in MPD
+
+  if ((acq_mode & 1) && (mpdGetEventBuilding(mpdSlot(0)) != 0)) { 
+
+    int mpd_evt[21];
+    int UseSdram, FastReadout;
+    int empty, full, nwords;
+    int nwread;
+    int iw, blen;
+
+    // open out file
+    FILE *fout;
+    fout = fopen(outfile,"w");
+    if (fout == NULL) { fout = stdout; }
+    fprintf(fout,"%x\n", FILE_VERSION | 0xD0000000);
+
+    UseSdram = mpdGetUseSdram(mpdSlot(0)); // assume sdram and fastreadout are the same for all MPDs
+    FastReadout = mpdGetFastReadout(mpdSlot(0));
+
+    printf(" UseSDRAM= %d , FastReadout= %d\n",UseSdram, FastReadout);
+
+    if (FastReadout) {
+      vmeDmaConfig(2,5,1); // A32, 2sst150
+    } else {
+      vmeDmaConfig(2,2,0); // A32, BLT32
+    }
+
+    for (k=0;k<fnMPD;k++) { // only active mpd set 
+      if (k==0) { evt = mpd_evt[i]; }
+      i = mpdSlot(k);
+
+      // mpd latest configuration before trigger is enabled
+      mpdSetAcqMode(i, "process"); 
+
+      // load pedestal and thr default values
+      mpdPEDTHR_Write(i);    
+    
+      // enable acq
+      mpdDAQ_Enable(i);      
+
+      mpdTRIG_Enable(i);
+    
+      mpd_evt[i]=0;
+    }    
+    // -> now trigger can be enabled
+
+    printf(" ============ START ACQ MPD EVT_BUILDER ===========\n");
+    do { // simulate loop on trigger
+      sleep(1); // wait for event
+      printf(" ---- At least %d events acquired on each active MPDs -----\n",evt);
+      // event occurred ... need some trigger logic
+      rtout=0;
+
+      evt=0;
+
+      for (k=0;k<fnMPD;k++) { // only active mpd set
+	i = mpdSlot(k);
+	mpdArmReadout(i); // prepare internal variables for readout @@ use old buffer scheme, need improvement
+	blen = mpdApvGetBufferAvailable(i, 0);
+	printf(" BLEN = %d\n",blen);
+	if ( UseSdram ) {
+
+	  mpdOBUF_GetFlags(i, &empty, &full, &nwords);
+
+	  if (FastReadout) {
+	    if ( nwords < 128 ) { empty = 1; } else { nwords *= 2; }
+	  }
+
+	  if (!empty ) { // read data
+	    if (nwords > blen/4) { nwords = blen/4; }
+	    mpdOBUF_Read(i, nwords, &nwread);   
+	  }
+	    
+	  if (nwords != nwread ) {
+	    printf("Error: word read count does not match %d %d\n", nwords, nwread);
+	  }
+
+	} else { // if not Sdram
+	  
+	  mpdFIFO_IsEmpty(i, 0, &empty); //  read fifo channel=0 status
+
+	  if (!empty) { // read fifo
+	    nwread = blen/4;
+	    mpdFIFO_ReadSingle(i, 0, mpdApvGetBufferPointer(i, 0, 0), &nwread, 20); 
+	    if (nwread == 0) {
+	      printf("Error: word read count is 0, while some words are expected back\n");
+	    }
+	  }
+
+	}
+	
+	if (nwread>0) { // data need to be written on file
+
+	  int zero_count;
+	  zero_count=0;
+	  printf("%d: ",i); // slot
+	  fprintf(fout,"%x\n", i | MPD_TAG);
+	  for(iw=0; iw<nwread; iw++) {
+	    uint32_t datao;
+	    datao = mpdApvGetBufferElement(i, 0, iw);
+	    fprintf(fout,"%x\n",datao);
+	    if (datao !=0) {
+	      printf(" %d : 0x%x\n",iw,datao);
+	    } else {
+	      zero_count++;
+	    }
+
+	    if( (datao & 0x00E00000) == 0x00A00000 ) {
+	      mpd_evt[i]++;
+	    }
+	    evt = (evt > mpd_evt[i]) ? mpd_evt[i] : evt; // evt is the smallest number of events of an MPD
+	  }
+
+	  printf("MPD %d: nwords=%d nwcount=%d zero_count=%d\n",i,nwords,nwread,zero_count);
+	}
+      } // active mpd loop
+
+    } while (evt< n_event);  // events loop
+
     if (fout != stdout)  fclose(fout);
 
   }

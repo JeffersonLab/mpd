@@ -98,6 +98,9 @@ int mpdSource=0;                                    /* Signal source for MPD sys
 int mpdBlockLevel=0;                                /* Block Level for ADCs */
 int mpdIntCount = 0;                                /* Count of interrupts from MPD */
 int mpdBlockError=0; /* Whether (>0) or not (0) Block Transfer had an error */
+int mpdOutputBufferBaseAddr=0x100000;               /* output buffer base address */
+int mpdOutputBufferSpace=0x800000;                  /* output buffer space (8 Mbyte) */
+int mpdSdramBaseAddr=0x0;                           /* sdram base address (test only, 0=disabled) */
 ApvParameters fApv[(MPD_MAX_BOARDS)+1][MPD_MAX_APV];
 mpdParameters fMpd[(MPD_MAX_BOARDS)+1];
 unsigned short fApvEnableMask[(MPD_MAX_BOARDS)+1];
@@ -108,7 +111,7 @@ static uint32_t mpdSSPFiberMask[(MPD_MAX_BOARDS)+1];
 static int mpdSSPFiberMap[(MPD_MAX_BOARDS)+1];
 
 /* */
-#define MPD_VERSION_MASK 0xf00f
+#define MPD_VERSION_MASK 0xf00f 
 #define MPD_SUPPORTED_CTRL_FIRMWARE 0x4
 
 /* Internal APV register addresses */
@@ -308,7 +311,7 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
 	}
       else
 	{
-	  MPD_MSG("Looking at MPD in slot %d\n",ii);
+	  MPD_MSG("Looking at MPD in slot %d\n",ii+1);
 	  if(useList==1)
 	    {
 	      laddr_inc = mpdAddrList[ii] + mpdA24Offset; // not tested yet (EC)
@@ -328,7 +331,7 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
 	    {
 	      /* Turn off fiber mode, and try again */
 	      MPD_DBG("Try turning off fiber mode\n");
-	      mpd->fiber_status_ctrl = 0;
+	      mpd->fiber_status_ctrl = LSWAP(1);
 	    }
 
 #ifdef VXWORKS
@@ -367,7 +370,7 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
       if(mpdSSPMode)
 	boardID=ii;
       else
-	boardID=mpdRead32(&mpd->a24_bar)>>5;
+	boardID=mpdRead32(&mpd->a24_bar)>>3;
       
       if((boardID < 0)||(boardID >21)) 
 	{
@@ -431,7 +434,7 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
       if(boardID >= maxSlot) maxSlot = boardID;
       if(boardID <= minSlot) minSlot = boardID;
       
-      MPDp[boardID] = (struct mpd_struct *)(laddr);
+      MPDp[boardID] = (struct mpd_struct *)(laddr_inc);
 
       if(mpdSSPMode)
 	{
@@ -483,10 +486,10 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
 int mpdGetNumberMPD() { return mpdInited; };
 
 
-
 int mpdGetNumberAPV(int id) { return (uint16_t) fMpd[id].nAPV; };
-void mpdSetNumberAPV(int id, uint16_t v) { fMpd[id].nAPV = v; };
+void mpdSetNumberAPV(int id, uint16_t v) { fMpd[id].nAPV = v; }; 
 
+int mpdGetNumberConfiguredAPV(int id) { return nApv[id]; }; // return number of enabled APV
 
 int
 mpdCheckAddresses(int id)
@@ -638,6 +641,15 @@ short mpdGetCommonNoiseSubtraction(int id) { return fMpd[id].fCommonNoiseSubtrac
 
 void mpdSetEventBuilding(int id, int val) { fMpd[id].fEventBuilding = val; };
 int mpdGetEventBuilding(int id) { return fMpd[id].fEventBuilding; };
+
+void mpdSetEventPerBlock(int id, int val) { fMpd[id].fEventPerBlock = val; };
+int mpdGetEventPerBlock(int id) { return fMpd[id].fEventPerBlock; };
+
+void mpdSetUseSdram(int id, int val) { fMpd[id].fUseSdram = val; };
+int mpdGetUseSdram(int id) { return fMpd[id].fUseSdram; };
+
+void mpdSetFastReadout(int id, int val) { fMpd[id].fFastReadout = val; };
+int mpdGetFastReadout(int id) { return fMpd[id].fFastReadout; };
  
 void mpdSetCommonOffset(int id, int val) { fMpd[id].fCommonOffset = val; };
 int mpdGetCommonOffset(int id) { return fMpd[id].fCommonOffset; };
@@ -645,10 +657,13 @@ int mpdGetCommonOffset(int id) { return fMpd[id].fCommonOffset; };
 void mpdSetCalibLatency(int id, int val) { fMpd[id].fCalibLatency = val; };
 int mpdGetCalibLatency(int id) { return fMpd[id].fCalibLatency; };
 
+void mpdSetTriggerLatency(int id, int val) { fMpd[id].fTriggerLatency = val; };
+int mpdGetTriggerLatency(int id) { return fMpd[id].fTriggerLatency; };
+
 void mpdSetTriggerNumber(int id, int val) { fMpd[id].fTriggerNumber = val; };
 int mpdGetTriggerNumber(int id) { return fMpd[id].fTriggerNumber; };
 
-void mpdSetTriggerMode(int id, int lat, int num) 
+void mpdSetTriggerMode(int id, int lat, int tlat, int num) 
 {
   if( num == 0 )
     fMpd[id].fTriggerMode = MPD_TRIG_MODE_NONE;
@@ -665,8 +680,9 @@ void mpdSetTriggerMode(int id, int lat, int num)
   }
   mpdSetTriggerNumber(id, num);
   mpdSetCalibLatency(id, lat);
-  printf("%s: Calib Latency = %d, Trigger Mode = 0x%x\n",
-	  __FUNCTION__, lat, fMpd[id].fTriggerMode);
+  mpdSetTriggerLatency(id, tlat);
+  printf("%s: Calib / Trigger Latency = %d %d, Trigger Mode = 0x%x\n",
+	 __FUNCTION__, lat, tlat, fMpd[id].fTriggerMode);
 };
 
 int mpdGetTriggerMode(int id) { return fMpd[id].fTriggerMode; };
@@ -1043,7 +1059,7 @@ I2C_SendByte(int id, uint8_t byteval, int start)
     {
       usleep(10);
       data = mpdRead32(&MPDp[id]->i2c.comm_stat);
-      //printf("data:%0--8x %08x\n",data,MPD_I2C_COMMSTAT_NACK_RECV);
+      //printf("data:%08x %08x\n",data,MPD_I2C_COMMSTAT_NACK_RECV);
       retry_count++;
     }
 
@@ -1166,6 +1182,12 @@ int  mpdGetAdcClockPhase(int id, int adc) {
   return clock_phase; 
 };
 
+
+void mpdSetFIRenable(int id, int flag) { fMpd[id].fFIR = flag; }
+int mpdGetFIRenable(int id) { return fMpd[id].fFIR; }
+void mpdSetFIRcoeff(int id, int idx, int val) { fMpd[id].fFIRcoeff[idx] = val; }
+int mpdGetFIRcoeff(int id, int idx) { return fMpd[id].fFIRcoeff[idx]; }
+
 void mpdSetAdcGain(int id, int adc, int ch, int g) {fMpd[id].fAdcGain[adc][ch] = g; };
 int  mpdGetAdcGain(int id, int adc, int ch) {return fMpd[id].fAdcGain[adc][ch]; };
 void mpdSetAdcInvert(int id, int adc, int val) {fMpd[id].fAdcInvert[adc] = val; };
@@ -1222,7 +1244,40 @@ mpdAPV_Reset101(int id)
 
   return OK;
 }
+/*
+// generate software trigger
+int
+mpdAPV_SoftTrigger(int id)
+{
+  uint32_t data;
+  //  if(id==0) id=mpdID[0];
+  if((MPDp[id]==NULL) || (id<0) || (id>21))
+    {
+      printf("%s: ERROR: MPD in slot %d is not initialized.\n",
+	     __FUNCTION__,id);
+      return ERROR;
+    }
 
+  MPDLOCK;
+
+   data = mpdRead32(&MPDp[id]->ApvDaq.Trig_Gen_Config);
+ 
+
+   //   data |= MPD_APVDAQ_TRIGCONFIG_ENABLE_MACH;	// Enable trig machine
+  data |= SOFTWARE_TRIGGER_MASK;       
+
+  mpdWrite32(&MPDp[id]->ApvDaq.Trig_Gen_Config, data);
+
+  data &= ~SOFTWARE_TRIGGER_MASK;
+  //   data &= ~MPD_APVDAQ_TRIGCONFIG_ENABLE_MACH;	// Disable trig machine
+
+    mpdWrite32(&MPDp[id]->ApvDaq.Trig_Gen_Config, data);
+
+  MPDUNLOCK;
+
+  return OK;
+}
+*/
 /*
  * return true if apv is present
  *   (EC: to be improved not yet 100% reliable) 
@@ -1309,7 +1364,7 @@ mpdAPV_Scan(int id)
   nApv[id]=0;
   for(iapv=0; iapv<fMpd[id].nAPV; iapv++)
     {
-      printf("%s: Try %2d %2d : ", __FUNCTION__, fApv[id][iapv].i2c, fApv[id][iapv].adc);
+      printf("%s: Try i2c=%2d adc=%2d : ", __FUNCTION__, fApv[id][iapv].i2c, fApv[id][iapv].adc);
       
       if ( mpdAPV_Try(id, fApv[id][iapv].i2c)>-1 && fApv[id][iapv].adc>-1 ) 
 	{
@@ -1319,13 +1374,15 @@ mpdAPV_Scan(int id)
 	  mpdSetApvEnableMask(id, (1 << fApv[id][iapv].adc));
 	  printf("%s: APV enable mask 0x%04x\n", 
 		 __FUNCTION__,mpdGetApvEnableMask(id));
+	  fApv[id][iapv].enabled=1;
 	  nApv[id]++;
 	}
       else 
 	{
-	  printf("%s: MPD %d APV i2c = %d does not respond.  It is removed from db\n",
+	  printf("%s: MPD %d APV i2c = %d does not respond.  It is disabld\n",
 		 __FUNCTION__,id, fApv[id][iapv].i2c);
 	  fApvEnableMask[id] &= ~(1 << fApv[id][iapv].adc);
+	  fApv[id][iapv].enabled=0;
 	}
     }   
       
@@ -1503,6 +1560,12 @@ mpdAPV_Config(int id, int apv_index)
 }
 
 /**
+ * return 0 if card is disable
+ */
+
+short mpdApvEnabled(int id, int ia) { return fApv[id][ia].enabled; }
+
+/**
  * Return the setting value of the number of samples per trigger (1 or 3)
  * this is the same for all Apvs 
  * return -1 if there are no APV connected
@@ -1593,9 +1656,11 @@ mpdApvGetMaxLatency(int id)
       return ERROR;
     }
   
-  for (iapv=0; iapv<nApv[id]; iapv++) 
+  for (iapv=0; iapv<fMpd[id].nAPV; iapv++) 
     {
-      c = (fApv[id][iapv].Latency > c) ? fApv[id][iapv].Latency : c;
+      if (fApv[id][iapv].enabled) {
+	c = (fApv[id][iapv].Latency > c) ? fApv[id][iapv].Latency : c;
+      }
     }
   return c;
 }
@@ -1607,10 +1672,10 @@ mpdApvBufferAlloc(int id, int ia)
   GEF_MAP_PTR mapPtr;
   GEF_VME_DMA_HDL dma_hdl;
 
-  fApv[id][ia].fBufSize = 15*fApv[id][ia].fNumberSample*(EVENT_SIZE+2); // at least 6 times larger @@@ increased to 15 -- need improvement
+  fApv[id][ia].fBufSize = 15*fApv[id][ia].fNumberSample*(EVENT_SIZE+2)+1000; // at least 6 times larger @@@ increased to 15 -- need improvement
 
 #define PHYSMEM
-#ifdef PHYSMEM  
+#ifdef PHYSMEM
   status = gefVmeAllocDmaBuf (vmeHdl,fApv[id][ia].fBufSize,	
 			    &dma_hdl,&mapPtr);
   if(status != GEF_STATUS_SUCCESS) 
@@ -1669,7 +1734,7 @@ mpdApvGetBufferPointer(int id, int ia, int ib)
   if (ib<fApv[id][ia].fBufSize) { // probably not required !!
     return &(fApv[id][ia].fBuffer[ib]);
   }
-  MPD_ERR("Fifo %d, index %d is out of range (%d)\n",fApv[id][ia].adc, ib, fApv[id][ia].fBufSize);
+  MPD_ERR("MPD %d Fifo %d, index %d is out of range (buf size = %d)\n",id, fApv[id][ia].adc, ib, fApv[id][ia].fBufSize);
   exit(1);
 }
 
@@ -1728,12 +1793,14 @@ mpdArmReadout(int id)
       return ERROR;
     }
 
-  for (iapv=0; iapv<nApv[id]; iapv++) 
+  for (iapv=0; iapv<fMpd[id].nAPV; iapv++) 
     {
-      mpdApvSetSampleLeft(id, iapv); // improve peak mode
-      fApv[id][iapv].fBi0 = 0; // begin of buffer (should be always 0)
-      fApv[id][iapv].fBs = 0;  // end of event (last sample end mark)
-      fApv[id][iapv].fBi1 = 0; // end of buffer
+      if (fApv[id][iapv].enabled) {
+	mpdApvSetSampleLeft(id, iapv); // improve peak mode
+	fApv[id][iapv].fBi0 = 0; // begin of buffer (should be always 0)
+	fApv[id][iapv].fBs = 0;  // end of event (last sample end mark)
+	fApv[id][iapv].fBi1 = 0; // end of buffer
+      }
     }
   fMpd[id].fReadDone = FALSE;
 
@@ -1826,27 +1893,27 @@ mpdTRIG_Enable(int id)
   mpdWrite32(&MPDp[id]->sync_period,    sync_period);
   mpdWrite32(&MPDp[id]->channel_enable, mpdGetApvEnableMask(id));
 
-  if( mpdGetFpgaRevision(id) < 2 )
-    data =  mpdGetAdcClockPhase(id, 0) | 	// This works only for ADC board rev 0
-      ((mpdGetTriggerMode(id) & 0x07) << 12) |
-      ((mpdGetTriggerNumber(id) & 0x0F) << 8) | reset_latency;
-  else
-    data = 
-      ((mpdGetCalibLatency(id) & 0xFF) << 24) |
-      ((mpdGetInPathI(id, MPD_IN_FRONT, MPD_IN_TRIG) & 0x01) << 23) |
-      ((mpdGetInPathI(id, MPD_IN_P0, MPD_IN_TRIG2) & 0x01) << 22) |
-      ((mpdGetInPathI(id, MPD_IN_P0, MPD_IN_TRIG1) & 0x01) << 21) |
-      ((mpdGetInPathI(id, MPD_IN_FRONT, MPD_IN_SYNC) & 0x01) << 17) |
-      ((mpdGetInPathI(id, MPD_IN_P0, MPD_IN_SYNC) & 0x01) << 16) |
-      //	  ((test_mode & 0x01) << 15) |
-      ((mpdGetTriggerMode(id) & 0x07) << 12) |
-      ((mpdGetTriggerNumber(id) & 0x0F) << 8) | reset_latency;
-
-  mpdWrite32(&MPDp[id]->trigger_config, data);
+  data = mpdGetTriggerLatency(id);
+  mpdWrite32(&MPDp[id]->trigger_delay,  data);
 
   mpdWrite32(&MPDp[id]->zero_threshold, mpdGetZeroLevel(id));
   mpdWrite32(&MPDp[id]->one_threshold,  mpdGetOneLevel(id));
+
+  data = 
+    ((mpdGetCalibLatency(id) & 0xFF) << 24) |
+    ((mpdGetInPathI(id, MPD_IN_FRONT, MPD_IN_TRIG) & 0x01) << 23) |
+    ((mpdGetInPathI(id, MPD_IN_P0, MPD_IN_TRIG2) & 0x01) << 22) |
+    ((mpdGetInPathI(id, MPD_IN_P0, MPD_IN_TRIG1) & 0x01) << 21) |
+    ((mpdGetInPathI(id, MPD_IN_FRONT, MPD_IN_SYNC) & 0x01) << 17) |
+    ((mpdGetInPathI(id, MPD_IN_P0, MPD_IN_SYNC) & 0x01) << 16) |
+    //	  ((test_mode & 0x01) << 15) |
+    ((mpdGetTriggerMode(id) & 0x07) << 12) |
+    ((mpdGetTriggerNumber(id) & 0x0F) << 8) | reset_latency;
+
+  mpdWrite32(&MPDp[id]->trigger_config, data);
+
   MPDUNLOCK;
+
 
   return OK;
 }
@@ -1943,6 +2010,38 @@ mpdDELAY25_Set(int id, int apv1_delay, int apv2_delay)
 }
 
 //======================================================
+//
+
+int mpdFIR_Config(int id) {
+
+  uint32_t addr;
+  uint32_t data, rdata;
+  int success;
+  int i;
+  int coeff0, coeff1;
+
+  int npar = 16;
+
+  // set coeff
+  printf("%s: FIR coefficients:", __FUNCTION__);
+  for (i=0;i<npar/2;i++) {
+    coeff0 = mpdGetFIRcoeff(id, i*2);
+    coeff1 = mpdGetFIRcoeff(id, i*2+1);
+    data = ((coeff1 << 16) & 0xffff0000) | (coeff0 & 0xffff);
+    printf(" W 0x%x 0x%x",coeff0&0xffff, coeff1&0xffff);
+
+    mpdWrite32(&MPDp[id]->fir_coefficients[i], data);
+
+    rdata = mpdRead32(&MPDp[id]->fir_coefficients[i]);
+    printf(" R 0x%x 0x%x",rdata&0xffff, (rdata>>16)&0xffff);
+  }
+  printf("\n");
+
+  return OK;
+
+}
+
+//======================================================
 // adc methods
 
 #define MPD_ADC_TOUT 1000
@@ -1981,6 +2080,11 @@ int mpdADS5281_Config(int id) {
 			   mpdGetAdcGain(id,j,6), 
 			   mpdGetAdcGain(id,j,7)) != OK )
       printf("WRN: Set ADC Gain %d failed on mpd %d\n",j,id);
+  }
+
+  // FIR filter configuration (april/2015)
+   if( mpdGetFpgaCompileTime(id) >= 1429878298 ) { // Apr 24 14:24:58 2015
+     mpdFIR_Config(id);  // configure FIR coefficients (FIR is enabled in DAQ_Config)
   }
 
   return OK;
@@ -2359,6 +2463,108 @@ mpdHISTO_Read(int id, int ch, uint32_t *histogram)	/* ch == 0, 15; uint32_t hist
 //======================================================
 // Daq-Readout methods
 
+int 
+mpdOBUF_GetFlags(int id, int *empty, int *full, int *nwords)
+{
+
+  uint32_t data;
+
+  MPDLOCK;
+  data = mpdRead32(&MPDp[id]->ob_status.output_buffer_flag_wc);
+  MPDUNLOCK;
+
+  if( data & 0x80000000 )
+    *full = 1;
+  else
+    *full = 0;
+  if( data & 0x40000000 )
+    *empty = 1;
+  else
+    *empty = 0;
+
+  *nwords = data & 0xFFFF;
+
+  return OK;
+}
+
+int 
+mpdOBUF_Read(int id, int size, int *wrec)
+{
+
+  uint32_t data;
+  uint32_t vmeAdrs;
+  int retVal=0;
+
+  if (mpdGetFastReadout(id)) {
+    // read 64bit 2sst
+    vmeDmaConfig(2,5,1);
+  } else {
+    // block readout A32 mode BLT
+    vmeDmaConfig(2,2,0);
+  }
+  MPDLOCK;
+  
+  
+  
+  vmeAdrs = (uint32_t) mpdOutputBufferBaseAddr + mpdOutputBufferSpace * id;
+  retVal = vmeDmaSendPhys(fApv[id][0].physMemBase,vmeAdrs,(size<<2));
+  if(retVal != 0) 
+    {
+      MPD_ERR("ERROR in DMA transfer Initialization (returned 0x%x)\n",retVal);
+      MPD_ERR("  id=%d apv physMemBase = 0x%08x\n",
+	      id,(uint32_t)fApv[id][0].physMemBase);
+      *wrec=0;
+      MPDUNLOCK;
+      return(retVal);
+    }
+  
+  /* Wait until Done or Error */
+  retVal = vmeDmaDone();
+  MPDUNLOCK;
+  if(retVal==0)
+    {
+      *wrec=0;
+      MPD_ERR("vmeDmaDone returned zero word count\n");
+      
+      return ERROR;
+    }
+  else if(retVal==ERROR)
+      {
+	*wrec=0;
+	MPD_ERR("vmeDmaDone returned ERROR\n");
+
+	return ERROR;
+      }
+  else
+    {
+      *wrec   = (retVal>>2);
+      MPD_DBG("vmeDmaDone returned 0x%x (%d)  wrec = %d\n",
+	      retVal, retVal, *wrec);
+      int iword=0;
+      for(iword =0; iword<*wrec; iword++)
+	{
+#ifdef DEBUG_BLOCKREAD
+	  if((iword%4)==0)
+	    printf("\n%4d:  ",iword);
+	  
+	  printf("0x%08x   ",LSWAP(fApv[id][0].fBuffer[iword]));
+#endif
+	  /* Byte swap necessary for block transfers */
+	  fApv[id][0].fBuffer[iword] = LSWAP(fApv[id][0].fBuffer[iword]);
+	}
+#ifdef DEBUG_BLOCKREAD
+      printf("\n");
+#endif
+    }
+  
+  if( *wrec != size ) {
+    MPD_DBG("Count Mismatch: %d expected %d\n", *wrec, size);
+    return ERROR;
+  }
+
+  return OK;
+
+}
 
 /**
  * Readout Fifo
@@ -2396,16 +2602,18 @@ mpdFIFO_ReadSingle(int id,
   i = 0;
   while( (nwords <= 0) && (i <= max_retry) ) {
     if( max_retry > 0 ) i++;
-    success = mpdFIFO_GetNwords(id, channel, &nwords);
+    success = mpdFIFO_GetNwords(id, fApv[id][channel].adc, &nwords);
     if( success != OK ) return success;
   }
   
-  //printf("%s: number of words to be read %d\n",__FUNCTION__,nwords);
+  //printf("\n\n%s: number of words to be read %d\n %d",__FUNCTION__,nwords,max_retry);
   size = (nwords < wmax) ? nwords : wmax;
   
+  printf("\n\n%s: mpdFIFO_GetNwords:number of words to be read %d size: %d\n",__FUNCTION__,nwords,size);
+
   //MPD_DBG("fifo ch = %d, words in fifo= %d, retries= %d (max %d)\n",channel, nwords,i, max_retry);
   MPD_DBG("  id=%d  channel=%d  physMemBase = 0x%08x   dbuf = 0x%08x\n\n",
-	  id,channel,(uint32_t)fApv[id][0].physMemBase, (uint32_t)&dbuf[0]);
+	  id,channel,(uint32_t)fApv[id][channel].physMemBase, (uint32_t)&dbuf[0]);
   
   if( i > max_retry ) {
     MPD_ERR(" max retry = %d, count=%d nword=%d\n", max_retry, i, nwords);
@@ -2418,10 +2626,12 @@ mpdFIFO_ReadSingle(int id,
   /*   unsigned long offset = ((unsigned long)&dbuf - (unsigned long)&fApv[id][0].fBuffer); */
   unsigned long offset = 0;
   MPD_DBG("dbuf addr = 0x%lx  fBuffer = 0x%lx  offset = 0x%lx\n",
-  	  (unsigned long)dbuf, (unsigned long)fApv[id][0].fBuffer, (unsigned long)offset);
+  	  (unsigned long)dbuf, (unsigned long)fApv[id][channel].fBuffer, (unsigned long)offset);
 
-  vmeAdrs = (uint32_t)&MPDp[id]->data_ch[channel][0];
-  retVal = vmeDmaSendPhys(fApv[id][0].physMemBase+offset,vmeAdrs,(size<<2));
+  vmeDmaConfig(1,2,0); //A24 BLT32
+
+  vmeAdrs = (uint32_t)&MPDp[id]->data_ch[fApv[id][channel].adc][0] - mpdA24Offset;
+  retVal = vmeDmaSendPhys(fApv[id][channel].physMemBase+offset,vmeAdrs,(size<<2));
   if(retVal != 0) 
     {
       MPD_ERR("ERROR in DMA transfer Initialization (returned 0x%x)\n",retVal);
@@ -2437,14 +2647,14 @@ mpdFIFO_ReadSingle(int id,
   if(retVal==0)
     {
       *wrec=0;
-      MPD_ERR("vmeDmaDone returned zero word count\n");
+      MPD_ERR("vmeDmaDone returned zero word count retVal=0x%x (%d)\n",retVal,retVal);
       MPDUNLOCK;
       return ERROR;
     }
   else if(retVal==ERROR)
     {
       *wrec=0;
-      MPD_ERR("vmeDmaDone returned ERROR\n");
+      MPD_ERR("vmeDmaDone returned ERROR retVal=0x%x (%d)\n",retVal,retVal);
       MPDUNLOCK;
       return ERROR;
     }
@@ -2456,14 +2666,15 @@ mpdFIFO_ReadSingle(int id,
       int iword=0;
       for(iword =0; iword<*wrec; iword++)
 	{
+#define DEBUG_BLOCKREAD
 #ifdef DEBUG_BLOCKREAD
 	  if((iword%4)==0)
 	    printf("\n%4d:  ",iword);
 	  
-	  printf("0x%08x   ",LSWAP(fApv[id][0].fBuffer[iword]));
+	  printf("0x%08x   ",LSWAP(fApv[id][channel].fBuffer[iword]));
 #endif
 	  /* Byte swap necessary for block transfers */
-	  fApv[id][0].fBuffer[iword] = LSWAP(fApv[id][0].fBuffer[iword]);
+	  fApv[id][channel].fBuffer[iword] = LSWAP(fApv[id][channel].fBuffer[iword]);
 	}
 #ifdef DEBUG_BLOCKREAD
       printf("\n");
@@ -2585,9 +2796,11 @@ mpdFIFO_Samples(int id,
 #ifdef BLOCK_TRANSFER
   success = BUS_BlockRead(fifo_addr, nwords, event, nread);
 #else
-  for(i=0; i<nwords; i++)
-    event[i] = mpdRead32(&MPDp[id]->data_ch[channel][i*4]);
+      printf("addr: %08x \n",(&MPDp[id]->data_ch[0][0]-&MPDp[id]->histo_memory[0][0]));
 
+  for(i=0; i<nwords; i++) {
+    event[i] = mpdRead32(&MPDp[id]->data_ch[channel][i]);
+  }
   *nread = nwords*4;
 #endif
   *nread /= 4;
@@ -2755,7 +2968,7 @@ mpdFIFO_GetNwords(int id, int channel, int *nwords)
     }
 
   MPDLOCK;
-  *nwords = data = mpdRead32(&MPDp[id]->ch_flags.used_word_ch_pair[channel]);
+  *nwords = data = mpdRead32(&MPDp[id]->ch_flags.used_word_ch_pair[channel]) & 0xffff;
   MPDUNLOCK;
 
   //printf("EC: nwords from fifo %d 0x%x\n",channel,data);
@@ -2889,14 +3102,16 @@ mpdFIFO_ReadAll(int id, int *timeout, int *global_fifo_error) {
   *global_fifo_error = 0;
   
   if (fMpd[id].fReadDone == 0) { // at least one MPD FIFO needs to be read
-    for(k=0; k<nApv[id]; k++) { // loop on ADC channels on single board
+    for(k=0; k<fMpd[id].nAPV; k++) { // loop on ADC channels on single board
+
+      if (fApv[id][k].enabled == 0) { continue; }
 
       if (mpdApvReadDone(id, k) == 0) { // APV FIFO has data to be read
 
 	nread = mpdApvGetBufferAvailable(id, k);
-	//printf(" EC: card %d buffer size available = %d\n",k,nread);
+	// printf(" EC: card %d %d buffer size available = %d\n",id, k,nread);
 	if (nread>0) { // space in memory buffer
-	  err = mpdFIFO_ReadSingle(id, fApv[id][k].adc,mpdApvGetBufferPWrite(id, k), &nread, 20); //not this
+	  err = mpdFIFO_ReadSingle(id, k/*fApv[id][k].adc*/ ,mpdApvGetBufferPWrite(id, k), &nread, 20); //not this
 
 	  mpdApvIncBufferPointer(id, k, nread);
 
@@ -2910,7 +3125,7 @@ mpdFIFO_ReadAll(int id, int *timeout, int *global_fifo_error) {
 
        	int n = mpdApvGetBufferSample(id,k);
 
-	MPD_DBG("APV_No= %d, ADC_No= %d, word read= %d, event/sample read= %d, error=%d\n",k,fApv[id][k].adc,nread ,n, *global_fifo_error);
+	MPD_DBG("MPD: %d APV_idx= %d, ADC_FIFO= %d, word read= %d, event/sample read= %d, error=%d\n",id, k,fApv[id][k].adc,nread ,n, *global_fifo_error);
 
 	sample_left += mpdApvGetSampleLeft(id, k);
 
@@ -3013,8 +3228,9 @@ mpdFIFO_ReadAllNew(int id, int *timeout, int *global_fifo_error)
   sample_left = 0;
 
   if (fMpd[id].fReadDone == 0) { // MPD fifos need to be read
-    for(k=0; k<nApv[id]; k++) { // loop on ADC channels on single board
+    for(k=0; k<fMpd[id].nAPV; k++) { // loop on ADC channels on single board
 
+      if (fApv[id][k].enabled == 0) { continune; }
       if (mpdApvReadDone(id,k) == 0) { // APV FIFO has data to be read
   
 	//      sample_left += ApvGetSampleLeft(k);
@@ -3120,7 +3336,7 @@ mpdDAQ_Config(int id)
 
   uint32_t data;
   int i;
-  short evtbld;
+  short evtbld, UseSdram,FastReadout;
 
   //  if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
@@ -3131,23 +3347,65 @@ mpdDAQ_Config(int id)
     }
 
   evtbld = mpdGetEventBuilding(id) ? 1 : 0;
+  UseSdram = mpdGetUseSdram(id) ? 1 : 0;
+  FastReadout = mpdGetFastReadout(id) ? 1 : 0;
+  if(evtbld==0){UseSdram = 0;}
+  if(evtbld==0||(evtbld == 1 && UseSdram == 0)) FastReadout = 0;
+
+  if(evtbld)
+    {
+      data = mpdGetTriggerNumber(id)*mpdApvGetPeakMode(id);
+      MPDLOCK;
+      mpdWrite32(&MPDp[id]->sample_per_event, data);
+      MPDUNLOCK;
+      printf("%s : Sample_per_event = 0x%x\n",__FUNCTION__,data);
+      data = mpdGetEventPerBlock(id) &0xff;
+      if (data == 0) data = 1;
+      MPDLOCK;
+      mpdWrite32(&MPDp[id]->event_per_block, data);
+      MPDUNLOCK;
+      printf("%s : Event_per_block = 0x%x\n",__FUNCTION__,data);
+    }
 
   data = (mpdGetAcqMode(id) & 0x07) | // ((test & 0x01) << 15) |
-    ((0 & 0x1) << 4) | // FIR enable=1 (to be implemented)
-    (( mpdGetInputLevel(id,0) & 0x1) << 8) | // NIM=0/TTL=1 Level LEMO IN0 (TBI)
-    (( mpdGetInputLevel(id,1) & 0x1) << 9) | // NIM/TTL Level LEMO IN1 (TBI)
-    (( mpdGetOutputLevel(id,0) & 0x1) << 10) | // NIM/TTL Level LEMO OUT0 (TBI)
-    (( mpdGetOutputLevel(id,1) & 0x1) << 11) | // NIM/TTL Level LEMO OUT1 (TBI)
+    ((mpdGetFIRenable(id) & 0x1) << 4) | // FIR enable=1 
+    (FastReadout << 14) |
+    (UseSdram << 15) |
     ((mpdGetCommonOffset(id) & 0xfff) << 16) | 
     ((mpdGetCommonNoiseSubtraction(id) & 0x1) << 28) | 
     ((evtbld & 0x1) << 30);
-
-  printf("%s : ReadoutConfig = 0x%x\n",__FUNCTION__,data);
   MPDLOCK;
   mpdWrite32(&MPDp[id]->readout_config, data);
   MPDUNLOCK;
+  printf("%s : ReadoutConfig = 0x%x\n",__FUNCTION__,data);
 
-  for (i=0;i<nApv[id];i++) {
+   data = 
+     (( mpdGetInputLevel(id,0) & 0x1) << 0) | // NIM=1/TTL=0 Level LEMO IN0
+     (( mpdGetInputLevel(id,1) & 0x1) << 1) | // NIM/TTL Level LEMO IN1
+     (( mpdGetOutputLevel(id,0) & 0x1) << 2) | // NIM/TTL Level LEMO OUT0
+     (( mpdGetOutputLevel(id,1) & 0x1) << 3); // NIM/TTL Level LEMO OUT1 
+  MPDLOCK;
+  mpdWrite32(&MPDp[id]->io_config, data);
+  MPDUNLOCK;
+  printf("%s : IOConfig = 0x%x\n",__FUNCTION__,data);
+
+  if ( UseSdram ) { 
+    data = ( mpdOutputBufferBaseAddr + mpdOutputBufferSpace * id ) >> 2;
+  } else {
+    data = 0;
+  }
+  MPDLOCK;
+  mpdWrite32(&MPDp[id]->obuf_base_addr, data);
+  MPDUNLOCK;
+  printf("%s : Output buffer base address = 0x%x (0=no SDRAM)\n",__FUNCTION__,data);
+
+  data = mpdSdramBaseAddr;
+  MPDLOCK;
+  mpdWrite32(&MPDp[id]->sdram_base_addr, data);
+  MPDUNLOCK;
+  printf("%s : Sdram base address = 0x%x (test only)\n",__FUNCTION__,data);
+
+  for (i=0;i<fMpd[id].nAPV;i++) {
     fApv[id][i].fBi0 = 0;
     fApv[id][i].fBi1 = 0;
   }

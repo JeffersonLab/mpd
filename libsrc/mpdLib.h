@@ -138,8 +138,7 @@ struct mpd_struct
   /* 0x01010 */          uint32_t blank7[(0x4000-0x1010)>>2];
   /* 0x04000 */ volatile uint32_t histo_memory[2][(0x4000)>>2];
   /* 0x0C000 */          uint32_t blank8[(0x10000-0xC000)>>2];
-  /* 0x10000 */ volatile uint32_t data_ch[16][(0x1000-0x0)>>2];
-  /* 0x20000 */          uint32_t blank9[(0x30000-0x20000)>>2];
+  /* 0x10000 */ volatile uint32_t data_ch[16][(0x2000)>>2];
   /* 0x30000 */ struct mpd_channel_flags_struct ch_flags;
   /* 0x30048 */          uint32_t blank10[(0x34000-0x30048)>>2];
   /* 0x34000 */ volatile uint32_t ped[16][(0x200)>>2];
@@ -189,6 +188,8 @@ typedef struct apvparm_struct // actually a structure
 {
   uint8_t i2cAddrScan; // i2c address from card discovery (scan)
   uint8_t i2cAddr;
+
+  short enabled; // if 0 card is disabled
   
   // config settings
   short i2c;
@@ -258,10 +259,11 @@ typedef struct mpd_priv_struct
   uint32_t Last1Offset;
 
   uint16_t fApv_enable_mask;
-  uint16_t nAPV; // number of apv in mpd (EC)
+  uint16_t nAPV; // number of apv in mpd config file (EC)
 
   // config settings
   int   fCalibLatency;
+  int   fTriggerLatency;
   short fTriggerNumber;
   short fTriggerMode;
   short fAcqMode; // histo, event process ...
@@ -272,6 +274,9 @@ typedef struct mpd_priv_struct
   short fOutLevelTTL[2]; // output lemo logic level 0=NIM, 1=TTL
 
   int fEventBuilding;
+  int fEventPerBlock;
+  int fUseSdram;
+  int fFastReadout;
 
   short fCommonNoiseSubtraction;
   int  fCommonOffset;
@@ -285,6 +290,10 @@ typedef struct mpd_priv_struct
   int fAdcGain[2][8];
   int fAdcInvert[2];
   int fAdcPattern[2];
+
+  // FIR
+  int fFIR;
+  int fFIRcoeff[16];
 
   // i2c
   int fI2CSpeed;
@@ -325,13 +334,20 @@ void mpdSetCommonNoiseSubtraction(int id, short val);
 short mpdGetCommonNoiseSubtraction(int id);
 void mpdSetEventBuilding(int id, int val);
 int  mpdGetEventBuilding(int id);
+
+void mpdSetEventPerBlock(int id, int val);
+int  mpdGetEventPerBlock(int id);
+void mpdSetUseSdram(int id, int val);
+int  mpdGetUseSdram(int id);
+void mpdSetFastReadout(int id, int val);
+int  mpdGetFastReadout(int id);
 void mpdSetCommonOffset(int id, int val);
 int  mpdGetCommonOffset(int id);
 void mpdSetCalibLatency(int id, int val);
 int  mpdGetCalibLatency(int id);
 void mpdSetTriggerNumber(int id, int val);
 int  mpdGetTriggerNumber(int id);
-void mpdSetTriggerMode(int id, int lat, int num);
+void mpdSetTriggerMode(int id, int lat, int tlat, int num);
 int  mpdGetTriggerMode(int id);
 void mpdSetAcqMode(int id, char *name);
 int  mpdGetAcqMode(int id);
@@ -354,8 +370,9 @@ void mpdSetFpgaCompileTime(int id, uint32_t t);
 int  mpdLM95235_Read(int id, double *core_t, double *air_t);
 
 /* service methods */
-int mpdGetNumberAPV(int id); // EC
-void mpdSetNumberAPV(int id, uint16_t v); // EC
+int mpdGetNumberAPV(int id); // get number of apv in config file
+void mpdSetNumberAPV(int id, uint16_t v); // set number of apv in config file 
+int mpdGetNumberConfiguredAPV(int id); // return number of apv properly configured by the hardware
 
 /* I2C methods */
 void mpdSetI2CSpeed(int id, int val);
@@ -395,6 +412,7 @@ int  mpdApvReadDone(int id, int ia);
 int  mpdApvGetSampleLeft(int id, int ia);
 int  mpdApvGetSampleIdx(int id, int ia);
 int  mpdAPV_Reset101(int id);
+int  mpdAPV_SoftTrigger(int id);
 int  mpdAPV_Try(int id, uint8_t apv_addr);
 
 void mpdSetApvEnableMask(int id, uint16_t mask);
@@ -421,6 +439,8 @@ int  mpdApvGetBufferLength(int id, int ia);
 int  mpdApvGetEventSize(int id, int ia);
 int mpdApvGetAdc(int id, int ia);
 
+short mpdApvEnabled(int id, int ia);
+
 int  mpdArmReadout(int id);
 
 // trigger methods
@@ -446,6 +466,8 @@ int  mpdADS5281_SetGain(int id, int adc,
 			int gain0, int gain1, int gain2, int gain3, 
 			int gain4, int gain5, int gain6, int gain7);
 
+int mpdFIR_Config(int id);
+
 // histogramming methods
 
 int  mpdHISTO_Clear(int id, int ch, int val);
@@ -455,6 +477,9 @@ int  mpdHISTO_GetIntegral(int id, int ch, uint32_t *integral);
 int  mpdHISTO_Read(int id, int ch, uint32_t *histogram);
 
 // Daq-Readout methods
+int mpdOBUF_GetFlags(int id, int *empty, int *full, int *nwords);
+int mpdOBUF_Read(int id, int size, int *wrec);
+
 int  mpdFIFO_ReadSingle(int id, int channel, uint32_t *dbuf, int *wrec, int max_retry);
 int  mpdFIFO_ReadSingle0(int id, int channel, int blen, uint32_t *event, int *nread);
 int  mpdFIFO_Samples(int id, 
@@ -501,6 +526,12 @@ int  mpdGetPedCommon(int id);
 int  mpdGetThrCommon(int id);
 
 int mpdGetNumberMPD(); 
+
+void mpdSetFIRenable(int id, int flag);
+int mpdGetFIRenable(int id);
+void mpdSetFIRcoeff(int id, int idx, int val);
+int mpdGetFIRcoeff(int id, int idx);
+
 
 #ifdef NOTDONE
 int  mpdReadPedThr(int id, std::string pname);

@@ -111,6 +111,8 @@ mpdConfigLoad()
   int nApv;
   char *pattern;
 
+  printf("%s: Start\n",__FUNCTION__);
+
   for(impd=0; impd<nMPD; impd++)
     {
       mpdset[0] = config_setting_get_elem(mpd_set[0],impd);
@@ -136,6 +138,7 @@ mpdConfigLoad()
 
       mpdSetTriggerMode(slot, 
       			mpdReadSettingInt(mpdset, "calib_latency", 0),
+      			mpdReadSettingInt(mpdset, "trigger_latency", 0),
       			mpdReadSettingInt(mpdset, "trigger_number", 0));
 
       
@@ -144,6 +147,18 @@ mpdConfigLoad()
 
       mpdSetEventBuilding(slot,
 			  mpdReadSettingInt(mpdset, "event_building",0));
+
+
+      mpdSetEventPerBlock(slot,
+			  mpdReadSettingInt(mpdset, "event_per_block",0));
+
+
+      mpdSetUseSdram(slot,
+			  mpdReadSettingInt(mpdset, "use_sdram",0));
+
+      mpdSetFastReadout(slot,
+			  mpdReadSettingInt(mpdset, "fast_readout",0));
+
 
 
       mpdSetCommonOffset(slot,
@@ -172,10 +187,18 @@ mpdConfigLoad()
       mpdSetOutputLevel(slot, 0, mpdReadSettingInt(mpdset, "output_0_level",0));
       mpdSetOutputLevel(slot, 1, mpdReadSettingInt(mpdset, "output_1_level",0));
 
+      int ifir;
+      mpdSetFIRenable(slot, mpdReadSettingInt(mpdset, "fir_enable", 0));
+      for (ifir=0;ifir<16;ifir++) {
+	mpdSetFIRcoeff(slot, ifir, 
+		       mpdReadSettingInt(mpdset, "fir_coeff", ifir));
+      }
+
 #ifdef NOTDONE
-      mpdSetFIR(slot, enable, param);
       mpdReadPedThr(slot);
 #endif
+
+
       adc_set[0] = config_setting_get_member(mpdset[0],"adc");
       adc_set[1] = config_setting_get_member(mpdset[1],"adc");
 
@@ -286,7 +309,7 @@ mpdConfigLoad()
 	  mode = (mpdReadSettingInt(apvset, "Polarization",0) << 5) |
 	    (apv_freq << 4) |
 	    (mpdReadSettingInt(apvset, "ReadOutMode",0) << 3) |
-	    ((1 - mpdReadSettingInt(apvset, "ReadOutMode",0)) << 2) |
+	    ((1 - mpdReadSettingInt(apvset, "CalPulse",0)) << 2) |
 	    (apv_smode << 1) |
 	    mpdReadSettingInt(apvset, "AnalogBias",0);
 

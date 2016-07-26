@@ -14,15 +14,17 @@ default:
 
       calib_latency = 0;     // 0..255: 0: disabled, > 0 issue a calib followed by trigger after given latency, trigger - calibration pulse delay
 
+      trigger_latency = 0; // [clock 25ns, max=31] delay from arrival of the trigger to the MPD input and issue of the trigger to the cards (new in MPD Firmware 4.0)
+
       trigger_number = 2;	// 0..15 0: disabled, 1: normal, >1: N trigger issued every 3 clock cycles, (that is number of samples)
 
       apv_Frequency  = 1; // Readout Frequency  : 0=20 MHz, 1=40 MHz
       apv_SampleMode = 0; // Sampling Mode      : 0=3 samples, 1=1 sample / trigger
 
-      input_0_level = 0; // LEMO input 0 digital level (0=NIM, 1=TTL)
-      input_1_level = 0; // LEMO input 1 digital level (0=NIM, 1=TTL)
-      output_0_level = 0; // LEMO output 0 digital level (0=NIM, 1=TTL)
-      output_1_level = 0; // LEMO putput 1 digital level (0=NIM, 1=TTL)
+      input_0_level = 1; // LEMO input 0 digital level (1=NIM, 0=TTL)
+      input_1_level = 0; // LEMO input 1 digital level (1=NIM, 0=TTL)
+      output_0_level = 0; // LEMO output 0 digital level (1=NIM, 0=TTL)
+      output_1_level = 0; // LEMO putput 1 digital level (1=NIM, 0=TTL)
 
       en_trig1_P0 = false;    // Enable TRIG1 line on P0 connector
       en_trig2_P0 = false;    // Enable TRIG2 line on P0 connector
@@ -30,7 +32,12 @@ default:
       en_sync_P0 = false;     // Enable SYNC line on P0 connector
       en_sync_Front = true;   // Enable SYNC line on Front Panel IN1 lemo connector
       common_noise_subtraction=0; // 0 disabled, 1=mean, ...
-      event_building = 0; // 0 = disabled
+      event_building = 0; // 0 = disabled (if = 1, run.mode need to be set to process)
+      
+      event_per_block = 1; //1..255 valid only if event building = 1
+      use_sdram = 0; //0=disbled, valid only if event building = 1
+      fast_readout = 1; // 0=32bit BLT. 1== 64 bit 2eVME(or 2esst). valid only if event building = 1
+
       common_offset=0; // 0..4095, offset
       zero_level = 700;  // zero logic below this adc value
       one_level = 2300;  // one logic above this adc value
@@ -41,6 +48,9 @@ default:
       pedthr_file = "no_pedthr_path"; // pedestals and thresholds, for apv_ch=0 ... 2048
 
       channel_mark = 255;     // 0...127, mark the corresponding adc channel, for frame alignment check; >127 disable mark (normal operation)
+
+      fir_enable = 0; // enable (1) or disable (0) the FIR filter (see 2012 JINST 7 C01082)
+      fir_coeff = [10990, -2130, -169, -232, -147, -123, -98, -191, -88, 333, -3, 34, 17, 14, 11, 7]; // FIR filter coefficients 16bits (/2^13 to get "real" values) need to be in the specific config file!!!
 
       adc: // ADC section, array for 2 ADCs (for ch. 0-7 and 8-15)
       ({ 
@@ -71,7 +81,7 @@ default:
 	Ispare = 0;
 	Vfp = 30;    // 30
 	Vfs = 60;    // 60
-	Vpsp = 25;   // 40 analog baseline, larger the value, smaller the baseline
+	Vpsp = 40;   // 40 analog baseline, larger the value, smaller the baseline
 
 // Calibration intensity, pattern and delay
 	Ical = 120; // calibration pulse value
