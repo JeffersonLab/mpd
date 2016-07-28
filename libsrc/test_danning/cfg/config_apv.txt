@@ -20,10 +20,7 @@ bus: // interface to the MPD
     // --- mpd 0
     {
       rotary = 19; // rotary switch setting
-<<<<<<< HEAD
      // rotary = 0; // for ssp 
-=======
->>>>>>> 2268b721019bf1483d72d4a6a8b667b587599378
 
       zero_level = 500; // zero logic level
       one_level = 1900;  // one logic level: above this adc value signal is assumed to be a digital "one"

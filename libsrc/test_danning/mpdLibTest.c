@@ -14,7 +14,6 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <unistd.h>
-<<<<<<< HEAD
 #include <sys/signal.h>
 /* Include MPD definitions */
 #include "mpdLib.h"
@@ -23,11 +22,6 @@ int ctrl_break=0;
 
 void sig_handler(int signo);
 
-=======
-/* Include MPD definitions */
-#include "mpdLib.h"
-
->>>>>>> 2268b721019bf1483d72d4a6a8b667b587599378
 int 
 main(int argc, char *argv[]) 
 {
@@ -441,13 +435,9 @@ main(int argc, char *argv[])
 
   }
 
-<<<<<<< HEAD
   // -----------------------------
   // EVENT_BUILDER ENABLED in MPD
   // -----------------------------
-=======
-  // EVENT_BUILDER ENABLED in MPD
->>>>>>> 2268b721019bf1483d72d4a6a8b667b587599378
 
   if ((acq_mode & 1) && (mpdGetEventBuilding(mpdSlot(0)) != 0)) { 
 
@@ -461,22 +451,17 @@ main(int argc, char *argv[])
     FILE *fout;
     fout = fopen(outfile,"w");
     if (fout == NULL) { fout = stdout; }
-<<<<<<< HEAD
 
     fprintf(fout,"%x\n", mpdGetApvEnableMask(mpdSlot(0)));
     fprintf(fout,"%x\n",  mpdGetTriggerNumber(mpdSlot(0))*mpdApvGetPeakMode(mpdSlot(0)));
 
     //    fprintf(fout,"%x\n", FILE_VERSION | 0xD0000000);
-=======
-    fprintf(fout,"%x\n", FILE_VERSION | 0xD0000000);
->>>>>>> 2268b721019bf1483d72d4a6a8b667b587599378
 
     UseSdram = mpdGetUseSdram(mpdSlot(0)); // assume sdram and fastreadout are the same for all MPDs
     FastReadout = mpdGetFastReadout(mpdSlot(0));
 
     printf(" UseSDRAM= %d , FastReadout= %d\n",UseSdram, FastReadout);
 
-<<<<<<< HEAD
     /* is in mpdLib:OBUF_Read  better here
        switch (mpdGetFastReadout(id)) {
        case 0:  
@@ -502,13 +487,6 @@ main(int argc, char *argv[])
        break;
        }
     */
-=======
-    if (FastReadout) {
-      vmeDmaConfig(2,5,1); // A32, 2sst150
-    } else {
-      vmeDmaConfig(2,2,0); // A32, BLT32
-    }
->>>>>>> 2268b721019bf1483d72d4a6a8b667b587599378
 
     for (k=0;k<fnMPD;k++) { // only active mpd set 
       if (k==0) { evt = mpd_evt[i]; }
@@ -529,16 +507,10 @@ main(int argc, char *argv[])
     }    
     // -> now trigger can be enabled
 
-<<<<<<< HEAD
 
     printf(" ============ START ACQ MPD EVT_BUILDER ===========\n");
     do { // simulate loop on trigger
       // sleep(1); // wait for event
-=======
-    printf(" ============ START ACQ MPD EVT_BUILDER ===========\n");
-    do { // simulate loop on trigger
-      sleep(1); // wait for event
->>>>>>> 2268b721019bf1483d72d4a6a8b667b587599378
       printf(" ---- At least %d events acquired on each active MPDs -----\n",evt);
       // event occurred ... need some trigger logic
       rtout=0;
@@ -547,7 +519,6 @@ main(int argc, char *argv[])
 
       for (k=0;k<fnMPD;k++) { // only active mpd set
 	i = mpdSlot(k);
-<<<<<<< HEAD
 	vmeSetQuietFlag(1);
 	vmeClearException(1);
 	mpdArmReadout(i); // prepare internal variables for readout @@ use old buffer scheme, need improvement
@@ -568,21 +539,10 @@ main(int argc, char *argv[])
 	  printf("OBUFF status: empty=%d, full=%d, nwords=%d\n",empty, full, nwords);
 
 	  if (FastReadout>0) { //64bit transfer
-=======
-	mpdArmReadout(i); // prepare internal variables for readout @@ use old buffer scheme, need improvement
-	blen = mpdApvGetBufferAvailable(i, 0);
-	printf(" BLEN = %d\n",blen);
-	if ( UseSdram ) {
-
-	  mpdOBUF_GetFlags(i, &empty, &full, &nwords);
-
-	  if (FastReadout) {
->>>>>>> 2268b721019bf1483d72d4a6a8b667b587599378
 	    if ( nwords < 128 ) { empty = 1; } else { nwords *= 2; }
 	  }
 
 	  if (!empty ) { // read data
-<<<<<<< HEAD
 
 	    printf("Data waiting to be read in obuf: %d (32b-words)\n",nwords);
 
@@ -597,16 +557,6 @@ main(int argc, char *argv[])
 
 	  }
 	    
-=======
-	    if (nwords > blen/4) { nwords = blen/4; }
-	    mpdOBUF_Read(i, nwords, &nwread);   
-	  }
-	    
-	  if (nwords != nwread ) {
-	    printf("Error: word read count does not match %d %d\n", nwords, nwread);
-	  }
-
->>>>>>> 2268b721019bf1483d72d4a6a8b667b587599378
 	} else { // if not Sdram
 	  
 	  mpdFIFO_IsEmpty(i, 0, &empty); //  read fifo channel=0 status
@@ -625,7 +575,6 @@ main(int argc, char *argv[])
 
 	  int zero_count;
 	  zero_count=0;
-<<<<<<< HEAD
 	  printf("MPD Slot: %d (dump on screen first 24 and last 24 words)\n",i); // slot
 	  // fprintf(fout,"%x\n", i | MPD_TAG);
 	  for(iw=0; iw<nwread; iw++) {
@@ -650,39 +599,15 @@ main(int argc, char *argv[])
 	    if( (datao & 0x00E00000) == 0x00A00000 ) { // EVENT TRAILER
 	      mpd_evt[i]++;
 	      evt=mpd_evt[i];
-=======
-	  printf("%d: ",i); // slot
-	  fprintf(fout,"%x\n", i | MPD_TAG);
-	  for(iw=0; iw<nwread; iw++) {
-	    uint32_t datao;
-	    datao = mpdApvGetBufferElement(i, 0, iw);
-	    fprintf(fout,"%x\n",datao);
-	    if (datao !=0) {
-	      printf(" %d : 0x%x\n",iw,datao);
-	    } else {
-	      zero_count++;
-	    }
-
-	    if( (datao & 0x00E00000) == 0x00A00000 ) {
-	      mpd_evt[i]++;
->>>>>>> 2268b721019bf1483d72d4a6a8b667b587599378
 	    }
 	    evt = (evt > mpd_evt[i]) ? mpd_evt[i] : evt; // evt is the smallest number of events of an MPD
 	  }
 
-<<<<<<< HEAD
 	  printf("MPD %d: nwords=%d nwcount=%d zero_count=%d evt %d\n",i,nwords,nwread,zero_count,mpd_evt[i]);
 	}
       } // active mpd loop
 
     } while ((evt<n_event) && (ctrl_break==0));  // events loop
-=======
-	  printf("MPD %d: nwords=%d nwcount=%d zero_count=%d\n",i,nwords,nwread,zero_count);
-	}
-      } // active mpd loop
-
-    } while (evt< n_event);  // events loop
->>>>>>> 2268b721019bf1483d72d4a6a8b667b587599378
 
     if (fout != stdout)  fclose(fout);
 
@@ -696,7 +621,6 @@ main(int argc, char *argv[])
 
 }
 
-<<<<<<< HEAD
 
 void sig_handler(int signo)
 {
@@ -710,5 +634,3 @@ void sig_handler(int signo)
   }
   return;
 }
-=======
->>>>>>> 2268b721019bf1483d72d4a6a8b667b587599378

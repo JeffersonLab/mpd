@@ -32,7 +32,6 @@ default:
       en_sync_P0 = false;     // Enable SYNC line on P0 connector
       en_sync_Front = true;   // Enable SYNC line on Front Panel IN1 lemo connector
       common_noise_subtraction=0; // 0 disabled, 1=mean, ...
-<<<<<<< HEAD
       event_building = 1; // 0 = disabled (if = 1, run.mode need to be set to process)
       
       event_per_block = 1; //1..255 valid only if event building = 1
@@ -42,17 +41,6 @@ default:
       common_offset=0; // 0..4095, offset
       zero_level = 400;  // zero logic below this adc value
       one_level = 2500;  // one logic above this adc value
-=======
-      event_building = 0; // 0 = disabled (if = 1, run.mode need to be set to process)
-      
-      event_per_block = 1; //1..255 valid only if event building = 1
-      use_sdram = 0; //0=disbled, valid only if event building = 1
-      fast_readout = 1; // 0=32bit BLT. 1== 64 bit 2eVME(or 2esst). valid only if event building = 1
-
-      common_offset=0; // 0..4095, offset
-      zero_level = 700;  // zero logic below this adc value
-      one_level = 2300;  // one logic above this adc value
->>>>>>> 2268b721019bf1483d72d4a6a8b667b587599378
 
       ped_common = 0;     // pedestal value common to all channels, superceded by pedthr_file 
       thr_common = 0;     // threshold value common to all channels, superceded by pedthr_file 

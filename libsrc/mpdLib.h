@@ -480,11 +480,8 @@ int  mpdHISTO_Read(int id, int ch, uint32_t *histogram);
 int mpdOBUF_GetFlags(int id, int *empty, int *full, int *nwords);
 int mpdOBUF_Read(int id, int size, int *wrec);
 
-<<<<<<< HEAD
 int mpdSDRAM_GetParam(int id, int *init, int *overrun, int *rdaddr, int *wraddr, int *nwords);
 
-=======
->>>>>>> 2268b721019bf1483d72d4a6a8b667b587599378
 int  mpdFIFO_ReadSingle(int id, int channel, uint32_t *dbuf, int *wrec, int max_retry);
 int  mpdFIFO_ReadSingle0(int id, int channel, int blen, uint32_t *event, int *nread);
 int  mpdFIFO_Samples(int id, 

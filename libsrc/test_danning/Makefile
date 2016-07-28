@@ -32,11 +32,7 @@ ifdef DEBUG
 CFLAGS			+= -Wall -g
 endif
 
-<<<<<<< HEAD
 PROGS			= mpdLibTest mpdSSPLibTest
-=======
-PROGS			= mpdLibTest
->>>>>>> 2268b721019bf1483d72d4a6a8b667b587599378
 
 all: $(PROGS)
 
