@@ -15,6 +15,10 @@
  *          INFN
  *          July 2015
  *
+<<<<<<< HEAD
+=======
+ *
+>>>>>>> 2268b721019bf1483d72d4a6a8b667b587599378
  *          Danning Di
  *          University of Virginia
  *          Email:Danning@jlab.org
@@ -1235,8 +1239,11 @@ mpdAPV_Reset101(int id)
 
   mpdWrite32(&MPDp[id]->trigger_config, data);
 
+<<<<<<< HEAD
   usleep(100);
 
+=======
+>>>>>>> 2268b721019bf1483d72d4a6a8b667b587599378
   data &= ~SOFTWARE_CLEAR_MASK;
   data &= ~MPD_APVDAQ_TRIGCONFIG_ENABLE_MACH;	// Disable trig machine
 
@@ -1244,8 +1251,11 @@ mpdAPV_Reset101(int id)
 
   MPDUNLOCK;
 
+<<<<<<< HEAD
   usleep(100);
 
+=======
+>>>>>>> 2268b721019bf1483d72d4a6a8b667b587599378
   return OK;
 }
 /*
@@ -1676,7 +1686,11 @@ mpdApvBufferAlloc(int id, int ia)
   GEF_MAP_PTR mapPtr;
   GEF_VME_DMA_HDL dma_hdl;
 
+<<<<<<< HEAD
   fApv[id][ia].fBufSize = 15*fApv[id][ia].fNumberSample*(EVENT_SIZE+2); // at least 6 times larger @@@ increased to 15 -- need improvement
+=======
+  fApv[id][ia].fBufSize = 15*fApv[id][ia].fNumberSample*(EVENT_SIZE+2)+1000; // at least 6 times larger @@@ increased to 15 -- need improvement
+>>>>>>> 2268b721019bf1483d72d4a6a8b667b587599378
 
 #define PHYSMEM
 #ifdef PHYSMEM
@@ -1691,7 +1705,11 @@ mpdApvBufferAlloc(int id, int ia)
   fApv[id][ia].dmaHdl      = dma_hdl;
   // fApv[id][ia].fBuffer = (uint32_t *) malloc(fApv[id][ia].fBufSize*sizeof(uint32_t));
   fApv[id][ia].fBi1 = 0;
+<<<<<<< HEAD
   printf("Fifo %d, buffer allocated with word size %d\n\t id=%d  ia=%d  dmaHdl = 0x%08x  physMemBase = 0x%08x  fBuffer = 0x%08x\n",
+=======
+  MPD_DBG("Fifo %d, buffer allocated with word size %d\n\t id=%d  ia=%d  dmaHdl = 0x%08x  physMemBase = 0x%08x  fBuffer = 0x%08x\n",
+>>>>>>> 2268b721019bf1483d72d4a6a8b667b587599378
 	  fApv[id][ia].adc, 
 	  fApv[id][ia].fBufSize,
 	  id,
@@ -2027,18 +2045,32 @@ int mpdFIR_Config(int id) {
   int npar = 16;
 
   // set coeff
+<<<<<<< HEAD
   printf("%s: FIR coefficients (FIRenable=%d):\n", __FUNCTION__,mpdGetFIRenable(id));
+=======
+  printf("%s: FIR coefficients:", __FUNCTION__);
+>>>>>>> 2268b721019bf1483d72d4a6a8b667b587599378
   for (i=0;i<npar/2;i++) {
     coeff0 = mpdGetFIRcoeff(id, i*2);
     coeff1 = mpdGetFIRcoeff(id, i*2+1);
     data = ((coeff1 << 16) & 0xffff0000) | (coeff0 & 0xffff);
+<<<<<<< HEAD
     printf(" %2d: W 0x%4x 0x%4x",i*2, coeff0&0xffff, coeff1&0xffff);
+=======
+    printf(" W 0x%x 0x%x",coeff0&0xffff, coeff1&0xffff);
+>>>>>>> 2268b721019bf1483d72d4a6a8b667b587599378
 
     mpdWrite32(&MPDp[id]->fir_coefficients[i], data);
 
     rdata = mpdRead32(&MPDp[id]->fir_coefficients[i]);
+<<<<<<< HEAD
     printf(" R 0x%4x 0x%4x\n",rdata&0xffff, (rdata>>16)&0xffff);
   }
+=======
+    printf(" R 0x%x 0x%x",rdata&0xffff, (rdata>>16)&0xffff);
+  }
+  printf("\n");
+>>>>>>> 2268b721019bf1483d72d4a6a8b667b587599378
 
   return OK;
 
@@ -2497,6 +2529,7 @@ mpdOBUF_Read(int id, int size, int *wrec)
   uint32_t data;
   uint32_t vmeAdrs;
   int retVal=0;
+<<<<<<< HEAD
   int i;
 
 #define BLOCK_TRANSFER3
@@ -2531,6 +2564,22 @@ mpdOBUF_Read(int id, int size, int *wrec)
   vmeAdrs = (uint32_t) mpdOutputBufferBaseAddr + mpdOutputBufferSpace * id;
   retVal = vmeDmaSendPhys(fApv[id][0].physMemBase,vmeAdrs,(size<<2));
 
+=======
+
+  if (mpdGetFastReadout(id)) {
+    // read 64bit 2sst
+    vmeDmaConfig(2,5,1);
+  } else {
+    // block readout A32 mode BLT
+    vmeDmaConfig(2,2,0);
+  }
+  MPDLOCK;
+  
+  
+  
+  vmeAdrs = (uint32_t) mpdOutputBufferBaseAddr + mpdOutputBufferSpace * id;
+  retVal = vmeDmaSendPhys(fApv[id][0].physMemBase,vmeAdrs,(size<<2));
+>>>>>>> 2268b721019bf1483d72d4a6a8b667b587599378
   if(retVal != 0) 
     {
       MPD_ERR("ERROR in DMA transfer Initialization (returned 0x%x)\n",retVal);
@@ -2579,6 +2628,7 @@ mpdOBUF_Read(int id, int size, int *wrec)
       printf("\n");
 #endif
     }
+<<<<<<< HEAD
 
 #else
 
@@ -2597,6 +2647,9 @@ mpdOBUF_Read(int id, int size, int *wrec)
 
 #endif
 
+=======
+  
+>>>>>>> 2268b721019bf1483d72d4a6a8b667b587599378
   if( *wrec != size ) {
     MPD_DBG("Count Mismatch: %d expected %d\n", *wrec, size);
     return ERROR;
@@ -2606,6 +2659,7 @@ mpdOBUF_Read(int id, int size, int *wrec)
 
 }
 
+<<<<<<< HEAD
 int mpdSDRAM_GetParam(int id, int *init, int *overrun, int *rdaddr, int *wraddr, int *nwords) {
 
 
@@ -2632,6 +2686,8 @@ int mpdSDRAM_GetParam(int id, int *init, int *overrun, int *rdaddr, int *wraddr,
 
 }
 
+=======
+>>>>>>> 2268b721019bf1483d72d4a6a8b667b587599378
 /**
  * Readout Fifo
  * Standard Event Mode (no zero suppression or pedestal subtraction)
@@ -2691,10 +2747,16 @@ mpdFIFO_ReadSingle(int id,
 #ifdef BLOCK_TRANSFER1
   /*   unsigned long offset = ((unsigned long)&dbuf - (unsigned long)&fApv[id][0].fBuffer); */
   unsigned long offset = 0;
+<<<<<<< HEAD
+=======
+  MPD_DBG("dbuf addr = 0x%lx  fBuffer = 0x%lx  offset = 0x%lx\n",
+  	  (unsigned long)dbuf, (unsigned long)fApv[id][channel].fBuffer, (unsigned long)offset);
+>>>>>>> 2268b721019bf1483d72d4a6a8b667b587599378
 
   vmeDmaConfig(1,2,0); //A24 BLT32
 
   vmeAdrs = (uint32_t)&MPDp[id]->data_ch[fApv[id][channel].adc][0] - mpdA24Offset;
+<<<<<<< HEAD
 
   MPD_DBG("dbuf addr = 0x%lx  fBuffer = 0x%lx  offset = 0x%lx  vmeAdrs = 0x%08x\n",
 	  (unsigned long)dbuf, (unsigned long)fApv[id][channel].fBuffer,
@@ -2702,6 +2764,9 @@ mpdFIFO_ReadSingle(int id,
   
   retVal = vmeDmaSendPhys(fApv[id][channel].physMemBase,vmeAdrs,(size<<2));
 
+=======
+  retVal = vmeDmaSendPhys(fApv[id][channel].physMemBase+offset,vmeAdrs,(size<<2));
+>>>>>>> 2268b721019bf1483d72d4a6a8b667b587599378
   if(retVal != 0) 
     {
       MPD_ERR("ERROR in DMA transfer Initialization (returned 0x%x)\n",retVal);
@@ -2714,7 +2779,10 @@ mpdFIFO_ReadSingle(int id,
 
   /* Wait until Done or Error */
   retVal = vmeDmaDone();
+<<<<<<< HEAD
 
+=======
+>>>>>>> 2268b721019bf1483d72d4a6a8b667b587599378
   if(retVal==0)
     {
       *wrec=0;
@@ -3091,22 +3159,32 @@ mpdFIFO_ClearAll(int id)
       return ERROR;
     }
 
+<<<<<<< HEAD
   // Issue a pulse on READOUT_CONFIG[31] clear fifos, sdram, output buffer
+=======
+  // Issue a pulse on READOUT_CONFIG[31]
+>>>>>>> 2268b721019bf1483d72d4a6a8b667b587599378
 
   MPDLOCK;
   oldval = mpdRead32(&MPDp[id]->readout_config);
   data = oldval | 0x80000000;
 
   mpdWrite32(&MPDp[id]->readout_config, data);
+<<<<<<< HEAD
   usleep(100); // seems to be important
+=======
+>>>>>>> 2268b721019bf1483d72d4a6a8b667b587599378
 
   data = oldval & 0x7FFFFFFF;
 
   mpdWrite32(&MPDp[id]->readout_config, data);
   MPDUNLOCK;
 
+<<<<<<< HEAD
   usleep(100);
 
+=======
+>>>>>>> 2268b721019bf1483d72d4a6a8b667b587599378
   return success;
 }
 
