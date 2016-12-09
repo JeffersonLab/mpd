@@ -35,8 +35,8 @@ default:
       event_building = 1; // 0 = disabled (if = 1, run.mode need to be set to process)
       
       event_per_block = 1; //1..255 valid only if event building = 1
-      use_sdram = 1; //0=disbled, valid only if event building = 1
-      fast_readout = 1; // 0:32bit BLT, 1:MBLT, 2:2eVME, 3:2eSST160, 4:2eSST267, 5:2eSST320; valid only if event building = 1
+      use_sdram = 0; //0=disbled, valid only if event building = 1
+      fast_readout = 0; // 0:32bit BLT, 1:MBLT, 2:2eVME, 3:2eSST160, 4:2eSST267, 5:2eSST320; valid only if event building = 1
 
       common_offset=0; // 0..4095, offset
       zero_level = 400;  // zero logic below this adc value

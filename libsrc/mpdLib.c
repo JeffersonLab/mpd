@@ -157,6 +157,7 @@ mpdRead32(volatile uint32_t *reg)
   else
     read = vmeRead32(reg);
 
+
   return read;
 }
 

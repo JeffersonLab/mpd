@@ -135,7 +135,9 @@ rocDownload()
   /* Set crate ID */
   tiSetCrateID(0x01); /* ROC 1 */
 
-  tiSetTriggerSource(TI_TRIGGER_TSINPUTS);
+  tiSetTriggerSourceMask(TI_TRIGSRC_TSINPUTS | TI_TRIGSRC_PULSER | 
+			 TI_TRIGSRC_LOOPBACK | TI_TRIGSRC_VME);
+  /*   tiSetTriggerSource(TI_TRIGGER_TSINPUTS); */
 
   /* Set needed TS input bits */
   tiEnableTSInput( TI_TSINPUT_1 );
@@ -410,40 +412,45 @@ rocTrigger(int arg)
 	usleep(10);
       }
 
-  	if (ssp_timeout == 1000) {
-          data = mpdRead32(&MPDp[0]->ob_status.output_buffer_flag_wc);
-	  if( data & 0x20000000 )	// Evt_Fifo_Full
-	    printf ("FIFO full\n");
-
-          sspGetEbStatus(0, &blockcnt, &wordcnt, &eventcnt);
-
-	}
-    vmeDmaConfig(2,5,1);
-    int dCnt = sspReadBlock(0, dma_dabufp, 1024>>2,1);
-    if(dCnt<=0)
+    if (ssp_timeout == 1000) 
       {
-	  printf("No data or error.  dCnt = %d\n",dCnt);
+	data = mpdRead32(&MPDp[0]->ob_status.output_buffer_flag_wc);
+	if( data & 0x20000000 )	// Evt_Fifo_Full
+	  printf ("FIFO full\n");
+	
+	sspGetEbStatus(0, &blockcnt, &wordcnt, &eventcnt);
+	printf("\nblockcnt = %d\nwordcnt = %d\neventcnt = %d\n",
+	       blockcnt, wordcnt, eventcnt);
       }
     else
       {
-	dma_dabufp += dCnt;
-      }
-    
-    printf("  dCnt = %d\n",dCnt);
-    for(idata=0;idata<dCnt;idata++)
-      {
-	if((idata%5)==0) printf("\n\t");
-	datao = (unsigned int)LSWAP(the_event->data[idata]);
-	printf("  0x%08x ",datao);
+	vmeDmaConfig(2,5,1);
+	int dCnt = sspReadBlock(0, dma_dabufp, 1024>>2,1);
+	if(dCnt<=0)
+	  {
+	  printf("No data or error.  dCnt = %d\n",dCnt);
+	  }
+	else
+	  {
+	    dma_dabufp += dCnt;
+	  }
 	
-	
-	/* 	if( (datao & 0x00E00000) == 0x00A00000 ) { */
-	/* 	    mpd_evt[i]++; */
-	/* 	    evt=mpd_evt[i]; */
-	/* 	} */
+	printf("  dCnt = %d\n",dCnt);
+	for(idata=0;idata<dCnt;idata++)
+	  {
+	    if((idata%5)==0) printf("\n\t");
+	    datao = (unsigned int)LSWAP(the_event->data[idata]);
+	    printf("  0x%08x ",datao);
+	    
+	    
+	    /* 	if( (datao & 0x00E00000) == 0x00A00000 ) { */
+	    /* 	    mpd_evt[i]++; */
+	    /* 	    evt=mpd_evt[i]; */
+	    /* 	} */
 	/* 	evt = (evt > mpd_evt[i]) ? mpd_evt[i] : evt; // evt is the smallest number of events of an MPD */
+	  }
+	printf("\n\n");
       }
-    printf("\n\n");
   }
   
   

@@ -19,8 +19,8 @@ bus: // interface to the MPD
    
     // --- mpd 0
     {
-      rotary = 19; // rotary switch setting
-     // rotary = 0; // for ssp 
+     // rotary = 17; // rotary switch setting
+      rotary = 0; // for ssp 
 
       zero_level = 500; // zero logic level
       one_level = 1900;  // one logic level: above this adc value signal is assumed to be a digital "one"
@@ -53,27 +53,28 @@ bus: // interface to the MPD
       );
     apv:
       (
-	{ adc = 15; i2c = 1; }, 
-	{ adc = 14; i2c = 2; }, 
-	{ adc = 13; i2c = 3; }
+//	{ adc = 15; i2c = 1; }, 
+//	{ adc = 14; i2c = 2; }, 
+//	{ adc = 13; i2c = 3; }
 	
-/*	{ adc = 13; i2c = 4; }, 
-	{ adc = 12; i2c = 5; },
-	{ adc = 11; i2c = 6; },
-	{ adc = 10; i2c = 7; },
+//	{ adc = 13; i2c = 4; }, 
+//	{ adc = 12; i2c = 5; },
+//	{ adc = 11; i2c = 6; },
+//	{ adc = 10; i2c = 7; },
 
-	{ adc = 8; i2c =8; },
-	{ adc = 7; i2c =9; },
-	{ adc = 6; i2c = 10; },
-	{ adc = 5; i2c = 11; },
+//	{ adc = 8; i2c =8; },
+//	{ adc = 7; i2c =9; },
+//	{ adc = 6; i2c = 10; },
+//	{ adc = 5; i2c = 11; },
 
-	{ adc = 3; i2c = 12; },
-	{ adc = 2; i2c = 13; },
-	{ adc = 1; i2c = 14; },
-	{ adc = 0; i2c = 15; }
-*/
+//	{ adc = 4; i2c = 0; },
+	{ adc = 3; i2c = 1; },
+	{ adc = 2; i2c = 2; },
+	{ adc = 1; i2c = 3; }
+//	{ adc = 0; i2c = 15; }
+//
       );
-    },
+    }/*,
     //end MPD 0
          
     // --- mpd 1
@@ -125,7 +126,7 @@ bus: // interface to the MPD
     );
     }//,//end MPD 1
     
-    /*   // --- mpd 2
+       // --- mpd 2
     {
       rotary = 5; // rotary switch setting
 
