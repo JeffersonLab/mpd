@@ -1,0 +1,1779 @@
+
+MPD Library Tests
+----------------------------
+ outfile = out.txt
+ acq_mode= 0x4
+ n_event = 10
+Opening CRCSR Window (opened at [0xb6f34000,0xb7f34000])
+Opening A32 Window (opened at [0xb6f24000,0xb6f34000])
+Opening A32Blt Window (opened at [0xacf24000,0xb6f24000])
+Opening A24 Window (opened at [0xabf24000,0xacf24000])
+Opening A16 Window (opened at [0xabf14000,0xabf24000])
+jlabgefMapTsi: Tempe Chip Userspace map successful
+VME Bus Error IRQ Disabled
+vmeBusCreateLockShm: vmeBus shared memory mutex initialized
+mpdConfigInit: cfg/config_apv.txt: Version = 0.35
+mpdConfigInit: Number of MPDs in config file = 5
+mpdConfigLoad: Start
+mpdConfigLoad: Loading MPD idx=  0 rotary (slot) =  0
+mpdSetTriggerMode: Calib / Trigger Latency = 0 0, Trigger Mode = 0x2
+mpdSetAcqMode: Acquisition Mode = 0x1 (event)
+mpdConfigLoad: 2 APV elements in given MPD 0
+mpdAddApv: APV 0 added to list of FECs
+mpdAddApv: APV 1 added to list of FECs
+mpdConfigLoad:  2 APV loaded in Slot=0 MPD settings
+mpdConfigLoad: Loading MPD idx=  1 rotary (slot) =  8
+mpdSetTriggerMode: Calib / Trigger Latency = 0 0, Trigger Mode = 0x2
+mpdSetAcqMode: Acquisition Mode = 0x1 (event)
+mpdConfigLoad: 12 APV elements in given MPD 8
+mpdAddApv: APV 0 added to list of FECs
+mpdAddApv: APV 1 added to list of FECs
+mpdAddApv: APV 2 added to list of FECs
+mpdAddApv: APV 3 added to list of FECs
+mpdAddApv: APV 4 added to list of FECs
+mpdAddApv: APV 5 added to list of FECs
+mpdAddApv: APV 6 added to list of FECs
+mpdAddApv: APV 7 added to list of FECs
+mpdAddApv: APV 8 added to list of FECs
+mpdAddApv: APV 9 added to list of FECs
+mpdAddApv: APV 10 added to list of FECs
+mpdAddApv: APV 11 added to list of FECs
+mpdConfigLoad: 12 APV loaded in Slot=8 MPD settings
+mpdConfigLoad: Loading MPD idx=  2 rotary (slot) = 10
+mpdSetTriggerMode: Calib / Trigger Latency = 0 0, Trigger Mode = 0x2
+mpdSetAcqMode: Acquisition Mode = 0x1 (event)
+mpdConfigLoad: 15 APV elements in given MPD 10
+mpdAddApv: APV 0 added to list of FECs
+mpdAddApv: APV 1 added to list of FECs
+mpdAddApv: APV 2 added to list of FECs
+mpdAddApv: APV 3 added to list of FECs
+mpdAddApv: APV 4 added to list of FECs
+mpdAddApv: APV 5 added to list of FECs
+mpdAddApv: APV 6 added to list of FECs
+mpdAddApv: APV 7 added to list of FECs
+mpdAddApv: APV 8 added to list of FECs
+mpdAddApv: APV 9 added to list of FECs
+mpdAddApv: APV 10 added to list of FECs
+mpdAddApv: APV 11 added to list of FECs
+mpdAddApv: APV 12 added to list of FECs
+mpdAddApv: APV 13 added to list of FECs
+mpdAddApv: APV 14 added to list of FECs
+mpdConfigLoad: 15 APV loaded in Slot=10 MPD settings
+mpdConfigLoad: Loading MPD idx=  3 rotary (slot) = 12
+mpdSetTriggerMode: Calib / Trigger Latency = 0 0, Trigger Mode = 0x2
+mpdSetAcqMode: Acquisition Mode = 0x1 (event)
+mpdConfigLoad: 12 APV elements in given MPD 12
+mpdAddApv: APV 0 added to list of FECs
+mpdAddApv: APV 1 added to list of FECs
+mpdAddApv: APV 2 added to list of FECs
+mpdAddApv: APV 3 added to list of FECs
+mpdAddApv: APV 4 added to list of FECs
+mpdAddApv: APV 5 added to list of FECs
+mpdAddApv: APV 6 added to list of FECs
+mpdAddApv: APV 7 added to list of FECs
+mpdAddApv: APV 8 added to list of FECs
+mpdAddApv: APV 9 added to list of FECs
+mpdAddApv: APV 10 added to list of FECs
+mpdAddApv: APV 11 added to list of FECs
+mpdConfigLoad: 12 APV loaded in Slot=12 MPD settings
+mpdConfigLoad: Loading MPD idx=  4 rotary (slot) = 14
+mpdSetTriggerMode: Calib / Trigger Latency = 0 0, Trigger Mode = 0x2
+mpdSetAcqMode: Acquisition Mode = 0x1 (event)
+mpdConfigLoad: 15 APV elements in given MPD 14
+mpdAddApv: APV 0 added to list of FECs
+mpdAddApv: APV 1 added to list of FECs
+mpdAddApv: APV 2 added to list of FECs
+mpdAddApv: APV 3 added to list of FECs
+mpdAddApv: APV 4 added to list of FECs
+mpdAddApv: APV 5 added to list of FECs
+mpdAddApv: APV 6 added to list of FECs
+mpdAddApv: APV 7 added to list of FECs
+mpdAddApv: APV 8 added to list of FECs
+mpdAddApv: APV 9 added to list of FECs
+mpdAddApv: APV 10 added to list of FECs
+mpdAddApv: APV 11 added to list of FECs
+mpdAddApv: APV 12 added to list of FECs
+mpdAddApv: APV 13 added to list of FECs
+mpdAddApv: APV 14 added to list of FECs
+mpdConfigLoad: 15 APV loaded in Slot=14 MPD settings
+mpdInit: A24 mapping: VME addr=0x80000 -> Local 0xabfa4000
+mpdInit: Looking at MPD in slot 1
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x80000
+mpdInit: DEBUG: Try turning off fiber mode
+jlabgefMemProbe: Clearing VME BERR/2eST (0xc00ef900) at VME address 0x80190
+mpdInit: WARN: No addressable board at VME addr=0x80000 (local 0xabfa4000)
+mpdInit: Looking at MPD in slot 2
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x100000
+mpdInit: DEBUG: Try turning off fiber mode
+jlabgefMemProbe: Clearing VME BERR/2eST (0xc00ef900) at VME address 0x100190
+mpdInit: WARN: No addressable board at VME addr=0x100000 (local 0xac024000)
+mpdInit: Looking at MPD in slot 3
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x180000
+mpdInit: DEBUG: Try turning off fiber mode
+jlabgefMemProbe: Clearing VME BERR/2eST (0xc00ef900) at VME address 0x180190
+mpdInit: WARN: No addressable board at VME addr=0x180000 (local 0xac0a4000)
+mpdInit: Looking at MPD in slot 4
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x200000
+mpdInit: DEBUG: Try turning off fiber mode
+jlabgefMemProbe: Clearing VME BERR/2eST (0xc00ef900) at VME address 0x200190
+mpdInit: WARN: No addressable board at VME addr=0x200000 (local 0xac124000)
+mpdInit: Looking at MPD in slot 5
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x280000
+mpdInit: DEBUG: Try turning off fiber mode
+jlabgefMemProbe: Clearing VME BERR/2eST (0xc00ef900) at VME address 0x280190
+mpdInit: WARN: No addressable board at VME addr=0x280000 (local 0xac1a4000)
+mpdInit: Looking at MPD in slot 6
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x300000
+mpdInit: DEBUG: Try turning off fiber mode
+jlabgefMemProbe: Clearing VME BERR/2eST (0xc00ef900) at VME address 0x300190
+mpdInit: WARN: No addressable board at VME addr=0x300000 (local 0xac224000)
+mpdInit: Looking at MPD in slot 7
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x380000
+mpdInit: DEBUG: Try turning off fiber mode
+jlabgefMemProbe: Clearing VME BERR/2eST (0xc00ef900) at VME address 0x380190
+mpdInit: WARN: No addressable board at VME addr=0x380000 (local 0xac2a4000)
+mpdInit: Looking at MPD in slot 8
+mpdInit: DEBUG: Try turning off fiber mode
+ MPD Slot 8 - Firmware Revision ID = 0x4000004
+ MPD Slot 8 - Firmware Revision Time: Thu Dec 15 09:29:38 2016
+
+ ++ MPD in slot 8 is in config file, INIT IT
+Initialized MPD index  0 Slot # 8 at VME address 0x00400000 (local 0xac324000)
+
+mpdInit: Looking at MPD in slot 9
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x480000
+mpdInit: DEBUG: Try turning off fiber mode
+jlabgefMemProbe: Clearing VME BERR/2eST (0xc00ef900) at VME address 0x480190
+mpdInit: WARN: No addressable board at VME addr=0x480000 (local 0xac3a4000)
+mpdInit: Looking at MPD in slot 10
+mpdInit: DEBUG: Try turning off fiber mode
+ MPD Slot 10 - Firmware Revision ID = 0x4000004
+ MPD Slot 10 - Firmware Revision Time: Thu Dec 15 09:29:38 2016
+
+ ++ MPD in slot 10 is in config file, INIT IT
+Initialized MPD index  1 Slot #10 at VME address 0x00500000 (local 0xac424000)
+
+mpdInit: Looking at MPD in slot 11
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x580000
+mpdInit: DEBUG: Try turning off fiber mode
+jlabgefMemProbe: Clearing VME BERR/2eST (0xc00ef900) at VME address 0x580190
+mpdInit: WARN: No addressable board at VME addr=0x580000 (local 0xac4a4000)
+mpdInit: Looking at MPD in slot 12
+mpdInit: DEBUG: Try turning off fiber mode
+ MPD Slot 12 - Firmware Revision ID = 0x4000004
+ MPD Slot 12 - Firmware Revision Time: Thu Dec 15 09:29:38 2016
+
+ ++ MPD in slot 12 is in config file, INIT IT
+Initialized MPD index  2 Slot #12 at VME address 0x00600000 (local 0xac524000)
+
+mpdInit: Looking at MPD in slot 13
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x680000
+mpdInit: DEBUG: Try turning off fiber mode
+jlabgefMemProbe: Clearing VME BERR/2eST (0xc00ef900) at VME address 0x680190
+mpdInit: WARN: No addressable board at VME addr=0x680000 (local 0xac5a4000)
+mpdInit: Looking at MPD in slot 14
+mpdInit: DEBUG: Try turning off fiber mode
+ MPD Slot 14 - Firmware Revision ID = 0x4000004
+ MPD Slot 14 - Firmware Revision Time: Thu Dec 15 09:29:38 2016
+
+ ++ MPD in slot 14 is in config file, INIT IT
+Initialized MPD index  3 Slot #14 at VME address 0x00700000 (local 0xac624000)
+
+mpdInit: Looking at MPD in slot 15
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x780000
+mpdInit: DEBUG: Try turning off fiber mode
+jlabgefMemProbe: Clearing VME BERR/2eST (0xc00ef900) at VME address 0x780190
+mpdInit: WARN: No addressable board at VME addr=0x780000 (local 0xac6a4000)
+mpdInit: Looking at MPD in slot 16
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x800000
+mpdInit: DEBUG: Try turning off fiber mode
+jlabgefMemProbe: Clearing VME BERR/2eST (0xc00ef900) at VME address 0x800190
+mpdInit: WARN: No addressable board at VME addr=0x800000 (local 0xac724000)
+mpdInit: Looking at MPD in slot 17
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x880000
+mpdInit: DEBUG: Try turning off fiber mode
+jlabgefMemProbe: Clearing VME BERR/2eST (0xc00ef900) at VME address 0x880190
+mpdInit: WARN: No addressable board at VME addr=0x880000 (local 0xac7a4000)
+mpdInit: Looking at MPD in slot 18
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x900000
+mpdInit: DEBUG: Try turning off fiber mode
+jlabgefMemProbe: Clearing VME BERR/2eST (0xc00ef900) at VME address 0x900190
+mpdInit: WARN: No addressable board at VME addr=0x900000 (local 0xac824000)
+mpdInit: Looking at MPD in slot 19
+mpdInit: DEBUG: Try turning off fiber mode
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800ef900) at VME address 0x980190
+mpdInit: WARN: No addressable board at VME addr=0x980000 (local 0xac8a4000)
+mpdInit: Looking at MPD in slot 20
+mpdInit: DEBUG: Try turning off fiber mode
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800ef900) at VME address 0xa00190
+mpdInit: WARN: No addressable board at VME addr=0xa00000 (local 0xac924000)
+mpdInit: Looking at MPD in slot 21
+mpdInit: DEBUG: Try turning off fiber mode
+mpdInit: WARN: for board at 0xa80000, invalid data code 0x71011500 (expected 0x43524f4d)
+mpdInit: 4 MPD(s) initialized, 4 discovered
+mpdInit: WARN: Unable to initialize all requested MPD Modules (4 found)
+main: MPD discovered = 4
+main: MPD 8 TEST histo memory
+ERROR: HISTO Test fail 30 time / 4096 attempts
+
+main: Try initialize I2C of MPD in slot 8
+mpdI2C_Init: i2c low prescaler register set/read : 100 / 100
+mpdI2C_Init: i2c high prescaler register set/read : 0 / 0
+mpdI2C_Init: i2c speed prescale = 100, (period = 10.000000 us, frequency = 100.000000 kHz)
+mpdI2C_Init: Board temperatures: core=256.00 air=256.00 (dec celsius)
+main: Try APV discovery and init of MPD slot 8
+mpdAPV_Scan: MPD 8 Blind scan on 31 apvs: 
+mpdAPV_Scan MPD 8 I2C addr 0:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 0 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 1:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 1 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 2:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 2 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 3:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 3 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 4:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 4 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 5:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 5 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 6:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 6 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 7:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 7 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 8:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 8 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 9:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 9 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 10:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 10 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 11:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 11 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 12:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 12 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 13:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 13 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 14:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 14 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 15:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 15 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 16:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 16 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 17:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 17 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 18:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 18 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 19:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 19 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 20:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 20 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 21:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 21 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 22:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 22 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 23:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 23 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 24:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 24 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 25:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 25 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 26:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 26 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 27:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 27 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 28:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 28 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 29:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 29 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 30:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 30 found in MPD in slot 8
+mpdAPV_Scan: MPD 8 Blind scan done
+mpdAPV_Scan: Try i2c= 0 adc= 0 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 0 matched in MPD in slot 8
+mpdAPV_Scan: APV enable mask 0x0001
+mpdAPV_Scan: Try i2c= 1 adc= 1 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 1 matched in MPD in slot 8
+mpdAPV_Scan: APV enable mask 0x0003
+mpdAPV_Scan: Try i2c= 2 adc= 2 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 2 matched in MPD in slot 8
+mpdAPV_Scan: APV enable mask 0x0007
+mpdAPV_Scan: Try i2c= 3 adc= 3 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 3 matched in MPD in slot 8
+mpdAPV_Scan: APV enable mask 0x000f
+mpdAPV_Scan: Try i2c=11 adc= 6 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 11 matched in MPD in slot 8
+mpdAPV_Scan: APV enable mask 0x004f
+mpdAPV_Scan: Try i2c=10 adc= 7 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 10 matched in MPD in slot 8
+mpdAPV_Scan: APV enable mask 0x00cf
+mpdAPV_Scan: Try i2c= 9 adc= 8 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 9 matched in MPD in slot 8
+mpdAPV_Scan: APV enable mask 0x01cf
+mpdAPV_Scan: Try i2c= 8 adc= 9 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 8 matched in MPD in slot 8
+mpdAPV_Scan: APV enable mask 0x03cf
+mpdAPV_Scan: Try i2c=19 adc=11 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 19 matched in MPD in slot 8
+mpdAPV_Scan: APV enable mask 0x0bcf
+mpdAPV_Scan: Try i2c=18 adc=12 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 18 matched in MPD in slot 8
+mpdAPV_Scan: APV enable mask 0x1bcf
+mpdAPV_Scan: Try i2c=17 adc=13 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 17 matched in MPD in slot 8
+mpdAPV_Scan: APV enable mask 0x3bcf
+mpdAPV_Scan: Try i2c=16 adc=14 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 16 matched in MPD in slot 8
+mpdAPV_Scan: APV enable mask 0x7bcf
+mpdAPV_Scan: 12 APV found matching settings
+Do DELAY setting on MPD slot 8
+mpdDELAY25_Set: start (8: 23 23)
+mpdDELAY25_Set: end
+main: Do APV reset on MPD slot 8
+Configure single APV on MPD slot 8
+APV card i2c=0 to ADC (fifo)=0 (from config file)
+Fifo 0, buffer allocated with word size 11880
+	 id=8  ia=0  dmaHdl = 0x09a52aa0  physMemBase = 0x2c3fc000  fBuffer = 0xabe90000
+APV card i2c=1 to ADC (fifo)=1 (from config file)
+Fifo 1, buffer allocated with word size 11880
+	 id=8  ia=1  dmaHdl = 0x09a52c38  physMemBase = 0x2bc00000  fBuffer = 0xabe8d000
+APV card i2c=2 to ADC (fifo)=2 (from config file)
+Fifo 2, buffer allocated with word size 11880
+	 id=8  ia=2  dmaHdl = 0x09a444d0  physMemBase = 0x2bc04000  fBuffer = 0xabe8a000
+APV card i2c=3 to ADC (fifo)=3 (from config file)
+Fifo 3, buffer allocated with word size 11880
+	 id=8  ia=3  dmaHdl = 0x09a442b0  physMemBase = 0x2bc08000  fBuffer = 0xabe87000
+APV card i2c=11 to ADC (fifo)=6 (from config file)
+Fifo 6, buffer allocated with word size 11880
+	 id=8  ia=4  dmaHdl = 0x09a442f8  physMemBase = 0x2bc0c000  fBuffer = 0xabe84000
+APV card i2c=10 to ADC (fifo)=7 (from config file)
+Fifo 7, buffer allocated with word size 11880
+	 id=8  ia=5  dmaHdl = 0x09a44340  physMemBase = 0x2bc10000  fBuffer = 0xabe81000
+APV card i2c=9 to ADC (fifo)=8 (from config file)
+Fifo 8, buffer allocated with word size 11880
+	 id=8  ia=6  dmaHdl = 0x09a44388  physMemBase = 0x2bc14000  fBuffer = 0xabe7e000
+APV card i2c=8 to ADC (fifo)=9 (from config file)
+Fifo 9, buffer allocated with word size 11880
+	 id=8  ia=7  dmaHdl = 0x09a443d0  physMemBase = 0x2bc18000  fBuffer = 0xabe7b000
+APV card i2c=19 to ADC (fifo)=11 (from config file)
+Fifo 11, buffer allocated with word size 11880
+	 id=8  ia=8  dmaHdl = 0x09a44a00  physMemBase = 0x2bc1c000  fBuffer = 0xabe78000
+APV card i2c=18 to ADC (fifo)=12 (from config file)
+Fifo 12, buffer allocated with word size 11880
+	 id=8  ia=9  dmaHdl = 0x09a44a48  physMemBase = 0x2bc20000  fBuffer = 0xabe75000
+APV card i2c=17 to ADC (fifo)=13 (from config file)
+Fifo 13, buffer allocated with word size 11880
+	 id=8  ia=10  dmaHdl = 0x09a44a90  physMemBase = 0x2bc24000  fBuffer = 0xabe72000
+APV card i2c=16 to ADC (fifo)=14 (from config file)
+Fifo 14, buffer allocated with word size 11880
+	 id=8  ia=11  dmaHdl = 0x09a44ad8  physMemBase = 0x2bc28000  fBuffer = 0xabe6f000
+Configure ADC on MPD slot 8
+mpdADS5281_Normal: Board= 0 ADC= 0 No Pattern (Normal Acq)
+mpdADS5281_InvertChannels: Board= 0 ADC= 0 Inverted Polarity
+mpdADS5281_SetGain: Board= 0 ADC= 0 Set Gain 5 5 5 5 5 5 5 5
+mpdADS5281_Normal: Board= 0 ADC= 1 No Pattern (Normal Acq)
+mpdADS5281_InvertChannels: Board= 0 ADC= 1 Inverted Polarity
+mpdADS5281_SetGain: Board= 0 ADC= 1 Set Gain 5 5 5 5 5 5 5 5
+mpdFIR_Config: FIR coefficients (FIRenable=0):
+  0: W 0x2aee 0xf7ae R 0x2aee 0xf7ae
+  2: W 0xff57 0xff18 R 0xff57 0xff18
+  4: W 0xff6d 0xff85 R 0xff6d 0xff85
+  6: W 0xff9e 0xff41 R 0xff9e 0xff41
+  8: W 0xffa8 0x 14d R 0xffa8 0x 14d
+ 10: W 0xfffd 0x  22 R 0xfffd 0x  22
+ 12: W 0x  11 0x   e R 0x  11 0x   e
+ 14: W 0x   b 0x   7 R 0x   b 0x   7
+Do 101 Reset on MPD slot 8
+main: MPD 10 TEST histo memory
+main: HISTO Read/Write test SUCCESS on MPD slot 10
+main: Try initialize I2C of MPD in slot 10
+mpdI2C_Init: i2c low prescaler register set/read : 100 / 100
+mpdI2C_Init: i2c high prescaler register set/read : 0 / 0
+mpdI2C_Init: i2c speed prescale = 100, (period = 10.000000 us, frequency = 100.000000 kHz)
+mpdI2C_Init: Board temperatures: core=256.00 air=256.00 (dec celsius)
+main: Try APV discovery and init of MPD slot 10
+mpdAPV_Scan: MPD 10 Blind scan on 31 apvs: 
+mpdAPV_Scan MPD 10 I2C addr 0:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 0 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 1:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 1 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 2:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 2 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 3:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 3 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 4:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 4 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 5:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 5 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 6:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 6 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 7:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 7 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 8:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 8 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 9:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 9 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 10:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 10 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 11:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 11 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 12:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 12 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 13:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 13 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 14:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 14 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 15:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 15 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 16:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 16 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 17:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 17 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 18:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 18 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 19:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 19 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 20:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 20 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 21:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 21 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 22:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 22 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 23:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 23 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 24:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 24 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 25:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 25 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 26:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 26 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 27:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 27 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 28:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 28 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 29:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 29 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 30:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 30 found in MPD in slot 10
+mpdAPV_Scan: MPD 10 Blind scan done
+mpdAPV_Scan: Try i2c= 0 adc= 0 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 0 matched in MPD in slot 10
+mpdAPV_Scan: APV enable mask 0x0001
+mpdAPV_Scan: Try i2c= 1 adc= 1 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 1 matched in MPD in slot 10
+mpdAPV_Scan: APV enable mask 0x0003
+mpdAPV_Scan: Try i2c= 2 adc= 2 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 2 matched in MPD in slot 10
+mpdAPV_Scan: APV enable mask 0x0007
+mpdAPV_Scan: Try i2c= 3 adc= 3 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 3 matched in MPD in slot 10
+mpdAPV_Scan: APV enable mask 0x000f
+mpdAPV_Scan: Try i2c= 4 adc= 4 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 4 matched in MPD in slot 10
+mpdAPV_Scan: APV enable mask 0x001f
+mpdAPV_Scan: Try i2c= 8 adc= 5 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 8 matched in MPD in slot 10
+mpdAPV_Scan: APV enable mask 0x003f
+mpdAPV_Scan: Try i2c= 9 adc= 6 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 9 matched in MPD in slot 10
+mpdAPV_Scan: APV enable mask 0x007f
+mpdAPV_Scan: Try i2c=10 adc= 7 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 10 matched in MPD in slot 10
+mpdAPV_Scan: APV enable mask 0x00ff
+mpdAPV_Scan: Try i2c=11 adc= 8 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 11 matched in MPD in slot 10
+mpdAPV_Scan: APV enable mask 0x01ff
+mpdAPV_Scan: Try i2c=12 adc= 9 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 12 matched in MPD in slot 10
+mpdAPV_Scan: APV enable mask 0x03ff
+mpdAPV_Scan: Try i2c=16 adc=10 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 16 matched in MPD in slot 10
+mpdAPV_Scan: APV enable mask 0x07ff
+mpdAPV_Scan: Try i2c=17 adc=11 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 17 matched in MPD in slot 10
+mpdAPV_Scan: APV enable mask 0x0fff
+mpdAPV_Scan: Try i2c=18 adc=12 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 18 matched in MPD in slot 10
+mpdAPV_Scan: APV enable mask 0x1fff
+mpdAPV_Scan: Try i2c=19 adc=13 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 19 matched in MPD in slot 10
+mpdAPV_Scan: APV enable mask 0x3fff
+mpdAPV_Scan: Try i2c=20 adc=14 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 20 matched in MPD in slot 10
+mpdAPV_Scan: APV enable mask 0x7fff
+mpdAPV_Scan: 15 APV found matching settings
+Do DELAY setting on MPD slot 10
+mpdDELAY25_Set: start (10: 23 23)
+mpdDELAY25_Set: end
+main: Do APV reset on MPD slot 10
+Configure single APV on MPD slot 10
+APV card i2c=0 to ADC (fifo)=0 (from config file)
+Fifo 0, buffer allocated with word size 11880
+	 id=10  ia=0  dmaHdl = 0x09a44b20  physMemBase = 0x2bc2c000  fBuffer = 0xabe6c000
+APV card i2c=1 to ADC (fifo)=1 (from config file)
+Fifo 1, buffer allocated with word size 11880
+	 id=10  ia=1  dmaHdl = 0x09a44b68  physMemBase = 0x2bc30000  fBuffer = 0xabe69000
+APV card i2c=2 to ADC (fifo)=2 (from config file)
+Fifo 2, buffer allocated with word size 11880
+	 id=10  ia=2  dmaHdl = 0x09a44bb0  physMemBase = 0x2bc34000  fBuffer = 0xabe66000
+APV card i2c=3 to ADC (fifo)=3 (from config file)
+Fifo 3, buffer allocated with word size 11880
+	 id=10  ia=3  dmaHdl = 0x09a44bf8  physMemBase = 0x2bc38000  fBuffer = 0xabe63000
+APV card i2c=4 to ADC (fifo)=4 (from config file)
+Fifo 4, buffer allocated with word size 11880
+	 id=10  ia=4  dmaHdl = 0x09a44c40  physMemBase = 0x2bc3c000  fBuffer = 0xabe60000
+APV card i2c=8 to ADC (fifo)=5 (from config file)
+Fifo 5, buffer allocated with word size 11880
+	 id=10  ia=5  dmaHdl = 0x09a44c88  physMemBase = 0x2bc40000  fBuffer = 0xabe5d000
+APV card i2c=9 to ADC (fifo)=6 (from config file)
+Fifo 6, buffer allocated with word size 11880
+	 id=10  ia=6  dmaHdl = 0x09a44cd0  physMemBase = 0x2bc44000  fBuffer = 0xabe5a000
+APV card i2c=10 to ADC (fifo)=7 (from config file)
+Fifo 7, buffer allocated with word size 11880
+	 id=10  ia=7  dmaHdl = 0x09a44d18  physMemBase = 0x2bc48000  fBuffer = 0xabe57000
+APV card i2c=11 to ADC (fifo)=8 (from config file)
+Fifo 8, buffer allocated with word size 11880
+	 id=10  ia=8  dmaHdl = 0x09a44d60  physMemBase = 0x2bc4c000  fBuffer = 0xabe54000
+APV card i2c=12 to ADC (fifo)=9 (from config file)
+Fifo 9, buffer allocated with word size 11880
+	 id=10  ia=9  dmaHdl = 0x09a44da8  physMemBase = 0x2bc50000  fBuffer = 0xabe51000
+APV card i2c=16 to ADC (fifo)=10 (from config file)
+Fifo 10, buffer allocated with word size 11880
+	 id=10  ia=10  dmaHdl = 0x09a44df0  physMemBase = 0x2bc54000  fBuffer = 0xabe4e000
+APV card i2c=17 to ADC (fifo)=11 (from config file)
+Fifo 11, buffer allocated with word size 11880
+	 id=10  ia=11  dmaHdl = 0x09a44e38  physMemBase = 0x2bc58000  fBuffer = 0xabe4b000
+APV card i2c=18 to ADC (fifo)=12 (from config file)
+Fifo 12, buffer allocated with word size 11880
+	 id=10  ia=12  dmaHdl = 0x09a44e80  physMemBase = 0x2bc5c000  fBuffer = 0xabe48000
+APV card i2c=19 to ADC (fifo)=13 (from config file)
+Fifo 13, buffer allocated with word size 11880
+	 id=10  ia=13  dmaHdl = 0x09a44ec8  physMemBase = 0x2bc60000  fBuffer = 0xabe45000
+APV card i2c=20 to ADC (fifo)=14 (from config file)
+Fifo 14, buffer allocated with word size 11880
+	 id=10  ia=14  dmaHdl = 0x09a44f10  physMemBase = 0x2bc64000  fBuffer = 0xabe42000
+Configure ADC on MPD slot 10
+mpdADS5281_Normal: Board= 0 ADC= 0 No Pattern (Normal Acq)
+mpdADS5281_InvertChannels: Board= 0 ADC= 0 Inverted Polarity
+mpdADS5281_SetGain: Board= 0 ADC= 0 Set Gain 5 5 5 5 5 5 5 5
+mpdADS5281_Normal: Board= 0 ADC= 1 No Pattern (Normal Acq)
+mpdADS5281_InvertChannels: Board= 0 ADC= 1 Inverted Polarity
+mpdADS5281_SetGain: Board= 0 ADC= 1 Set Gain 5 5 5 5 5 5 5 5
+mpdFIR_Config: FIR coefficients (FIRenable=0):
+  0: W 0x2aee 0xf7ae R 0x2aee 0xf7ae
+  2: W 0xff57 0xff18 R 0xff57 0xff18
+  4: W 0xff6d 0xff85 R 0xff6d 0xff85
+  6: W 0xff9e 0xff41 R 0xff9e 0xff41
+  8: W 0xffa8 0x 14d R 0xffa8 0x 14d
+ 10: W 0xfffd 0x  22 R 0xfffd 0x  22
+ 12: W 0x  11 0x   e R 0x  11 0x   e
+ 14: W 0x   b 0x   7 R 0x   b 0x   7
+Do 101 Reset on MPD slot 10
+main: MPD 12 TEST histo memory
+main: HISTO Read/Write test SUCCESS on MPD slot 12
+main: Try initialize I2C of MPD in slot 12
+mpdI2C_Init: i2c low prescaler register set/read : 100 / 100
+mpdI2C_Init: i2c high prescaler register set/read : 0 / 0
+mpdI2C_Init: i2c speed prescale = 100, (period = 10.000000 us, frequency = 100.000000 kHz)
+mpdI2C_Init: Board temperatures: core=256.00 air=256.00 (dec celsius)
+main: Try APV discovery and init of MPD slot 12
+mpdAPV_Scan: MPD 12 Blind scan on 31 apvs: 
+mpdAPV_Scan MPD 12 I2C addr 0:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 0 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 1:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 1 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 2:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 2 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 3:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 3 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 4:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 4 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 5:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 5 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 6:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 6 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 7:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 7 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 8:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 8 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 9:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 9 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 10:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 10 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 11:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 11 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 12:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 12 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 13:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 13 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 14:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 14 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 15:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 15 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 16:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 16 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 17:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 17 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 18:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 18 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 19:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 19 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 20:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 20 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 21:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 21 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 22:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 22 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 23:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 23 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 24:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 24 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 25:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 25 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 26:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 26 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 27:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 27 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 28:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 28 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 29:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 29 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 30:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 30 found in MPD in slot 12
+mpdAPV_Scan: MPD 12 Blind scan done
+mpdAPV_Scan: Try i2c= 3 adc= 1 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 3 matched in MPD in slot 12
+mpdAPV_Scan: APV enable mask 0x0002
+mpdAPV_Scan: Try i2c= 2 adc= 2 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 2 matched in MPD in slot 12
+mpdAPV_Scan: APV enable mask 0x0006
+mpdAPV_Scan: Try i2c= 1 adc= 3 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 1 matched in MPD in slot 12
+mpdAPV_Scan: APV enable mask 0x000e
+mpdAPV_Scan: Try i2c= 0 adc= 4 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 0 matched in MPD in slot 12
+mpdAPV_Scan: APV enable mask 0x001e
+mpdAPV_Scan: Try i2c=11 adc= 6 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 11 matched in MPD in slot 12
+mpdAPV_Scan: APV enable mask 0x005e
+mpdAPV_Scan: Try i2c=10 adc= 7 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 10 matched in MPD in slot 12
+mpdAPV_Scan: APV enable mask 0x00de
+mpdAPV_Scan: Try i2c= 9 adc= 8 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 9 matched in MPD in slot 12
+mpdAPV_Scan: APV enable mask 0x01de
+mpdAPV_Scan: Try i2c= 8 adc= 9 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 8 matched in MPD in slot 12
+mpdAPV_Scan: APV enable mask 0x03de
+mpdAPV_Scan: Try i2c=16 adc=10 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 16 matched in MPD in slot 12
+mpdAPV_Scan: APV enable mask 0x07de
+mpdAPV_Scan: Try i2c=17 adc=11 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 17 matched in MPD in slot 12
+mpdAPV_Scan: APV enable mask 0x0fde
+mpdAPV_Scan: Try i2c=18 adc=12 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 18 matched in MPD in slot 12
+mpdAPV_Scan: APV enable mask 0x1fde
+mpdAPV_Scan: Try i2c=19 adc=13 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 19 matched in MPD in slot 12
+mpdAPV_Scan: APV enable mask 0x3fde
+mpdAPV_Scan: 12 APV found matching settings
+Do DELAY setting on MPD slot 12
+mpdDELAY25_Set: start (12: 23 23)
+mpdDELAY25_Set: end
+main: Do APV reset on MPD slot 12
+Configure single APV on MPD slot 12
+APV card i2c=3 to ADC (fifo)=1 (from config file)
+Fifo 1, buffer allocated with word size 11880
+	 id=12  ia=0  dmaHdl = 0x09a44f58  physMemBase = 0x2bc68000  fBuffer = 0xabe3f000
+APV card i2c=2 to ADC (fifo)=2 (from config file)
+Fifo 2, buffer allocated with word size 11880
+	 id=12  ia=1  dmaHdl = 0x09a44fa0  physMemBase = 0x2bc6c000  fBuffer = 0xabe3c000
+APV card i2c=1 to ADC (fifo)=3 (from config file)
+Fifo 3, buffer allocated with word size 11880
+	 id=12  ia=2  dmaHdl = 0x09a44fe8  physMemBase = 0x2bc70000  fBuffer = 0xabe39000
+APV card i2c=0 to ADC (fifo)=4 (from config file)
+Fifo 4, buffer allocated with word size 11880
+	 id=12  ia=3  dmaHdl = 0x09a45030  physMemBase = 0x2bc74000  fBuffer = 0xabe36000
+APV card i2c=11 to ADC (fifo)=6 (from config file)
+Fifo 6, buffer allocated with word size 11880
+	 id=12  ia=4  dmaHdl = 0x09a45078  physMemBase = 0x2bc78000  fBuffer = 0xabe33000
+APV card i2c=10 to ADC (fifo)=7 (from config file)
+Fifo 7, buffer allocated with word size 11880
+	 id=12  ia=5  dmaHdl = 0x09a450c0  physMemBase = 0x2bc7c000  fBuffer = 0xabe30000
+APV card i2c=9 to ADC (fifo)=8 (from config file)
+Fifo 8, buffer allocated with word size 11880
+	 id=12  ia=6  dmaHdl = 0x09a45108  physMemBase = 0x2bc80000  fBuffer = 0xabe2d000
+APV card i2c=8 to ADC (fifo)=9 (from config file)
+Fifo 9, buffer allocated with word size 11880
+	 id=12  ia=7  dmaHdl = 0x09a45150  physMemBase = 0x2bc84000  fBuffer = 0xabe2a000
+APV card i2c=16 to ADC (fifo)=10 (from config file)
+Fifo 10, buffer allocated with word size 11880
+	 id=12  ia=8  dmaHdl = 0x09a45198  physMemBase = 0x2bc88000  fBuffer = 0xabe27000
+APV card i2c=17 to ADC (fifo)=11 (from config file)
+Fifo 11, buffer allocated with word size 11880
+	 id=12  ia=9  dmaHdl = 0x09a451e0  physMemBase = 0x2bc8c000  fBuffer = 0xabe24000
+APV card i2c=18 to ADC (fifo)=12 (from config file)
+Fifo 12, buffer allocated with word size 11880
+	 id=12  ia=10  dmaHdl = 0x09a45228  physMemBase = 0x2bc90000  fBuffer = 0xabe21000
+APV card i2c=19 to ADC (fifo)=13 (from config file)
+Fifo 13, buffer allocated with word size 11880
+	 id=12  ia=11  dmaHdl = 0x09a45270  physMemBase = 0x2bc94000  fBuffer = 0xabe1e000
+Configure ADC on MPD slot 12
+mpdADS5281_Normal: Board= 0 ADC= 0 No Pattern (Normal Acq)
+mpdADS5281_InvertChannels: Board= 0 ADC= 0 Inverted Polarity
+mpdADS5281_SetGain: Board= 0 ADC= 0 Set Gain 5 5 5 5 5 5 5 5
+mpdADS5281_Normal: Board= 0 ADC= 1 No Pattern (Normal Acq)
+mpdADS5281_InvertChannels: Board= 0 ADC= 1 Inverted Polarity
+mpdADS5281_SetGain: Board= 0 ADC= 1 Set Gain 5 5 5 5 5 5 5 5
+mpdFIR_Config: FIR coefficients (FIRenable=0):
+  0: W 0x2aee 0xf7ae R 0x2aee 0xf7ae
+  2: W 0xff57 0xff18 R 0xff57 0xff18
+  4: W 0xff6d 0xff85 R 0xff6d 0xff85
+  6: W 0xff9e 0xff41 R 0xff9e 0xff41
+  8: W 0xffa8 0x 14d R 0xffa8 0x 14d
+ 10: W 0xfffd 0x  22 R 0xfffd 0x  22
+ 12: W 0x  11 0x   e R 0x  11 0x   e
+ 14: W 0x   b 0x   7 R 0x   b 0x   7
+Do 101 Reset on MPD slot 12
+main: MPD 14 TEST histo memory
+main: HISTO Read/Write test SUCCESS on MPD slot 14
+main: Try initialize I2C of MPD in slot 14
+mpdI2C_Init: i2c low prescaler register set/read : 100 / 100
+mpdI2C_Init: i2c high prescaler register set/read : 0 / 0
+mpdI2C_Init: i2c speed prescale = 100, (period = 10.000000 us, frequency = 100.000000 kHz)
+mpdI2C_Init: Board temperatures: core=256.00 air=256.00 (dec celsius)
+main: Try APV discovery and init of MPD slot 14
+mpdAPV_Scan: MPD 14 Blind scan on 31 apvs: 
+mpdAPV_Scan MPD 14 I2C addr 0:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 0 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 1:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 1 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 2:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 2 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 3:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 3 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 4:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 4 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 5:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 5 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 6:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 6 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 7:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 7 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 8:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 8 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 9:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 9 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 10:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 10 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 11:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 11 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 12:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 12 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 13:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 13 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 14:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 14 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 15:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 15 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 16:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 16 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 17:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 17 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 18:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 18 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 19:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 19 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 20:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 20 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 21:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 21 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 22:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 22 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 23:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 23 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 24:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 24 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 25:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 25 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 26:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 26 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 27:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 27 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 28:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 28 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 29:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 29 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 30:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 30 found in MPD in slot 14
+mpdAPV_Scan: MPD 14 Blind scan done
+mpdAPV_Scan: Try i2c= 0 adc= 0 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 0 matched in MPD in slot 14
+mpdAPV_Scan: APV enable mask 0x0001
+mpdAPV_Scan: Try i2c= 1 adc= 1 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 1 matched in MPD in slot 14
+mpdAPV_Scan: APV enable mask 0x0003
+mpdAPV_Scan: Try i2c= 2 adc= 2 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 2 matched in MPD in slot 14
+mpdAPV_Scan: APV enable mask 0x0007
+mpdAPV_Scan: Try i2c= 3 adc= 3 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 3 matched in MPD in slot 14
+mpdAPV_Scan: APV enable mask 0x000f
+mpdAPV_Scan: Try i2c= 4 adc= 4 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 4 matched in MPD in slot 14
+mpdAPV_Scan: APV enable mask 0x001f
+mpdAPV_Scan: Try i2c= 8 adc= 5 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 8 matched in MPD in slot 14
+mpdAPV_Scan: APV enable mask 0x003f
+mpdAPV_Scan: Try i2c= 9 adc= 6 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 9 matched in MPD in slot 14
+mpdAPV_Scan: APV enable mask 0x007f
+mpdAPV_Scan: Try i2c=10 adc= 7 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 10 matched in MPD in slot 14
+mpdAPV_Scan: APV enable mask 0x00ff
+mpdAPV_Scan: Try i2c=11 adc= 8 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 11 matched in MPD in slot 14
+mpdAPV_Scan: APV enable mask 0x01ff
+mpdAPV_Scan: Try i2c=12 adc= 9 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 12 matched in MPD in slot 14
+mpdAPV_Scan: APV enable mask 0x03ff
+mpdAPV_Scan: Try i2c=16 adc=10 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 16 matched in MPD in slot 14
+mpdAPV_Scan: APV enable mask 0x07ff
+mpdAPV_Scan: Try i2c=17 adc=11 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 17 matched in MPD in slot 14
+mpdAPV_Scan: APV enable mask 0x0fff
+mpdAPV_Scan: Try i2c=18 adc=12 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 18 matched in MPD in slot 14
+mpdAPV_Scan: APV enable mask 0x1fff
+mpdAPV_Scan: Try i2c=19 adc=13 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 19 matched in MPD in slot 14
+mpdAPV_Scan: APV enable mask 0x3fff
+mpdAPV_Scan: Try i2c=20 adc=14 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 20 matched in MPD in slot 14
+mpdAPV_Scan: APV enable mask 0x7fff
+mpdAPV_Scan: 15 APV found matching settings
+Do DELAY setting on MPD slot 14
+mpdDELAY25_Set: start (14: 23 23)
+mpdDELAY25_Set: end
+main: Do APV reset on MPD slot 14
+Configure single APV on MPD slot 14
+APV card i2c=0 to ADC (fifo)=0 (from config file)
+Fifo 0, buffer allocated with word size 11880
+	 id=14  ia=0  dmaHdl = 0x09a452b8  physMemBase = 0x2bc98000  fBuffer = 0xabe1b000
+APV card i2c=1 to ADC (fifo)=1 (from config file)
+Fifo 1, buffer allocated with word size 11880
+	 id=14  ia=1  dmaHdl = 0x09a45300  physMemBase = 0x2bc9c000  fBuffer = 0xabe18000
+APV card i2c=2 to ADC (fifo)=2 (from config file)
+Fifo 2, buffer allocated with word size 11880
+	 id=14  ia=2  dmaHdl = 0x09a45348  physMemBase = 0x2bca0000  fBuffer = 0xabe15000
+APV card i2c=3 to ADC (fifo)=3 (from config file)
+Fifo 3, buffer allocated with word size 11880
+	 id=14  ia=3  dmaHdl = 0x09a45390  physMemBase = 0x2bca4000  fBuffer = 0xabe12000
+APV card i2c=4 to ADC (fifo)=4 (from config file)
+Fifo 4, buffer allocated with word size 11880
+	 id=14  ia=4  dmaHdl = 0x09a453d8  physMemBase = 0x2bca8000  fBuffer = 0xabe0f000
+APV card i2c=8 to ADC (fifo)=5 (from config file)
+Fifo 5, buffer allocated with word size 11880
+	 id=14  ia=5  dmaHdl = 0x09a45420  physMemBase = 0x2bcac000  fBuffer = 0xabe0c000
+APV card i2c=9 to ADC (fifo)=6 (from config file)
+Fifo 6, buffer allocated with word size 11880
+	 id=14  ia=6  dmaHdl = 0x09a45468  physMemBase = 0x2bcb0000  fBuffer = 0xabe09000
+APV card i2c=10 to ADC (fifo)=7 (from config file)
+Fifo 7, buffer allocated with word size 11880
+	 id=14  ia=7  dmaHdl = 0x09a454b0  physMemBase = 0x2bcb4000  fBuffer = 0xabe06000
+APV card i2c=11 to ADC (fifo)=8 (from config file)
+Fifo 8, buffer allocated with word size 11880
+	 id=14  ia=8  dmaHdl = 0x09a454f8  physMemBase = 0x2bcb8000  fBuffer = 0xabe03000
+APV card i2c=12 to ADC (fifo)=9 (from config file)
+Fifo 9, buffer allocated with word size 11880
+	 id=14  ia=9  dmaHdl = 0x09a45540  physMemBase = 0x2bcbc000  fBuffer = 0xabe00000
+APV card i2c=16 to ADC (fifo)=10 (from config file)
+Fifo 10, buffer allocated with word size 11880
+	 id=14  ia=10  dmaHdl = 0x09a45588  physMemBase = 0x2bcc0000  fBuffer = 0xabdfd000
+APV card i2c=17 to ADC (fifo)=11 (from config file)
+Fifo 11, buffer allocated with word size 11880
+	 id=14  ia=11  dmaHdl = 0x09a455d0  physMemBase = 0x2bcc4000  fBuffer = 0xabdfa000
+APV card i2c=18 to ADC (fifo)=12 (from config file)
+Fifo 12, buffer allocated with word size 11880
+	 id=14  ia=12  dmaHdl = 0x09a45618  physMemBase = 0x2bcc8000  fBuffer = 0xabdf7000
+APV card i2c=19 to ADC (fifo)=13 (from config file)
+Fifo 13, buffer allocated with word size 11880
+	 id=14  ia=13  dmaHdl = 0x09a45660  physMemBase = 0x2bccc000  fBuffer = 0xabdf4000
+APV card i2c=20 to ADC (fifo)=14 (from config file)
+Fifo 14, buffer allocated with word size 11880
+	 id=14  ia=14  dmaHdl = 0x09a456a8  physMemBase = 0x2bcd0000  fBuffer = 0xabdf1000
+Configure ADC on MPD slot 14
+mpdADS5281_Normal: Board= 0 ADC= 0 No Pattern (Normal Acq)
+mpdADS5281_InvertChannels: Board= 0 ADC= 0 Inverted Polarity
+mpdADS5281_SetGain: Board= 0 ADC= 0 Set Gain 5 5 5 5 5 5 5 5
+mpdADS5281_Normal: Board= 0 ADC= 1 No Pattern (Normal Acq)
+mpdADS5281_InvertChannels: Board= 0 ADC= 1 Inverted Polarity
+mpdADS5281_SetGain: Board= 0 ADC= 1 Set Gain 5 5 5 5 5 5 5 5
+mpdFIR_Config: FIR coefficients (FIRenable=0):
+  0: W 0x2aee 0xf7ae R 0x2aee 0xf7ae
+  2: W 0xff57 0xff18 R 0xff57 0xff18
+  4: W 0xff6d 0xff85 R 0xff6d 0xff85
+  6: W 0xff9e 0xff41 R 0xff9e 0xff41
+  8: W 0xffa8 0x 14d R 0xffa8 0x 14d
+ 10: W 0xfffd 0x  22 R 0xfffd 0x  22
+ 12: W 0x  11 0x   e R 0x  11 0x   e
+ 14: W 0x   b 0x   7 R 0x   b 0x   7
+Do 101 Reset on MPD slot 14
+
+========== S T A R T . H I S T O . T E S T ==========
+
+mpdSetAcqMode: Acquisition Mode = 0x4 (histo)
+mpdADS5281_SetGain: Board= 0 ADC= 0 Set Gain 5 5 5 5 5 5 5 5
+ ### histo peaks integral MPD/ADCch = 8 / 0 (total Integral= 4072701)
+ first bin= 50: 58181 last bin= 59
+ first bin= 81: 58181 last bin= 91
+ first bin= 95: 3432711 last bin= 130
+ first bin= 186: 58181 last bin= 196
+ first bin= 203: 58181 last bin= 212
+ first bin= 223: 58181 last bin= 232
+ first bin= 254: 58181 last bin= 263
+ first bin= 294: 58181 last bin= 303
+ first bin= 336: 58179 last bin= 376
+ first bin= 378: 2 last bin= 378
+ first bin= 406: 58181 last bin= 415
+ first bin= 2440: 58180 last bin= 2502
+ first bin= 2505: 1 last bin= 2505
+ first bin= 2779: 42309 last bin= 2792
+ ### histo peaks integral MPD/ADCch = 8 / 1 (total Integral= 4066092)
+ first bin= 134: 58087 last bin= 143
+ first bin= 161: 58087 last bin= 169
+ first bin= 173: 3405632 last bin= 206
+ first bin= 251: 58087 last bin= 260
+ first bin= 269: 58087 last bin= 278
+ first bin= 289: 50151 last bin= 299
+ first bin= 318: 58087 last bin= 328
+ first bin= 350: 114638 last bin= 384
+ first bin= 430: 54247 last bin= 440
+ first bin= 2485: 58087 last bin= 2537
+ first bin= 2725: 58087 last bin= 2737
+ ### histo peaks integral MPD/ADCch = 8 / 2 (total Integral= 4066492)
+ first bin= 27: 58093 last bin= 36
+ first bin= 50: 3396476 last bin= 98
+ first bin= 160: 58093 last bin= 169
+ first bin= 176: 165063 last bin= 208
+ first bin= 234: 58093 last bin= 244
+ first bin= 280: 58093 last bin= 290
+ first bin= 356: 56045 last bin= 366
+ first bin= 2599: 58093 last bin= 2642
+ first bin= 2725: 58093 last bin= 2737
+ ### histo peaks integral MPD/ADCch = 8 / 3 (total Integral= 4066427)
+ first bin= 105: 54252 last bin= 116
+ first bin= 133: 3479108 last bin= 177
+ first bin= 234: 116184 last bin= 250
+ first bin= 259: 58092 last bin= 269
+ first bin= 272: 116184 last bin= 298
+ first bin= 322: 53996 last bin= 332
+ first bin= 418: 58092 last bin= 429
+ first bin= 2583: 58092 last bin= 2629
+ first bin= 2706: 58092 last bin= 2718
+ ### histo peaks integral MPD/ADCch = 8 / 4 (total Integral= 4066566)
+ first bin= 2018: 4050184 last bin= 2041
+ ### histo peaks integral MPD/ADCch = 8 / 5 (total Integral= 4066128)
+ first bin= 2044: 4053842 last bin= 2067
+ ### histo peaks integral MPD/ADCch = 8 / 6 (total Integral= 4066969)
+ first bin= 68: 58100 last bin= 78
+ first bin= 85: 3485970 last bin= 136
+ first bin= 176: 174300 last bin= 202
+ first bin= 213: 58100 last bin= 223
+ first bin= 238: 58100 last bin= 247
+ first bin= 282: 58100 last bin= 292
+ first bin= 384: 58100 last bin= 395
+ first bin= 2679: 110568 last bin= 2725
+ ### histo peaks integral MPD/ADCch = 8 / 7 (total Integral= 4066587)
+ first bin= 23: 58094 last bin= 31
+ first bin= 36: 58094 last bin= 46
+ first bin= 49: 1126040 last bin= 114
+ first bin= 128: 58094 last bin= 136
+ first bin= 164: 111836 last bin= 192
+ first bin= 252: 58094 last bin= 261
+ first bin= 349: 58094 last bin= 359
+ first bin= 515: 58094 last bin= 526
+ first bin= 2801: 58094 last bin= 2815
+ first bin= 2960: 57838 last bin= 2972
+ first bin= 2977: 1 last bin= 2977
+ first bin= 2979: 58093 last bin= 3020
+ first bin= 3061: 58094 last bin= 3073
+ first bin= 3140: 58094 last bin= 3153
+ first bin= 3187: 1915319 last bin= 3267
+ first bin= 3271: 53998 last bin= 3283
+ first bin= 3295: 116188 last bin= 3308
+ first bin= 3327: 54254 last bin= 3340
+ ### histo peaks integral MPD/ADCch = 8 / 8 (total Integral= 4066193)
+ first bin= 50: 58088 last bin= 60
+ first bin= 73: 53992 last bin= 83
+ first bin= 86: 3423642 last bin= 126
+ first bin= 184: 174264 last bin= 206
+ first bin= 212: 58088 last bin= 222
+ first bin= 238: 58088 last bin= 247
+ first bin= 288: 58088 last bin= 298
+ first bin= 412: 58088 last bin= 422
+ first bin= 2717: 116176 last bin= 2762
+ ### histo peaks integral MPD/ADCch = 8 / 9 (total Integral= 4066533)
+ first bin= 0: 290465 last bin= 9
+ first bin= 13: 1093799 last bin= 86
+ first bin= 132: 58093 last bin= 142
+ first bin= 218: 58093 last bin= 229
+ first bin= 357: 42733 last bin= 368
+ first bin= 757: 56045 last bin= 768
+ first bin= 2399: 58094 last bin= 2411
+ first bin= 2806: 58094 last bin= 2818
+ first bin= 2941: 58094 last bin= 2953
+ first bin= 3033: 116187 last bin= 3062
+ first bin= 3081: 1832354 last bin= 3167
+ first bin= 3171: 55021 last bin= 3182
+ first bin= 3195: 114139 last bin= 3208
+ first bin= 3219: 53998 last bin= 3230
+ first bin= 3242: 53998 last bin= 3253
+ ### histo peaks integral MPD/ADCch = 8 / 10 (total Integral= 4025388)
+ first bin= 2037: 3953965 last bin= 2083
+ ### histo peaks integral MPD/ADCch = 8 / 11 (total Integral= 3998334)
+ first bin= 106: 57529 last bin= 115
+ first bin= 121: 3459582 last bin= 174
+ first bin= 226: 57529 last bin= 235
+ first bin= 243: 55481 last bin= 253
+ first bin= 259: 57529 last bin= 269
+ first bin= 283: 57529 last bin= 294
+ first bin= 328: 57529 last bin= 338
+ first bin= 450: 57529 last bin= 460
+ first bin= 2752: 57529 last bin= 2764
+ first bin= 2921: 57529 last bin= 2934
+ ### histo peaks integral MPD/ADCch = 8 / 12 (total Integral= 4026746)
+ first bin= 148: 57525 last bin= 157
+ first bin= 166: 3501342 last bin= 208
+ first bin= 259: 57525 last bin= 269
+ first bin= 275: 57525 last bin= 285
+ first bin= 287: 57525 last bin= 297
+ first bin= 311: 57525 last bin= 320
+ first bin= 345: 57525 last bin= 356
+ first bin= 441: 57525 last bin= 452
+ first bin= 2692: 57525 last bin= 2704
+ first bin= 2814: 55477 last bin= 2828
+ ### histo peaks integral MPD/ADCch = 8 / 13 (total Integral= 4026476)
+ first bin= 151: 112994 last bin= 172
+ first bin= 174: 3413379 last bin= 216
+ first bin= 267: 57521 last bin= 276
+ first bin= 285: 57521 last bin= 294
+ first bin= 303: 57521 last bin= 314
+ first bin= 333: 57521 last bin= 343
+ first bin= 375: 57521 last bin= 387
+ first bin= 487: 57521 last bin= 498
+ first bin= 2793: 57521 last bin= 2807
+ first bin= 2940: 57521 last bin= 2955
+ ### histo peaks integral MPD/ADCch = 8 / 14 (total Integral= 4026584)
+ first bin= 59: 3501711 last bin= 110
+ first bin= 138: 57523 last bin= 147
+ first bin= 177: 54451 last bin= 186
+ first bin= 189: 57523 last bin= 200
+ first bin= 211: 57523 last bin= 222
+ first bin= 251: 57523 last bin= 261
+ first bin= 329: 57523 last bin= 339
+ first bin= 596: 57523 last bin= 606
+ first bin= 2473: 57523 last bin= 2485
+ first bin= 2824: 57523 last bin= 2836
+ ### histo peaks integral MPD/ADCch = 8 / 15 (total Integral= 4026559)
+ first bin= 2053: 4026560 last bin= 2067
+main: MPD 8 ----- HISTO Test Summary -----
+main: ADC ch  0 ( 2785 ) connected and configured
+main: ADC ch  1 ( 2732 ) connected and configured
+main: ADC ch  2 ( 2732 ) connected and configured
+main: ADC ch  3 ( 2713 ) connected and configured
+main: ADC ch  4 ( 2032 ) not connected
+main: ADC ch  5 ( 2055 ) not connected
+main: ADC ch  6 ( 2718 ) connected and configured
+main: ADC ch  7 ( 3194 ) connected and configured
+main: ADC ch  8 ( 2756 ) connected and configured
+main: ADC ch  9 ( 3089 ) connected and configured
+main: ADC ch 10 ( 2063 ) not connected
+main: ADC ch 11 ( 2928 ) connected and configured
+main: ADC ch 12 ( 2697 ) connected and configured
+main: ADC ch 13 ( 2948 ) connected and configured
+main: ADC ch 14 ( 2830 ) connected and configured
+main: ADC ch 15 ( 2059 ) not connected
+mpdSetAcqMode: Acquisition Mode = 0x4 (histo)
+mpdADS5281_SetGain: Board= 0 ADC= 0 Set Gain 5 5 5 5 5 5 5 5
+ ### histo peaks integral MPD/ADCch = 10 / 0 (total Integral= 4032381)
+ first bin= 224: 57605 last bin= 232
+ first bin= 246: 57605 last bin= 254
+ first bin= 260: 3398727 last bin= 284
+ first bin= 317: 57605 last bin= 325
+ first bin= 330: 115210 last bin= 343
+ first bin= 349: 57605 last bin= 357
+ first bin= 383: 57605 last bin= 391
+ first bin= 424: 57605 last bin= 432
+ first bin= 516: 57605 last bin= 524
+ first bin= 2719: 57605 last bin= 2753
+ first bin= 2771: 57605 last bin= 2782
+ ### histo peaks integral MPD/ADCch = 10 / 1 (total Integral= 4025879)
+ first bin= 271: 3508263 last bin= 304
+ first bin= 324: 115026 last bin= 342
+ first bin= 347: 57513 last bin= 355
+ first bin= 366: 57513 last bin= 374
+ first bin= 386: 57513 last bin= 394
+ first bin= 418: 57513 last bin= 426
+ first bin= 515: 57513 last bin= 524
+ first bin= 2762: 115026 last bin= 2790
+ ### histo peaks integral MPD/ADCch = 10 / 2 (total Integral= 4025266)
+ first bin= 325: 57504 last bin= 333
+ first bin= 340: 3450227 last bin= 363
+ first bin= 375: 57504 last bin= 386
+ first bin= 396: 115008 last bin= 411
+ first bin= 423: 57504 last bin= 431
+ first bin= 451: 57504 last bin= 458
+ first bin= 487: 57504 last bin= 495
+ first bin= 595: 57504 last bin= 603
+ first bin= 2755: 57504 last bin= 2766
+ first bin= 2809: 57504 last bin= 2832
+ ### histo peaks integral MPD/ADCch = 10 / 3 (total Integral= 4025623)
+ first bin= 328: 3450535 last bin= 351
+ first bin= 353: 57509 last bin= 362
+ first bin= 370: 57509 last bin= 381
+ first bin= 392: 115018 last bin= 407
+ first bin= 415: 57509 last bin= 423
+ first bin= 435: 57509 last bin= 443
+ first bin= 470: 57509 last bin= 478
+ first bin= 556: 57509 last bin= 565
+ first bin= 2724: 57509 last bin= 2734
+ first bin= 2742: 57509 last bin= 2767
+ ### histo peaks integral MPD/ADCch = 10 / 4 (total Integral= 4026098)
+ first bin= 251: 57516 last bin= 259
+ first bin= 262: 57516 last bin= 271
+ first bin= 279: 3393422 last bin= 295
+ first bin= 297: 57517 last bin= 306
+ first bin= 342: 115032 last bin= 357
+ first bin= 367: 57516 last bin= 375
+ first bin= 394: 57516 last bin= 402
+ first bin= 455: 57516 last bin= 463
+ first bin= 695: 57516 last bin= 704
+ first bin= 2570: 57516 last bin= 2581
+ first bin= 2897: 57516 last bin= 2907
+ ### histo peaks integral MPD/ADCch = 10 / 5 (total Integral= 4025719)
+ first bin= 247: 115020 last bin= 255
+ first bin= 263: 3335601 last bin= 273
+ first bin= 282: 57510 last bin= 290
+ first bin= 294: 57510 last bin= 305
+ first bin= 309: 115020 last bin= 323
+ first bin= 332: 57510 last bin= 340
+ first bin= 354: 57510 last bin= 363
+ first bin= 383: 57510 last bin= 390
+ first bin= 488: 57510 last bin= 496
+ first bin= 2705: 57510 last bin= 2717
+ first bin= 2739: 57510 last bin= 2762
+ ### histo peaks integral MPD/ADCch = 10 / 6 (total Integral= 4025779)
+ first bin= 1274: 3508182 last bin= 1287
+ first bin= 1313: 172533 last bin= 1327
+ first bin= 1333: 115022 last bin= 1340
+ first bin= 1356: 57511 last bin= 1363
+ first bin= 1421: 57511 last bin= 1428
+ first bin= 2423: 115022 last bin= 2441
+ ### histo peaks integral MPD/ADCch = 10 / 7 (total Integral= 4026064)
+ first bin= 229: 115030 last bin= 246
+ first bin= 251: 3393394 last bin= 271
+ first bin= 274: 57516 last bin= 284
+ first bin= 301: 115030 last bin= 318
+ first bin= 327: 57515 last bin= 336
+ first bin= 348: 57516 last bin= 356
+ first bin= 375: 57516 last bin= 384
+ first bin= 462: 57516 last bin= 470
+ first bin= 2718: 57516 last bin= 2729
+ first bin= 2763: 57516 last bin= 2785
+ ### histo peaks integral MPD/ADCch = 10 / 8 (total Integral= 4025903)
+ first bin= 0: 57513 last bin= 0
+ first bin= 8: 57513 last bin= 18
+ first bin= 24: 3450774 last bin= 74
+ first bin= 120: 57513 last bin= 130
+ first bin= 138: 57513 last bin= 149
+ first bin= 157: 57513 last bin= 168
+ first bin= 186: 57513 last bin= 196
+ first bin= 236: 57512 last bin= 246
+ first bin= 248: 1 last bin= 248
+ first bin= 370: 57513 last bin= 381
+ first bin= 2800: 57513 last bin= 2813
+ first bin= 2952: 57513 last bin= 2970
+ ### histo peaks integral MPD/ADCch = 10 / 9 (total Integral= 4025648)
+ first bin= 60: 115018 last bin= 79
+ first bin= 83: 3393050 last bin= 127
+ first bin= 135: 57509 last bin= 144
+ first bin= 205: 115018 last bin= 218
+ first bin= 229: 57509 last bin= 239
+ first bin= 270: 57509 last bin= 279
+ first bin= 358: 57509 last bin= 367
+ first bin= 701: 57509 last bin= 712
+ first bin= 2529: 57509 last bin= 2541
+ first bin= 2949: 57509 last bin= 2960
+ ### histo peaks integral MPD/ADCch = 10 / 10 (total Integral= 4025601)
+ first bin= 11: 57508 last bin= 20
+ first bin= 36: 57508 last bin= 45
+ first bin= 50: 3393010 last bin= 94
+ first bin= 153: 57508 last bin= 162
+ first bin= 166: 172524 last bin= 194
+ first bin= 196: 1 last bin= 196
+ first bin= 220: 57508 last bin= 230
+ first bin= 275: 57509 last bin= 286
+ first bin= 415: 1 last bin= 415
+ first bin= 417: 57508 last bin= 427
+ first bin= 2709: 57509 last bin= 2750
+ first bin= 2764: 57509 last bin= 2777
+ ### histo peaks integral MPD/ADCch = 10 / 11 (total Integral= 4024898)
+ first bin= 63: 57499 last bin= 73
+ first bin= 91: 57499 last bin= 100
+ first bin= 108: 3392411 last bin= 150
+ first bin= 185: 114998 last bin= 208
+ first bin= 214: 57499 last bin= 224
+ first bin= 233: 57499 last bin= 244
+ first bin= 266: 57499 last bin= 277
+ first bin= 315: 57499 last bin= 325
+ first bin= 434: 57499 last bin= 444
+ first bin= 2779: 57499 last bin= 2791
+ first bin= 2818: 57499 last bin= 2845
+ ### histo peaks integral MPD/ADCch = 10 / 12 (total Integral= 4025710)
+ first bin= 59: 57510 last bin= 70
+ first bin= 82: 57510 last bin= 91
+ first bin= 94: 3393096 last bin= 128
+ first bin= 141: 57511 last bin= 153
+ first bin= 187: 57510 last bin= 198
+ first bin= 200: 57510 last bin= 210
+ first bin= 220: 57510 last bin= 230
+ first bin= 247: 57510 last bin= 258
+ first bin= 289: 57511 last bin= 298
+ first bin= 402: 57511 last bin= 412
+ first bin= 2728: 57511 last bin= 2742
+ first bin= 2819: 57511 last bin= 2841
+ ### histo peaks integral MPD/ADCch = 10 / 13 (total Integral= 4025418)
+ first bin= 0: 57504 last bin= 6
+ first bin= 8: 1 last bin= 8
+ first bin= 16: 57506 last bin= 26
+ first bin= 30: 3392854 last bin= 65
+ first bin= 68: 57506 last bin= 78
+ first bin= 124: 57506 last bin= 134
+ first bin= 142: 57506 last bin= 152
+ first bin= 163: 57506 last bin= 173
+ first bin= 189: 57506 last bin= 199
+ first bin= 229: 57506 last bin= 238
+ first bin= 356: 57506 last bin= 367
+ first bin= 2768: 57506 last bin= 2781
+ first bin= 2905: 57506 last bin= 2922
+ ### histo peaks integral MPD/ADCch = 10 / 14 (total Integral= 4025798)
+ first bin= 15: 3508191 last bin= 66
+ first bin= 86: 57512 last bin= 95
+ first bin= 144: 115024 last bin= 162
+ first bin= 169: 57512 last bin= 179
+ first bin= 206: 57512 last bin= 215
+ first bin= 287: 57512 last bin= 296
+ first bin= 586: 57512 last bin= 596
+ first bin= 2466: 57512 last bin= 2478
+ first bin= 2834: 57512 last bin= 2847
+ ### histo peaks integral MPD/ADCch = 10 / 15 (total Integral= 4025873)
+ first bin= 2064: 4025874 last bin= 2086
+main: MPD 10 ----- HISTO Test Summary -----
+main: ADC ch  0 ( 2777 ) connected and configured
+main: ADC ch  1 ( 2775 ) connected and configured
+main: ADC ch  2 ( 2760 ) connected and configured
+main: ADC ch  3 ( 2728 ) connected and configured
+main: ADC ch  4 ( 2576 ) connected but not configured OR HDMI ch 5
+main: ADC ch  5 ( 2711 ) connected and configured
+main: ADC ch  6 ( 1281 ) undefined
+main: ADC ch  7 ( 2724 ) connected and configured
+main: ADC ch  8 ( 2807 ) connected and configured
+main: ADC ch  9 ( 2955 ) connected and configured
+main: ADC ch 10 ( 2770 ) connected and configured
+main: ADC ch 11 ( 2785 ) connected and configured
+main: ADC ch 12 ( 2736 ) connected and configured
+main: ADC ch 13 ( 2775 ) connected and configured
+main: ADC ch 14 ( 2841 ) connected and configured
+main: ADC ch 15 ( 2073 ) not connected
+mpdSetAcqMode: Acquisition Mode = 0x4 (histo)
+mpdADS5281_SetGain: Board= 0 ADC= 0 Set Gain 5 5 5 5 5 5 5 5
+ ### histo peaks integral MPD/ADCch = 12 / 0 (total Integral= 4031840)
+ first bin= 2057: 4031842 last bin= 2072
+ ### histo peaks integral MPD/ADCch = 12 / 1 (total Integral= 4025507)
+ first bin= 141: 57507 last bin= 150
+ first bin= 154: 57507 last bin= 164
+ first bin= 171: 3450438 last bin= 203
+ first bin= 257: 57507 last bin= 266
+ first bin= 270: 57507 last bin= 281
+ first bin= 286: 57507 last bin= 295
+ first bin= 310: 57507 last bin= 319
+ first bin= 348: 57507 last bin= 357
+ first bin= 432: 57507 last bin= 444
+ first bin= 2879: 57507 last bin= 2892
+ first bin= 3008: 57507 last bin= 3020
+ ### histo peaks integral MPD/ADCch = 12 / 2 (total Integral= 4024849)
+ first bin= 163: 114996 last bin= 180
+ first bin= 188: 3449873 last bin= 227
+ first bin= 274: 57498 last bin= 284
+ first bin= 286: 57498 last bin= 297
+ first bin= 300: 57498 last bin= 310
+ first bin= 322: 57498 last bin= 332
+ first bin= 354: 57498 last bin= 363
+ first bin= 470: 57498 last bin= 482
+ first bin= 2808: 57497 last bin= 2821
+ first bin= 2964: 57497 last bin= 2977
+ ### histo peaks integral MPD/ADCch = 12 / 3 (total Integral= 4023815)
+ first bin= 121: 114966 last bin= 139
+ first bin= 148: 3448986 last bin= 186
+ first bin= 234: 57483 last bin= 243
+ first bin= 247: 57483 last bin= 257
+ first bin= 263: 57483 last bin= 273
+ first bin= 287: 57483 last bin= 297
+ first bin= 323: 57483 last bin= 333
+ first bin= 425: 57483 last bin= 437
+ first bin= 2688: 57483 last bin= 2701
+ first bin= 2820: 57483 last bin= 2836
+ ### histo peaks integral MPD/ADCch = 12 / 4 (total Integral= 4025263)
+ first bin= 144: 57504 last bin= 153
+ first bin= 160: 3450224 last bin= 194
+ first bin= 237: 57504 last bin= 247
+ first bin= 258: 115008 last bin= 275
+ first bin= 284: 57504 last bin= 294
+ first bin= 316: 57504 last bin= 325
+ first bin= 379: 57504 last bin= 388
+ first bin= 642: 57504 last bin= 652
+ first bin= 2509: 57504 last bin= 2520
+ first bin= 2847: 57504 last bin= 2858
+ ### histo peaks integral MPD/ADCch = 12 / 5 (total Integral= 4024931)
+ first bin= 2055: 4024932 last bin= 2071
+ ### histo peaks integral MPD/ADCch = 12 / 6 (total Integral= 4025155)
+ first bin= 52: 115004 last bin= 66
+ first bin= 73: 3392634 last bin= 104
+ first bin= 110: 57502 last bin= 119
+ first bin= 159: 57502 last bin= 168
+ first bin= 172: 57502 last bin= 181
+ first bin= 189: 57502 last bin= 198
+ first bin= 215: 57502 last bin= 224
+ first bin= 252: 57502 last bin= 261
+ first bin= 351: 57502 last bin= 361
+ first bin= 2760: 57502 last bin= 2773
+ first bin= 2901: 57502 last bin= 2913
+ ### histo peaks integral MPD/ADCch = 12 / 7 (total Integral= 4024944)
+ first bin= 135: 115000 last bin= 147
+ first bin= 152: 3392448 last bin= 184
+ first bin= 191: 57499 last bin= 200
+ first bin= 202: 1 last bin= 202
+ first bin= 238: 57500 last bin= 247
+ first bin= 253: 57500 last bin= 264
+ first bin= 271: 57500 last bin= 281
+ first bin= 298: 57500 last bin= 307
+ first bin= 335: 57500 last bin= 345
+ first bin= 477: 57500 last bin= 488
+ first bin= 2778: 57499 last bin= 2790
+ first bin= 2964: 57499 last bin= 2976
+ ### histo peaks integral MPD/ADCch = 12 / 8 (total Integral= 4024874)
+ first bin= 149: 114996 last bin= 167
+ first bin= 178: 3449896 last bin= 214
+ first bin= 260: 57498 last bin= 270
+ first bin= 277: 57498 last bin= 287
+ first bin= 294: 57498 last bin= 303
+ first bin= 317: 57498 last bin= 327
+ first bin= 352: 57498 last bin= 361
+ first bin= 473: 57498 last bin= 483
+ first bin= 2757: 57498 last bin= 2769
+ first bin= 2919: 57498 last bin= 2932
+ ### histo peaks integral MPD/ADCch = 12 / 9 (total Integral= 4024881)
+ first bin= 132: 57499 last bin= 140
+ first bin= 149: 3449892 last bin= 191
+ first bin= 225: 57499 last bin= 235
+ first bin= 258: 114998 last bin= 273
+ first bin= 284: 57499 last bin= 294
+ first bin= 326: 57499 last bin= 335
+ first bin= 394: 57499 last bin= 404
+ first bin= 683: 57499 last bin= 694
+ first bin= 2541: 57499 last bin= 2552
+ first bin= 2913: 57499 last bin= 2924
+ ### histo peaks integral MPD/ADCch = 12 / 10 (total Integral= 4024940)
+ first bin= 0: 114998 last bin= 0
+ first bin= 5: 3392452 last bin= 43
+ first bin= 65: 57499 last bin= 75
+ first bin= 102: 114998 last bin= 122
+ first bin= 132: 57499 last bin= 141
+ first bin= 162: 57499 last bin= 172
+ first bin= 197: 57499 last bin= 207
+ first bin= 367: 57499 last bin= 376
+ first bin= 2764: 57499 last bin= 2777
+ first bin= 2977: 57499 last bin= 2990
+ ### histo peaks integral MPD/ADCch = 12 / 11 (total Integral= 4024900)
+ first bin= 65: 114996 last bin= 83
+ first bin= 90: 3392423 last bin= 126
+ first bin= 142: 57498 last bin= 152
+ first bin= 187: 57498 last bin= 197
+ first bin= 202: 57498 last bin= 212
+ first bin= 220: 57498 last bin= 230
+ first bin= 248: 57498 last bin= 258
+ first bin= 290: 57498 last bin= 300
+ first bin= 464: 57498 last bin= 474
+ first bin= 2740: 57498 last bin= 2752
+ first bin= 2957: 57498 last bin= 2969
+ ### histo peaks integral MPD/ADCch = 12 / 12 (total Integral= 4024885)
+ first bin= 44: 114996 last bin= 62
+ first bin= 71: 3392408 last bin= 104
+ first bin= 121: 57498 last bin= 131
+ first bin= 162: 57498 last bin= 172
+ first bin= 181: 57498 last bin= 190
+ first bin= 201: 57498 last bin= 210
+ first bin= 228: 57498 last bin= 238
+ first bin= 266: 57498 last bin= 276
+ first bin= 459: 57498 last bin= 470
+ first bin= 2683: 57498 last bin= 2696
+ first bin= 2919: 57498 last bin= 2930
+ ### histo peaks integral MPD/ADCch = 12 / 13 (total Integral= 4064105)
+ first bin= 47: 116118 last bin= 66
+ first bin= 72: 3425458 last bin= 107
+ first bin= 122: 58059 last bin= 132
+ first bin= 164: 58059 last bin= 174
+ first bin= 180: 58059 last bin= 190
+ first bin= 197: 58059 last bin= 206
+ first bin= 224: 58059 last bin= 234
+ first bin= 263: 58059 last bin= 273
+ first bin= 435: 58059 last bin= 446
+ first bin= 2693: 58059 last bin= 2706
+ first bin= 2904: 58059 last bin= 2917
+ ### histo peaks integral MPD/ADCch = 12 / 14 (total Integral= 4025155)
+ first bin= 2057: 4025156 last bin= 2077
+ ### histo peaks integral MPD/ADCch = 12 / 15 (total Integral= 4025570)
+ first bin= 2051: 4025571 last bin= 2067
+main: MPD 12 ----- HISTO Test Summary -----
+main: ADC ch  0 ( 2063 ) not connected
+main: ADC ch  1 ( 3014 ) connected and configured
+main: ADC ch  2 ( 2971 ) connected and configured
+main: ADC ch  3 ( 2694 ) connected and configured
+main: ADC ch  4 ( 2854 ) connected and configured
+main: ADC ch  5 ( 2064 ) not connected
+main: ADC ch  6 ( 2907 ) connected and configured
+main: ADC ch  7 ( 2783 ) connected and configured
+main: ADC ch  8 ( 2763 ) connected and configured
+main: ADC ch  9 ( 2920 ) connected and configured
+main: ADC ch 10 ( 2983 ) connected and configured
+main: ADC ch 11 ( 2963 ) connected and configured
+main: ADC ch 12 ( 2924 ) connected and configured
+main: ADC ch 13 ( 2909 ) connected and configured
+main: ADC ch 14 ( 2067 ) not connected
+main: ADC ch 15 ( 2059 ) not connected
+mpdSetAcqMode: Acquisition Mode = 0x4 (histo)
+mpdADS5281_SetGain: Board= 0 ADC= 0 Set Gain 5 5 5 5 5 5 5 5
+ ### histo peaks integral MPD/ADCch = 14 / 0 (total Integral= 4031476)
+ first bin= 21: 115184 last bin= 32
+ first bin= 50: 3455558 last bin= 98
+ first bin= 146: 57592 last bin= 155
+ first bin= 162: 57592 last bin= 171
+ first bin= 180: 57592 last bin= 189
+ first bin= 202: 57592 last bin= 211
+ first bin= 245: 57592 last bin= 254
+ first bin= 396: 57592 last bin= 405
+ first bin= 2723: 57592 last bin= 2734
+ first bin= 2916: 57592 last bin= 2929
+ ### histo peaks integral MPD/ADCch = 14 / 1 (total Integral= 4064205)
+ first bin= 16: 116122 last bin= 29
+ first bin= 41: 3483604 last bin= 87
+ first bin= 133: 58060 last bin= 142
+ first bin= 151: 58060 last bin= 160
+ first bin= 169: 58060 last bin= 179
+ first bin= 199: 58060 last bin= 208
+ first bin= 236: 58060 last bin= 245
+ first bin= 362: 58060 last bin= 372
+ first bin= 2829: 58060 last bin= 2842
+ first bin= 2998: 58060 last bin= 3010
+ ### histo peaks integral MPD/ADCch = 14 / 2 (total Integral= 4064426)
+ first bin= 97: 116126 last bin= 116
+ first bin= 131: 3483798 last bin= 169
+ first bin= 220: 58063 last bin= 231
+ first bin= 235: 58063 last bin= 245
+ first bin= 251: 58063 last bin= 261
+ first bin= 279: 58063 last bin= 288
+ first bin= 316: 58063 last bin= 325
+ first bin= 434: 58063 last bin= 445
+ first bin= 2768: 58063 last bin= 2780
+ first bin= 2933: 58063 last bin= 2945
+ ### histo peaks integral MPD/ADCch = 14 / 3 (total Integral= 4064265)
+ first bin= 75: 58061 last bin= 85
+ first bin= 88: 58061 last bin= 97
+ first bin= 107: 3483656 last bin= 145
+ first bin= 200: 58061 last bin= 208
+ first bin= 215: 58061 last bin= 224
+ first bin= 231: 58061 last bin= 240
+ first bin= 258: 58061 last bin= 267
+ first bin= 298: 58061 last bin= 306
+ first bin= 445: 58061 last bin= 455
+ first bin= 2734: 58061 last bin= 2747
+ first bin= 2932: 58061 last bin= 2946
+ ### histo peaks integral MPD/ADCch = 14 / 4 (total Integral= 4064132)
+ first bin= 10: 58059 last bin= 20
+ first bin= 25: 3483543 last bin= 68
+ first bin= 97: 58059 last bin= 106
+ first bin= 138: 116118 last bin= 153
+ first bin= 160: 58059 last bin= 170
+ first bin= 191: 58059 last bin= 200
+ first bin= 267: 58059 last bin= 277
+ first bin= 593: 58059 last bin= 603
+ first bin= 2485: 58059 last bin= 2496
+ first bin= 2854: 58059 last bin= 2865
+ ### histo peaks integral MPD/ADCch = 14 / 5 (total Integral= 4063659)
+ first bin= 23: 116104 last bin= 40
+ first bin= 49: 3425089 last bin= 91
+ first bin= 98: 58052 last bin= 107
+ first bin= 147: 58052 last bin= 157
+ first bin= 163: 58052 last bin= 173
+ first bin= 180: 58052 last bin= 190
+ first bin= 210: 58052 last bin= 219
+ first bin= 251: 58052 last bin= 261
+ first bin= 392: 58052 last bin= 402
+ first bin= 2740: 58052 last bin= 2752
+ first bin= 2930: 58052 last bin= 2942
+ ### histo peaks integral MPD/ADCch = 14 / 6 (total Integral= 4064057)
+ first bin= 171: 116116 last bin= 184
+ first bin= 190: 3425420 last bin= 220
+ first bin= 231: 58058 last bin= 240
+ first bin= 271: 58058 last bin= 281
+ first bin= 284: 58058 last bin= 294
+ first bin= 299: 58058 last bin= 309
+ first bin= 321: 58058 last bin= 331
+ first bin= 354: 58058 last bin= 364
+ first bin= 466: 58058 last bin= 476
+ first bin= 2785: 58058 last bin= 2797
+ first bin= 2932: 58058 last bin= 2945
+ ### histo peaks integral MPD/ADCch = 14 / 7 (total Integral= 4064257)
+ first bin= 224: 116122 last bin= 235
+ first bin= 244: 3425588 last bin= 277
+ first bin= 279: 58061 last bin= 289
+ first bin= 326: 58061 last bin= 336
+ first bin= 339: 58061 last bin= 348
+ first bin= 355: 58061 last bin= 364
+ first bin= 381: 58061 last bin= 392
+ first bin= 422: 58061 last bin= 431
+ first bin= 555: 58061 last bin= 566
+ first bin= 2779: 58061 last bin= 2790
+ first bin= 2961: 58061 last bin= 2973
+ ### histo peaks integral MPD/ADCch = 14 / 8 (total Integral= 4064336)
+ first bin= 0: 58062 last bin= 0
+ first bin= 9: 58062 last bin= 19
+ first bin= 24: 3425657 last bin= 64
+ first bin= 106: 58062 last bin= 120
+ first bin= 124: 116122 last bin= 141
+ first bin= 151: 58062 last bin= 161
+ first bin= 181: 58062 last bin= 190
+ first bin= 227: 58062 last bin= 237
+ first bin= 344: 58062 last bin= 354
+ first bin= 2760: 116122 last bin= 2796
+ first bin= 2799: 2 last bin= 2799
+ ### histo peaks integral MPD/ADCch = 14 / 9 (total Integral= 4064739)
+ first bin= 1552: 58067 last bin= 1560
+ first bin= 1649: 58067 last bin= 1657
+ first bin= 1774: 58067 last bin= 1782
+ first bin= 1849: 58067 last bin= 1856
+ first bin= 1858: 58068 last bin= 1866
+ first bin= 1869: 174204 last bin= 1885
+ first bin= 1895: 116135 last bin= 1905
+ first bin= 1907: 1 last bin= 1907
+ first bin= 1909: 1 last bin= 1909
+ first bin= 1911: 3309862 last bin= 1946
+ first bin= 1965: 58067 last bin= 1973
+ first bin= 2509: 58067 last bin= 2517
+ first bin= 2565: 58067 last bin= 2573
+ ### histo peaks integral MPD/ADCch = 14 / 10 (total Integral= 4063998)
+ first bin= 12: 58057 last bin= 22
+ first bin= 28: 58057 last bin= 38
+ first bin= 44: 3425373 last bin= 87
+ first bin= 158: 58057 last bin= 168
+ first bin= 175: 58057 last bin= 185
+ first bin= 196: 58057 last bin= 205
+ first bin= 209: 116114 last bin= 237
+ first bin= 277: 58057 last bin= 286
+ first bin= 373: 58057 last bin= 385
+ first bin= 2601: 58057 last bin= 2651
+ first bin= 2799: 58057 last bin= 2811
+ ### histo peaks integral MPD/ADCch = 14 / 11 (total Integral= 4064343)
+ first bin= 0: 58063 last bin= 0
+ first bin= 16: 58063 last bin= 26
+ first bin= 31: 3425659 last bin= 72
+ first bin= 122: 58063 last bin= 132
+ first bin= 141: 58062 last bin= 152
+ first bin= 165: 116124 last bin= 187
+ first bin= 195: 58062 last bin= 204
+ first bin= 235: 58062 last bin= 245
+ first bin= 320: 58062 last bin= 330
+ first bin= 2626: 58062 last bin= 2670
+ first bin= 2783: 58062 last bin= 2795
+ ### histo peaks integral MPD/ADCch = 14 / 12 (total Integral= 4064409)
+ first bin= 38: 116126 last bin= 50
+ first bin= 64: 3425717 last bin= 98
+ first bin= 103: 58063 last bin= 112
+ first bin= 158: 58063 last bin= 167
+ first bin= 170: 116126 last bin= 190
+ first bin= 208: 58063 last bin= 218
+ first bin= 245: 58063 last bin= 254
+ first bin= 365: 58063 last bin= 375
+ first bin= 2710: 58063 last bin= 2722
+ first bin= 2874: 58063 last bin= 2886
+ ### histo peaks integral MPD/ADCch = 14 / 13 (total Integral= 4064021)
+ first bin= 62: 116114 last bin= 77
+ first bin= 87: 3483453 last bin= 134
+ first bin= 184: 58057 last bin= 193
+ first bin= 200: 58057 last bin= 210
+ first bin= 215: 58057 last bin= 225
+ first bin= 245: 58057 last bin= 255
+ first bin= 288: 58057 last bin= 298
+ first bin= 426: 58057 last bin= 436
+ first bin= 2803: 58057 last bin= 2815
+ first bin= 2994: 58057 last bin= 3006
+ ### histo peaks integral MPD/ADCch = 14 / 14 (total Integral= 4064490)
+ first bin= 53: 58064 last bin= 63
+ first bin= 67: 3483852 last bin= 112
+ first bin= 147: 58064 last bin= 157
+ first bin= 181: 116128 last bin= 200
+ first bin= 209: 58064 last bin= 219
+ first bin= 246: 58064 last bin= 255
+ first bin= 333: 58064 last bin= 342
+ first bin= 689: 58064 last bin= 699
+ first bin= 2476: 58064 last bin= 2489
+ first bin= 2898: 58064 last bin= 2910
+ ### histo peaks integral MPD/ADCch = 14 / 15 (total Integral= 4064485)
+ first bin= 2040: 4064486 last bin= 2063
+main: MPD 14 ----- HISTO Test Summary -----
+main: ADC ch  0 ( 2728 ) connected and configured
+main: ADC ch  1 ( 2834 ) connected and configured
+main: ADC ch  2 ( 2940 ) connected and configured
+main: ADC ch  3 ( 2940 ) connected and configured
+main: ADC ch  4 ( 2490 ) connected but not configured OR HDMI ch 5
+main: ADC ch  5 ( 2936 ) connected and configured
+main: ADC ch  6 ( 2791 ) connected and configured
+main: ADC ch  7 ( 2967 ) connected and configured
+main: ADC ch  8 ( 2768 ) connected and configured
+main: ADC ch  9 ( 1917 ) not connected
+main: ADC ch 10 ( 2805 ) connected and configured
+main: ADC ch 11 ( 2789 ) connected and configured
+main: ADC ch 12 ( 2717 ) connected and configured
+main: ADC ch 13 ( 2999 ) connected and configured
+main: ADC ch 14 ( 2905 ) connected and configured
+main: ADC ch 15 ( 2051 ) not connected
+Closing A16 Window
+Closing A24 Window
+Closing A32Blt Window
+Closing A32 Window
+Closing CRCSR Window
+Calling gefVmeClose

@@ -185,7 +185,6 @@ int
 mpdSetSSPFiberMap_preInit(int id, int *ssp, int nmpd)
 {
   
-
   return OK;
 }
 
@@ -225,7 +224,7 @@ STATUS
 mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
 {
 
-  int ii, impd, impd_disc,res, errFlag = 0;
+  int ii,jj,impd, impd_disc,res, errFlag = 0;
   int boardID = 0;
   int maxSlot = 1;
   int minSlot = 21;
@@ -303,10 +302,12 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
 
   for (ii=0;ii<nmpd;ii++) 
     {
+      
       errFlag = 0;
 
       if(mpdSSPMode)
 	{
+	  
 	  rdata = mpdRead32(&mpd->magic_value);
 	  res=1;
 	}
@@ -439,12 +440,12 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
 
       if(mpdSSPMode)
 	{
-	  printf("Initialized MPD %2d at SSP Fiber Connection %d\n",
+	  printf("%s: MPD %2d at SSP Fiber Connection %d initialized\n",__FUNCTION__,
 		 impd, fiber_number);
 	}
       else
 	{
-	  printf("Initialized MPD %2d  Slot #%2d at VME address 0x%08x (local 0x%08x) \n",
+	  printf("%s: MPD index %2d Slot #%2d at VME address 0x%08x (local 0x%08x)\n\n",__FUNCTION__,
 		 impd, boardID,
 		 (UINT32) MPDp[boardID]-mpdA24Offset,
 		 (UINT32) MPDp[boardID]);
@@ -474,7 +475,7 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
   
   if(errFlag > 0) 
     {
-      printf("mpdInit: WARN: Unable to initialize all requested MPD Modules (%d)\n",
+      printf("mpdInit: WARN: Unable to initialize all requested MPD Modules (%d found)\n",
 	     nmpd);
       return(ERROR);
     } 
@@ -858,7 +859,6 @@ mpdI2C_Init(int id)
      period = clock_prescale/10 us
   */
 
-  
   MPDLOCK;
   mpdWrite32(&MPDp[id]->i2c.control, 0); /* Disable I2C Core and interrupts */
 
@@ -884,11 +884,10 @@ mpdI2C_Init(int id)
   
   mpdWrite32(&MPDp[id]->i2c.control, MPD_I2C_CONTROL_ENABLE_CORE);
 
-
   MPDUNLOCK;
   usleep(500);
   mpdLM95235_Read(id, &core_t, &air_t);
-  printf("Board temperatures: core=%.2f air=%.2f (dec celsius)\n",core_t,air_t);
+  printf("%s: Board temperatures: core=%.2f air=%.2f (dec celsius)\n",__FUNCTION__,core_t,air_t);
 
   return success;
 
@@ -1291,8 +1290,9 @@ int
 mpdAPV_Try(int id, uint8_t apv_addr) // i2c addr
 {
 
-   int timeout;
+  int timeout;
   uint8_t x = 96;//apv_addr+32;
+  uint8_t y;
   int ret;
 
   //  if(id==0) id=mpdID[0];
@@ -1312,9 +1312,10 @@ mpdAPV_Try(int id, uint8_t apv_addr) // i2c addr
 
   printf("%s: timeout %d : %d ret = %d\n",__FUNCTION__,timeout,x, ret);
 
-  //mpdAPV_Read(id, apv_addr, latency_addr, &x);
-  //printf("laterncy read: %0x\n",x);
-  //	return APV_Write(apv_addr, mode_addr, def_Mode);
+  //  mpdAPV_Read(id, apv_addr, latency_addr, &y);
+  //  printf("%s: latency read: %0x %0x\n",__FUNCTION__,x,y);
+
+  //  return APV_Write(apv_addr, mode_addr, def_Mode);
 
   return ret;
 
@@ -1356,6 +1357,7 @@ mpdAPV_Scan(int id)
 
   for(iapv=0;iapv<MPD_MAX_APV;iapv++) 
     {
+      printf("%s MPD %d I2C addr %d:\n",__FUNCTION__,id,iapv);
       if ( mpdAPV_Try(id, iapv)>-1 ) 
 	{
 	  printf("%s : MPD %d APV i2c = %d found in MPD in slot %d\n",
@@ -1408,7 +1410,7 @@ mpdAPV_Write(int id, uint8_t apv_addr, uint8_t reg_addr, uint8_t val)
 	     id);
       return ERROR;
     }
-
+  //  usleep(500);
   return mpdI2C_ByteWrite(id, (uint8_t)((0x20 | apv_addr)<<1), reg_addr, 1, &val);
 
 }
@@ -1436,9 +1438,7 @@ mpdAPV_Read(int id, uint8_t apv_addr, uint8_t reg_addr, uint8_t *val)
   usleep(500);
   success = mpdI2C_ByteRead(id, (uint8_t)((0x20 | apv_addr)<<1), reg_addr, 1, val);
 
-
-  printf("%s: Set / Get = 0x%x 0x%x\n",
-	 __FUNCTION__,*val,rval);
+  printf("%s: Set / Get = 0x%x 0x%x\n", __FUNCTION__,*val,rval);
 
   return success;
 }
@@ -1990,7 +1990,7 @@ mpdDELAY25_Set(int id, int apv1_delay, int apv2_delay)
       return ERROR;
     }
 
-  printf("%s: start\n",__FUNCTION__);
+  printf("%s: start (%d: %d %d)\n",__FUNCTION__,id, apv1_delay, apv2_delay);
 
   //      mpdI2C_ByteWrite(0xF0 , (apv2_delay & 0x3F) | 0x40, 0, &val);      // CR0: APV2 out
   mpdI2C_ByteWrite(id, 0xF0 , 0x40, 0, &val);    // CR0: APV2 out not delayed
@@ -2007,6 +2007,12 @@ mpdDELAY25_Set(int id, int apv1_delay, int apv2_delay)
   mpdI2C_ByteWrite(id, 0xF8 , 0x40, 0, &val);    // CR4: APV1 out not delayed
   usleep(10000);
   mpdI2C_ByteWrite(id, 0xFA , 0x00, 0, &val);    // GCR (40 MHz)
+  usleep(10000);
+
+  mpdI2C_ByteWrite(id, 0xFA , 0x40, 0, &val);    // resync DDL
+  usleep(10000);
+
+  mpdI2C_ByteWrite(id, 0xFA , 0x00, 0, &val); 
   usleep(10000);
 
   printf("%s: end\n",__FUNCTION__);

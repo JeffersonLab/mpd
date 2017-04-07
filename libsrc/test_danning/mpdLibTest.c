@@ -53,6 +53,7 @@ main(int argc, char *argv[])
     printf("        acq_mode_bit0 : EVENT readout");
     printf("        acq_mode_bit1 : SAMPLE check");
     printf("        acq_mode_bit2 : HISTO output");
+    printf("        acq_mode_bit3 : Config only");
     printf("        #events: number of events only for EVENT_READOUT\n");
   }
 
@@ -175,7 +176,7 @@ main(int argc, char *argv[])
     mpdAPV_Reset101(i);
 
     // <- MPD+APV initialization ends here
-
+    return 0;
   } // end loop on mpds
 
     /**********************************

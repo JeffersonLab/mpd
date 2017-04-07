@@ -7,14 +7,18 @@
  */
 
 /* Event Buffer definitions */
-#define MAX_EVENT_POOL     100
-#define MAX_EVENT_LENGTH   1024*600      /* Size in Bytes */
+/* Default block level */
+unsigned int BLOCKLEVEL=1;
+#define BUFFERLEVEL 1
+#define MAX_EVENT_LENGTH   32768*6*BLOCKLEVEL      /* Size in Bytes */ 
+#define SSP_MAX_EVENT_LENGTH 32000*6*BLOCKLEVEL     //SSP block length
+#define MAX_EVENT_POOL     50
+
 
 /* Define Interrupt source and address */
 #define TI_MASTER
 #define TI_READOUT TI_READOUT_EXT_POLL  /* Poll for available data, external triggers */
-#define TI_ADDR    (21<<19)          /* GEO slot 21 */
-
+#define TI_ADDR    (21<<19)          /* GEO slot 20 */
 /* Decision on whether or not to readout the TI for each block 
    - Comment out to disable readout 
 */
@@ -84,10 +88,6 @@ extern volatile struct mpd_struct *MPDp[(MPD_MAX_BOARDS+1)]; /* pointers to MPD 
 
 
 
-/* Default block level */
-unsigned int BLOCKLEVEL=1;
-#define BUFFERLEVEL 1
-
 /* Redefine tsCrate according to TI_MASTER or TI_SLAVE */
 #ifdef TI_SLAVE
 int tsCrate=0;
@@ -106,9 +106,11 @@ void rocTrigger(int arg);
 void
 rocDownload()
 {
- remexSetCmsgServer("triton"); // Set this to the platform's host
+ remexSetCmsgServer("sbs1"); // Set this to the platform's host
   remexSetRedirect(1);
   remexInit("Thunder",1);
+  
+  printf("%s: Build date/time %s/%s\n", __func__, __DATE__, __TIME__);
 
   /* Setup Address and data modes for DMA transfers
    *   
@@ -147,12 +149,19 @@ rocDownload()
      pins 29/30 | 31/32 | 33/34 : trigger2
   */
   tiLoadTriggerTable(0);
+  // MPD 1 sample readout = 3.525 us = 8 * 480
+  tiSetTriggerHoldoff(1,30,1); /* 1 trigger in 20*480ns window */
+  //tiSetTriggerHoldoff(1,60,1); /* 1 trigger in 20*480ns window */
+  tiSetTriggerHoldoff(2,0,0);  /* 2 trigger in don't care window */
 
-  tiSetTriggerHoldoff(1,10,0);
-  tiSetTriggerHoldoff(2,10,0);
+  tiSetTriggerHoldoff(3,0,0);  /* 3 trigger in don't care window */
+  tiSetTriggerHoldoff(4,20,1);  /* 4 trigger in 20*3840ns window */
+  // tiSetTriggerHoldoff(4,1,1);  /* 4 trigger in 20*3840ns window */
 
 /*   /\* Set the sync delay width to 0x40*32 = 2.048us *\/ */
   tiSetSyncDelayWidth(0x54, 0x40, 1);
+
+  tiSetTriggerPulse(1,0,25,0);
 
   /* Set the busy source to non-default value (no Switch Slot B busy) */
   tiSetBusySource(TI_BUSY_LOOPBACK,1);
@@ -174,7 +183,7 @@ rocDownload()
   /*****************
    *   SSP SETUP
    *****************/
- int iFlag = SSP_INIT_SKIP_FIRMWARE_CHECK | 0xFFFF0000;
+ int iFlag = SSP_INIT_SKIP_FIRMWARE_CHECK | SSP_INIT_MODE_VXSLOCAL | 0xFFFF0000;
 
   sspInit(20<<19,1<<19,1,iFlag);
   extern int nSSP;
@@ -187,11 +196,13 @@ rocDownload()
       sspCheckAddresses(sspSlot(issp));
       sspMpdDisable(sspSlot(issp), 0xffffffff);
       sspMpdEnable(sspSlot(issp), 0x1);
-      
+      sspMpdEnable(sspSlot(issp), 0x2);
+
       sspEnableBusError(sspSlot(issp));
-      sspSetBlockLevel(sspSlot(issp),1);
+      sspSetBlockLevel(sspSlot(issp),BLOCKLEVEL);
     }
   sspSoftReset(0);
+  sspPrintMigStatus(0);
   
   sspGStatus(0);
   sspMpdPrintStatus(0);
@@ -202,7 +213,7 @@ rocDownload()
 
   //vmeDmaConfig(2,2,0);
   /*Read config file and fill internal variables*/
-  mpdConfigInit("cfg/config_apv.txt");
+  mpdConfigInit("/home/daq/ben/mpd/libsrc/rol/cfg/config_apv.txt");
   mpdConfigLoad();
 
   /* Init and config MPD+APV */
@@ -215,7 +226,7 @@ rocDownload()
 
 
   fnMPD = mpdGetNumberMPD();
-  fnMPD = 1;
+  //fnMPD = 1;
   if (fnMPD<=0) { // test all possible vme slot ?
     printf("ERR: no MPD discovered, cannot continue\n");
     return -1;
@@ -227,15 +238,23 @@ rocDownload()
   for (k=0;k<fnMPD;k++) { // only active mpd set
     i = mpdSlot(k);
 
+    int try_cnt = 0;
+retry:
+
     printf(" Try initialize I2C mpd in slot %d\n",i);
     if (mpdI2C_Init(i) != OK) {
       printf("WRN: I2C fails on MPD %d\n",i);
     }
 
     printf("Try APV discovery and init on MPD slot %d\n",i);
-    if (mpdAPV_Scan(i)<=0) { // no apd found, skip next 
-        continue;
+    if (mpdAPV_Scan(i)<=0 && try_cnt < 10 ) { // no apd found, skip next 
+	try_cnt++;
+	goto retry;
     }
+    if( try_cnt == 10 )
+	{
+		printf("CANNOT CONFIGURE APV FOR %d TIMES !!!!\n\n", try_cnt);
+	}
       
     // board configuration (APV-ADC clocks phase)
     printf("Do DELAY setting on MPD slot %d\n",i);
@@ -330,7 +349,7 @@ rocGo()
   /* Use this info to change block level is all modules */
 
   // tiSetBlockLimit(1);
-
+  tiStatus(0);
 }
 
 /****************************************
@@ -362,6 +381,10 @@ rocTrigger(int arg)
   int ssp_timeout;
   uint32_t bc, wc, ec, blockcnt, wordcnt, eventcnt;
   uint32_t data;
+static int tcnt = 0;
+
+
+  
   tiSetOutputPort(1,0,0,0);
 
   BANKOPEN(5,BT_UI4,0);
@@ -369,7 +392,7 @@ rocTrigger(int arg)
   *dma_dabufp++ = LSWAP(0xdead);
   *dma_dabufp++ = LSWAP(0xcebaf111);
   BANKCLOSE;
-
+  
 #ifdef TI_DATA_READOUT
   BANKOPEN(4,BT_UI4,0);
 
@@ -409,11 +432,14 @@ rocTrigger(int arg)
 	ssp_timeout++;
 	//	sspGetEbStatus(i, &bc, &wc, &ec);
 	//	printf("count %d Blockcount : %d Wordcount : %d Event count : %d\n",ssp_timeout,bc,wc,ec); 
-	usleep(10);
+	//usleep(10);
       }
+if(ssp_timeout > 12)
+        printf("ssp time = %d\n", ssp_timeout);
 
     if (ssp_timeout == 1000) 
       {
+	printf("*** SSP TIMEOUT ***\n");
 	data = mpdRead32(&MPDp[0]->ob_status.output_buffer_flag_wc);
 	if( data & 0x20000000 )	// Evt_Fifo_Full
 	  printf ("FIFO full\n");
@@ -425,7 +451,12 @@ rocTrigger(int arg)
     else
       {
 	vmeDmaConfig(2,5,1);
-	int dCnt = sspReadBlock(0, dma_dabufp, 1024>>2,1);
+	int dCnt = sspReadBlock(0, dma_dabufp, SSP_MAX_EVENT_LENGTH>>2,1);
+unsigned int *pBuf = (unsigned int *)dma_dabufp;
+tcnt++;
+if(!(tcnt & 0x3ff))
+   printf("tcnt = %u, EV Header: %u, MPD HDR = %u\n", tcnt&0xFFF, LSWAP(pBuf[1])&0xFFF, LSWAP(pBuf[5])&0xFFF);
+
 	if(dCnt<=0)
 	  {
 	  printf("No data or error.  dCnt = %d\n",dCnt);
@@ -435,7 +466,10 @@ rocTrigger(int arg)
 	    dma_dabufp += dCnt;
 	  }
 	
-	printf("  dCnt = %d\n",dCnt);
+
+
+	//printf("  dCnt = %d\n",dCnt);
+        dCnt=0;
 	for(idata=0;idata<dCnt;idata++)
 	  {
 	    if((idata%5)==0) printf("\n\t");
@@ -443,16 +477,15 @@ rocTrigger(int arg)
 	    printf("  0x%08x ",datao);
 	    
 	    
-	    /* 	if( (datao & 0x00E00000) == 0x00A00000 ) { */
-	    /* 	    mpd_evt[i]++; */
-	    /* 	    evt=mpd_evt[i]; */
-	    /* 	} */
-	/* 	evt = (evt > mpd_evt[i]) ? mpd_evt[i] : evt; // evt is the smallest number of events of an MPD */
+	    // 	if( (datao & 0x00E00000) == 0x00A00000 ) {
+	    // 	    mpd_evt[i]++;
+	    // 	    evt=mpd_evt[i];
+	    // 	}
+	// 	evt = (evt > mpd_evt[i]) ? mpd_evt[i] : evt; // evt is the smallest number of events of an MPD
 	  }
-	printf("\n\n");
+	//printf("\n\n");
       }
   }
-  
   
   BANKCLOSE;
   tiSetOutputPort(0,0,0,0);

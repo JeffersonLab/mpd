@@ -107,6 +107,7 @@ main(int argc, char *argv[])
   int iFlag = SSP_INIT_SKIP_FIRMWARE_CHECK | 0xFFFF0000;
 
   sspInit(20<<19,1<<19,1,iFlag);
+//  sspInit(7<<19,1<<19,1,iFlag);
   extern int nSSP;
   int issp=0;
   sspMpdFiberReset(0);

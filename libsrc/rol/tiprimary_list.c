@@ -136,7 +136,7 @@ static void __download()
 
   /* Initialize VME Interrupt interface - use defaults */
   tiFiberLatencyOffset = FIBER_LATENCY_OFFSET;
-
+  printf (" TI address : 0x%x",TI_ADDR);
   tiInit(TI_ADDR,TI_READOUT,0);
 
   /* Execute User defined download */
@@ -464,7 +464,7 @@ void asyncTrigger()
   int length,size;
   unsigned int tirval;
   int clocksource=-1;
-
+  
   intCount = tiGetIntCount();
 
 /*   clocksource = tiGetClockSource(0); */

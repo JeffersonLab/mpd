@@ -1,6 +1,5 @@
-//-*-C-*-
 
-version = "0.3";  // mandatory
+version = "0.35";  // mandatory
 logfile = "out/Daq.log"; // mandatory
 loglevel = 4;	// 0=none, 1=normal, 2=debug, 3=verbose, 4=very verbose ...
 date = "28/03/2012"; // date format: DD/MM/YYYY
@@ -17,17 +16,21 @@ bus: // interface to the MPD
 
   mpd:
   ( // list of mpds
-
+   
     // --- mpd 0
     {
-      rotary = 3; // rotary switch setting
+     // rotary = 17; // rotary switch setting
+      rotary = 0; // for ssp 
 
       zero_level = 500; // zero logic level
       one_level = 1900;  // one logic level: above this adc value signal is assumed to be a digital "one"
 
+      fir_enable= 0;
+      fir_coeff = [10990, -2130, -169, -232, -147, -123, -98, -191, -88, 333, -3, 34, 17, 14, 11, 7]; // FIR filter coefficients 16bits (/2^13 to get "real" values)
+
     i2c: // I2C section, configuration
       {
-        speed = 1124; // (x10^-5 s) period of the i2c clock
+        speed = 100;//speed = 1124; // (x10^-5 s) period of the i2c clock
         timeout = 2500; // number of retries before timeout
       };
     adc:
@@ -49,24 +52,243 @@ bus: // interface to the MPD
         }
       );
     apv:
+      (
+//	{ adc = 15; i2c = 1; }, 
+//	{ adc = 14; i2c = 2; }, 
+//	{ adc = 13; i2c = 3; }
+
+//	{ adc = 13; i2c = 4; }, 
+//	{ adc = 12; i2c = 5; },
+//	{ adc = 11; i2c = 6; },
+//	{ adc = 10; i2c = 7; },
+
+//	{ adc = 8; i2c =8; },
+//	{ adc = 7; i2c =9; },
+//	{ adc = 6; i2c = 10; },
+//	{ adc = 5; i2c = 11; },
+
+//	{ adc = 4; i2c = 0; },
+//	{ adc = 3; i2c = 1; },
+	{ adc = 2; i2c = 2; },
+	{ adc = 1; i2c = 3; }
+//	{ adc = 0; i2c = 15; }
+//
+      );
+    },
+
+
+    // 12/Dec/2016 - EC - Chamber 1 / MPD 1
+    {
+      rotary = 8; // rotary switch setting
+
+      zero_level = 500; // zero logic level
+      one_level = 1900;  // one logic level: above this adc value signal is assumed to be a digital "one"
+
+      fir_enable= 0;
+      fir_coeff = [10990, -2130, -169, -232, -147, -123, -98, -191, -88, 333, -3, 34, 17, 14, 11, 7]; // FIR filter coefficients 16bits (/2^13 to get "real" values)
+
+    adc:
+	(
+	{
+          gain = [5, 5, 5, 5, 5, 5, 5, 5];	// (0...12 dB) gain settings for
+                                            // sub-ch 0, 1, 2, ... 7
+          invert = true;
+          pattern = "none";  // none, sync, deskew, ramp
+          clock_phase = 23;	 // 0..63 (0.5 ns step) time offset between
+                             // adc-clock and apv-clock
+        },
+        {
+          gain = [5, 5, 5, 5, 5, 5, 5, 5]; 	// (0...12 dB) gain settings for
+                                            // sub-ch 0, 1, 2, ... 7
+          invert = true;
+          pattern = "none"; // none, sync, deskew, ramp
+          clock_phase = 23;	 // 0..63 (0.5 ns step) time offset between adc-clock and apv-clock //
+        }
+    );
+    i2c: // I2C section, configuration
+      {
+	speed = 100; // (x10^-5 s) period of the i2c clock --- 1124
+	timeout = 2000; // number of retries before timeout
+      };
+    apv:
     (
-     //        { adc = 0; i2c = 0; }, 
-     //    { adc = 1; i2c = 1; },
-     //   { adc = 2; i2c = 2; },
-     //   { adc = 3; i2c = 3; },
-     //   { adc = 4; i2c = 4; },
-        { adc = 9; i2c = 8; },
-        { adc = 8; i2c = 9; },
-        { adc = 7; i2c = 10; },
+        { adc = 0; i2c = 0; }, 
+        { adc = 1; i2c = 1; },
+        { adc = 2; i2c = 2; },
+        { adc = 3; i2c = 3; },
         { adc = 6; i2c = 11; },
-        { adc = 14; i2c = 16; },
-        { adc = 13; i2c = 17; },
+//        { adc = 7; i2c = 10; },
+        { adc = 8; i2c = 9; },
+        { adc = 9; i2c = 8; },
+        { adc = 11; i2c = 19; },
         { adc = 12; i2c = 18; },
-        { adc = 11; i2c = 19; }
+        { adc = 13; i2c = 17; },
+        { adc = 14; i2c = 16; }
     );
     },
+
+    // 12/Dec/2016 - EC - Chamber 1 / MPD 2
+    {
+      rotary = 10; // rotary switch setting
+
+      zero_level = 500; // zero logic level
+      one_level = 1900;  // one logic level: above this adc value signal is assumed to be a digital "one"
+
+      fir_enable= 0;
+      fir_coeff = [10990, -2130, -169, -232, -147, -123, -98, -191, -88, 333, -3, 34, 17, 14, 11, 7]; // FIR filter coefficients 16bits (/2^13 to get "real" values)
+
+    adc:
+	(
+	{
+          gain = [5, 5, 5, 5, 5, 5, 5, 5];	// (0...12 dB) gain settings for
+                                            // sub-ch 0, 1, 2, ... 7
+          invert = true;
+          pattern = "none";  // none, sync, deskew, ramp
+          clock_phase = 23;	 // 0..63 (0.5 ns step) time offset between
+                             // adc-clock and apv-clock
+        },
+        {
+          gain = [5, 5, 5, 5, 5, 5, 5, 5]; 	// (0...12 dB) gain settings for
+                                            // sub-ch 0, 1, 2, ... 7
+          invert = true;
+          pattern = "none"; // none, sync, deskew, ramp
+          clock_phase = 23;	 // 0..63 (0.5 ns step) time offset between adc-clock and apv-clock //
+        }
+    );
+    i2c: // I2C section, configuration
+      {
+	speed = 100; // (x10^-5 s) period of the i2c clock --- 1124
+	timeout = 2000; // number of retries before timeout
+      };
+    apv:
+    (
+        { adc = 0; i2c = 0; }, 
+        { adc = 1; i2c = 1; },
+        { adc = 2; i2c = 2; },
+        { adc = 3; i2c = 3; },
+        { adc = 4; i2c = 4; },
+        { adc = 5; i2c = 8; },
+//        { adc = 6; i2c = 9; },
+        { adc = 7; i2c = 10; },
+        { adc = 8; i2c = 11; },
+        { adc = 9; i2c = 12; },
+        { adc = 10; i2c = 16; },
+        { adc = 11; i2c = 17; },
+        { adc = 12; i2c = 18; },
+        { adc = 13; i2c = 19; },
+        { adc = 14; i2c = 20; }
+    );
+    },
+
+    // 12/Dec/2016 - EC - Chamber 1 / MPD 3
+    {
+      rotary = 12; // rotary switch setting
+
+      zero_level = 500; // zero logic level
+      one_level = 1900;  // one logic level: above this adc value signal is assumed to be a digital "one"
+
+      fir_enable= 0;
+      fir_coeff = [10990, -2130, -169, -232, -147, -123, -98, -191, -88, 333, -3, 34, 17, 14, 11, 7]; // FIR filter coefficients 16bits (/2^13 to get "real" values)
+
+    adc:
+	(
+	{
+          gain = [5, 5, 5, 5, 5, 5, 5, 5];	// (0...12 dB) gain settings for
+                                            // sub-ch 0, 1, 2, ... 7
+          invert = true;
+          pattern = "none";  // none, sync, deskew, ramp
+          clock_phase = 23;	 // 0..63 (0.5 ns step) time offset between
+                             // adc-clock and apv-clock
+        },
+        {
+          gain = [5, 5, 5, 5, 5, 5, 5, 5]; 	// (0...12 dB) gain settings for
+                                            // sub-ch 0, 1, 2, ... 7
+          invert = true;
+          pattern = "none"; // none, sync, deskew, ramp
+          clock_phase = 23;	 // 0..63 (0.5 ns step) time offset between adc-clock and apv-clock //
+        }
+    );
+    i2c: // I2C section, configuration
+      {
+	speed = 100; // (x10^-5 s) period of the i2c clock --- 1124
+	timeout = 2000; // number of retries before timeout
+      };
+    apv:
+    (
+        { adc = 1; i2c = 3; }, 
+        { adc = 2; i2c = 2; },
+        { adc = 3; i2c = 1; },
+        { adc = 4; i2c = 0; },
+        { adc = 6; i2c = 11; },
+        { adc = 7; i2c = 10; },
+        { adc = 8; i2c = 9; },
+        { adc = 9; i2c = 8; },
+        { adc = 10; i2c = 16; },
+        { adc = 11; i2c = 17; },
+        { adc = 12; i2c = 18; },
+        { adc = 13; i2c = 19; }
+    );
+    },
+
+    // 12/Dec/2016 - EC - Chamber 1 / MPD 4
+    {
+      rotary = 14; // rotary switch setting
+
+      zero_level = 500; // zero logic level
+      one_level = 1900;  // one logic level: above this adc value signal is assumed to be a digital "one"
+
+      fir_enable= 0;
+      fir_coeff = [10990, -2130, -169, -232, -147, -123, -98, -191, -88, 333, -3, 34, 17, 14, 11, 7]; // FIR filter coefficients 16bits (/2^13 to get "real" values)
+
+    adc:
+	(
+	{
+          gain = [5, 5, 5, 5, 5, 5, 5, 5];	// (0...12 dB) gain settings for
+                                            // sub-ch 0, 1, 2, ... 7
+          invert = true;
+          pattern = "none";  // none, sync, deskew, ramp
+          clock_phase = 23;	 // 0..63 (0.5 ns step) time offset between
+                             // adc-clock and apv-clock
+        },
+        {
+          gain = [5, 5, 5, 5, 5, 5, 5, 5]; 	// (0...12 dB) gain settings for
+                                            // sub-ch 0, 1, 2, ... 7
+          invert = true;
+          pattern = "none"; // none, sync, deskew, ramp
+          clock_phase = 23;	 // 0..63 (0.5 ns step) time offset between adc-clock and apv-clock //
+        }
+    );
+    i2c: // I2C section, configuration
+      {
+	speed = 100; // (x10^-5 s) period of the i2c clock --- 1124
+	timeout = 2000; // number of retries before timeout
+      };
+    apv:
+    (
+        { adc = 0; i2c = 0; }, 
+        { adc = 1; i2c = 1; },
+        { adc = 2; i2c = 2; },
+        { adc = 3; i2c = 3; },
+        { adc = 4; i2c = 4; },
+        { adc = 5; i2c = 8; },
+        { adc = 6; i2c = 9; },
+        { adc = 7; i2c = 10; },
+        { adc = 8; i2c = 11; },
+//        { adc = 9; i2c = 12; },
+        { adc = 10; i2c = 16; },
+        { adc = 11; i2c = 17; },
+        { adc = 12; i2c = 18; },
+        { adc = 13; i2c = 19; },
+        { adc = 14; i2c = 20; }
+    );
+    }
+
+
+
+
+/*,
     //end MPD 0
-    /*     
+         
     // --- mpd 1
     {
       rotary = 4; // rotary switch setting
@@ -74,6 +296,8 @@ bus: // interface to the MPD
       zero_level = 500; // zero logic level
       one_level = 1900;  // one logic level: above this adc value signal is assumed to be a digital "one"
 
+      fir_enable= 0;
+      fir_coeff = [10990, -2130, -169, -232, -147, -123, -98, -191, -88, 333, -3, 34, 17, 14, 11, 7]; // FIR filter coefficients 16bits (/2^13 to get "real" values)
     i2c: // I2C section, configuration
       {
         speed = 1124; // (x10^-5 s) period of the i2c clock
@@ -99,25 +323,22 @@ bus: // interface to the MPD
     );
     apv:
     (
-     // { adc = 0; i2c = 0; }, 
-        { adc = 1; i2c = 1; },
+	{ adc = 4; i2c = 0; }, 
+        { adc = 3; i2c = 1; },
         { adc = 2; i2c = 2; },
-        { adc = 3; i2c = 3; },
-        { adc = 4; i2c = 4; },
-	//        { adc = 5; i2c = 8; },
-        { adc = 6; i2c = 9; },
+        { adc = 1; i2c = 3; },
+        { adc = 0; i2c = 4; },
+
+        { adc = 9; i2c = 8; },
+        { adc = 8; i2c = 9; },
         { adc = 7; i2c = 10; },
-        { adc = 8; i2c = 11; },
-	{ adc = 9; i2c = 12; },
-        //{ adc = 10; i2c = 16; },
-        { adc = 11; i2c = 17; },
-        { adc = 12; i2c = 18; },
-        { adc = 13; i2c = 19; },
-        { adc = 14; i2c = 20; }
+        { adc = 6; i2c = 11; },
+	{ adc = 5; i2c = 12; }
+    
     );
-    },//end MPD 1
-    */
-    // --- mpd 2
+    }, //end MPD 1
+    
+       // --- mpd 2
     {
       rotary = 5; // rotary switch setting
 
@@ -149,22 +370,23 @@ bus: // interface to the MPD
     );
     apv:
     (
-        { adc = 4; i2c = 0; }, 
-        { adc = 3; i2c = 1; },
-        { adc = 2; i2c = 2; },
-        { adc = 1; i2c = 3; },
-        { adc = 9; i2c = 8; },
-        { adc = 8; i2c = 9; },
-        { adc = 7; i2c = 10; },
-    { adc = 6; i2c = 11; }//,
+     //{ adc = 4; i2c = 0; }, 
+	// { adc = 3; i2c = 1; },
+     // { adc = 2; i2c = 2; }//,
+	//{ adc = 1; i2c = 3; },
+	//   { adc = 9; i2c = 8; },
+        //{ adc = 8; i2c = 9; },
+     // { adc = 0; i2c = 11; }//,
+	// { adc = 6; i2c = 11; }//,
 	//  { adc = 11; i2c = 17; },
         //{ adc = 12; i2c = 18; },
         //{ adc = 13; i2c = 19; },
         //{ adc = 14; i2c = 20; }
     );
-    }
-/*,//end MPD 2
+    }*/
 
+/*,//end MPD 2
+    
 
     // --- mpd 3
     {

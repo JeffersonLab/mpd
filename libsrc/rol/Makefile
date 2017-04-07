@@ -18,7 +18,7 @@ DEBUG=1
 VMEROL			= mpd_list.so mpd_ssp_list.so
 # Add shared library dependencies here.  (jvme, ti, are already included)
 #ROLLIBS			= 
-ROLLIBS			= -lfadc  -lmpd -lssp -lconfig #-lremex
+ROLLIBS			=  -lmpd -lssp -lconfig #-lremex
 
 ifndef LINUXVME_LIB
 	LINUXVME_LIB	= $CODA/extensions/linuxvme/libs

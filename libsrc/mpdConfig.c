@@ -93,7 +93,7 @@ mpdConfigInit(char *confFileName)
   mpd_set[1]   = config_setting_get_member(d_busset,"mpd");
   run_set[1]   = config_setting_get_member(d_setting,"run");
 
-  printf("Number of MPDs in config file = %d\n",nMPD);
+  printf("%s: Number of MPDs in config file = %d\n",__FUNCTION__,nMPD);
   return OK;
 }
 

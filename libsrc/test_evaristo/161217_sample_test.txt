@@ -1,0 +1,1256 @@
+
+MPD Library Tests
+----------------------------
+ outfile = out.txt
+ acq_mode= 0x2
+ n_event = 10
+Opening CRCSR Window (opened at [0xb6f89000,0xb7f89000])
+Opening A32 Window (opened at [0xb6f79000,0xb6f89000])
+Opening A32Blt Window (opened at [0xacf79000,0xb6f79000])
+Opening A24 Window (opened at [0xabf79000,0xacf79000])
+Opening A16 Window (opened at [0xabf69000,0xabf79000])
+jlabgefMapTsi: Tempe Chip Userspace map successful
+VME Bus Error IRQ Disabled
+vmeBusCreateLockShm: vmeBus shared memory mutex initialized
+mpdConfigInit: cfg/config_apv.txt: Version = 0.35
+mpdConfigInit: Number of MPDs in config file = 5
+mpdConfigLoad: Start
+mpdConfigLoad: Loading MPD idx=  0 rotary (slot) =  0
+mpdSetTriggerMode: Calib / Trigger Latency = 0 0, Trigger Mode = 0x2
+mpdSetAcqMode: Acquisition Mode = 0x1 (event)
+mpdConfigLoad: 2 APV elements in given MPD 0
+ apv freq/smode = 1 0
+mpdAddApv: APV 0 added to list of FECs
+mpdAddApv: APV 1 added to list of FECs
+mpdConfigLoad:  2 APV loaded in Slot=0 MPD settings
+mpdConfigLoad: Loading MPD idx=  1 rotary (slot) =  8
+mpdSetTriggerMode: Calib / Trigger Latency = 0 0, Trigger Mode = 0x2
+mpdSetAcqMode: Acquisition Mode = 0x1 (event)
+mpdConfigLoad: 12 APV elements in given MPD 8
+ apv freq/smode = 1 0
+mpdAddApv: APV 0 added to list of FECs
+mpdAddApv: APV 1 added to list of FECs
+mpdAddApv: APV 2 added to list of FECs
+mpdAddApv: APV 3 added to list of FECs
+mpdAddApv: APV 4 added to list of FECs
+mpdAddApv: APV 5 added to list of FECs
+mpdAddApv: APV 6 added to list of FECs
+mpdAddApv: APV 7 added to list of FECs
+mpdAddApv: APV 8 added to list of FECs
+mpdAddApv: APV 9 added to list of FECs
+mpdAddApv: APV 10 added to list of FECs
+mpdAddApv: APV 11 added to list of FECs
+mpdConfigLoad: 12 APV loaded in Slot=8 MPD settings
+mpdConfigLoad: Loading MPD idx=  2 rotary (slot) = 10
+mpdSetTriggerMode: Calib / Trigger Latency = 0 0, Trigger Mode = 0x2
+mpdSetAcqMode: Acquisition Mode = 0x1 (event)
+mpdConfigLoad: 15 APV elements in given MPD 10
+ apv freq/smode = 1 0
+mpdAddApv: APV 0 added to list of FECs
+mpdAddApv: APV 1 added to list of FECs
+mpdAddApv: APV 2 added to list of FECs
+mpdAddApv: APV 3 added to list of FECs
+mpdAddApv: APV 4 added to list of FECs
+mpdAddApv: APV 5 added to list of FECs
+mpdAddApv: APV 6 added to list of FECs
+mpdAddApv: APV 7 added to list of FECs
+mpdAddApv: APV 8 added to list of FECs
+mpdAddApv: APV 9 added to list of FECs
+mpdAddApv: APV 10 added to list of FECs
+mpdAddApv: APV 11 added to list of FECs
+mpdAddApv: APV 12 added to list of FECs
+mpdAddApv: APV 13 added to list of FECs
+mpdAddApv: APV 14 added to list of FECs
+mpdConfigLoad: 15 APV loaded in Slot=10 MPD settings
+mpdConfigLoad: Loading MPD idx=  3 rotary (slot) = 12
+mpdSetTriggerMode: Calib / Trigger Latency = 0 0, Trigger Mode = 0x2
+mpdSetAcqMode: Acquisition Mode = 0x1 (event)
+mpdConfigLoad: 12 APV elements in given MPD 12
+ apv freq/smode = 1 0
+mpdAddApv: APV 0 added to list of FECs
+mpdAddApv: APV 1 added to list of FECs
+mpdAddApv: APV 2 added to list of FECs
+mpdAddApv: APV 3 added to list of FECs
+mpdAddApv: APV 4 added to list of FECs
+mpdAddApv: APV 5 added to list of FECs
+mpdAddApv: APV 6 added to list of FECs
+mpdAddApv: APV 7 added to list of FECs
+mpdAddApv: APV 8 added to list of FECs
+mpdAddApv: APV 9 added to list of FECs
+mpdAddApv: APV 10 added to list of FECs
+mpdAddApv: APV 11 added to list of FECs
+mpdConfigLoad: 12 APV loaded in Slot=12 MPD settings
+mpdConfigLoad: Loading MPD idx=  4 rotary (slot) = 14
+mpdSetTriggerMode: Calib / Trigger Latency = 0 0, Trigger Mode = 0x2
+mpdSetAcqMode: Acquisition Mode = 0x1 (event)
+mpdConfigLoad: 15 APV elements in given MPD 14
+ apv freq/smode = 1 0
+mpdAddApv: APV 0 added to list of FECs
+mpdAddApv: APV 1 added to list of FECs
+mpdAddApv: APV 2 added to list of FECs
+mpdAddApv: APV 3 added to list of FECs
+mpdAddApv: APV 4 added to list of FECs
+mpdAddApv: APV 5 added to list of FECs
+mpdAddApv: APV 6 added to list of FECs
+mpdAddApv: APV 7 added to list of FECs
+mpdAddApv: APV 8 added to list of FECs
+mpdAddApv: APV 9 added to list of FECs
+mpdAddApv: APV 10 added to list of FECs
+mpdAddApv: APV 11 added to list of FECs
+mpdAddApv: APV 12 added to list of FECs
+mpdAddApv: APV 13 added to list of FECs
+mpdAddApv: APV 14 added to list of FECs
+mpdConfigLoad: 15 APV loaded in Slot=14 MPD settings
+mpdInit: A24 mapping: VME addr=0x80000 -> Local 0xabff9000
+mpdInit: Looking at MPD in slot 1
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x80000
+mpdInit: DEBUG: Try turning off fiber mode
+jlabgefMemProbe: Clearing VME BERR/2eST (0xc00ef900) at VME address 0x80190
+mpdInit: WARN: No addressable board at VME addr=0x80000 (local 0xabff9000)
+mpdInit: Looking at MPD in slot 2
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x100000
+mpdInit: DEBUG: Try turning off fiber mode
+jlabgefMemProbe: Clearing VME BERR/2eST (0xc00ef900) at VME address 0x100190
+mpdInit: WARN: No addressable board at VME addr=0x100000 (local 0xac079000)
+mpdInit: Looking at MPD in slot 3
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x180000
+mpdInit: DEBUG: Try turning off fiber mode
+jlabgefMemProbe: Clearing VME BERR/2eST (0xc00ef900) at VME address 0x180190
+mpdInit: WARN: No addressable board at VME addr=0x180000 (local 0xac0f9000)
+mpdInit: Looking at MPD in slot 4
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x200000
+mpdInit: DEBUG: Try turning off fiber mode
+jlabgefMemProbe: Clearing VME BERR/2eST (0xc00ef900) at VME address 0x200190
+mpdInit: WARN: No addressable board at VME addr=0x200000 (local 0xac179000)
+mpdInit: Looking at MPD in slot 5
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x280000
+mpdInit: DEBUG: Try turning off fiber mode
+jlabgefMemProbe: Clearing VME BERR/2eST (0xc00ef900) at VME address 0x280190
+mpdInit: WARN: No addressable board at VME addr=0x280000 (local 0xac1f9000)
+mpdInit: Looking at MPD in slot 6
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x300000
+mpdInit: DEBUG: Try turning off fiber mode
+jlabgefMemProbe: Clearing VME BERR/2eST (0xc00ef900) at VME address 0x300190
+mpdInit: WARN: No addressable board at VME addr=0x300000 (local 0xac279000)
+mpdInit: Looking at MPD in slot 7
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x380000
+mpdInit: DEBUG: Try turning off fiber mode
+jlabgefMemProbe: Clearing VME BERR/2eST (0xc00ef900) at VME address 0x380190
+mpdInit: WARN: No addressable board at VME addr=0x380000 (local 0xac2f9000)
+mpdInit: Looking at MPD in slot 8
+mpdInit: DEBUG: Try turning off fiber mode
+ MPD Slot 8 - Firmware Revision ID = 0x4000004
+ MPD Slot 8 - Firmware Revision Time: Thu Dec 15 09:29:38 2016
+
+ ++ MPD in slot 8 is in config file, INIT IT
+mpdInit: MPD index  0 Slot # 8 at VME address 0x00400000 (local 0xac379000)
+
+mpdInit: Looking at MPD in slot 9
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x480000
+mpdInit: DEBUG: Try turning off fiber mode
+jlabgefMemProbe: Clearing VME BERR/2eST (0xc00ef900) at VME address 0x480190
+mpdInit: WARN: No addressable board at VME addr=0x480000 (local 0xac3f9000)
+mpdInit: Looking at MPD in slot 10
+mpdInit: DEBUG: Try turning off fiber mode
+ MPD Slot 10 - Firmware Revision ID = 0x4000004
+ MPD Slot 10 - Firmware Revision Time: Thu Dec 15 09:29:38 2016
+
+ ++ MPD in slot 10 is in config file, INIT IT
+mpdInit: MPD index  1 Slot #10 at VME address 0x00500000 (local 0xac479000)
+
+mpdInit: Looking at MPD in slot 11
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x580000
+mpdInit: DEBUG: Try turning off fiber mode
+jlabgefMemProbe: Clearing VME BERR/2eST (0xc00ef900) at VME address 0x580190
+mpdInit: WARN: No addressable board at VME addr=0x580000 (local 0xac4f9000)
+mpdInit: Looking at MPD in slot 12
+mpdInit: DEBUG: Try turning off fiber mode
+ MPD Slot 12 - Firmware Revision ID = 0x4000004
+ MPD Slot 12 - Firmware Revision Time: Thu Dec 15 09:29:38 2016
+
+ ++ MPD in slot 12 is in config file, INIT IT
+mpdInit: MPD index  2 Slot #12 at VME address 0x00600000 (local 0xac579000)
+
+mpdInit: Looking at MPD in slot 13
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x680000
+mpdInit: DEBUG: Try turning off fiber mode
+jlabgefMemProbe: Clearing VME BERR/2eST (0xc00ef900) at VME address 0x680190
+mpdInit: WARN: No addressable board at VME addr=0x680000 (local 0xac5f9000)
+mpdInit: Looking at MPD in slot 14
+mpdInit: DEBUG: Try turning off fiber mode
+ MPD Slot 14 - Firmware Revision ID = 0x4000004
+ MPD Slot 14 - Firmware Revision Time: Thu Dec 15 09:29:38 2016
+
+ ++ MPD in slot 14 is in config file, INIT IT
+mpdInit: MPD index  3 Slot #14 at VME address 0x00700000 (local 0xac679000)
+
+mpdInit: Looking at MPD in slot 15
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x780000
+mpdInit: DEBUG: Try turning off fiber mode
+jlabgefMemProbe: Clearing VME BERR/2eST (0xc00ef900) at VME address 0x780190
+mpdInit: WARN: No addressable board at VME addr=0x780000 (local 0xac6f9000)
+mpdInit: Looking at MPD in slot 16
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x800000
+mpdInit: DEBUG: Try turning off fiber mode
+jlabgefMemProbe: Clearing VME BERR/2eST (0xc00ef900) at VME address 0x800190
+mpdInit: WARN: No addressable board at VME addr=0x800000 (local 0xac779000)
+mpdInit: Looking at MPD in slot 17
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x880000
+mpdInit: DEBUG: Try turning off fiber mode
+jlabgefMemProbe: Clearing VME BERR/2eST (0xc00ef900) at VME address 0x880190
+mpdInit: WARN: No addressable board at VME addr=0x880000 (local 0xac7f9000)
+mpdInit: Looking at MPD in slot 18
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800cf900) at VME address 0x900000
+mpdInit: DEBUG: Try turning off fiber mode
+jlabgefMemProbe: Clearing VME BERR/2eST (0xc00ef900) at VME address 0x900190
+mpdInit: WARN: No addressable board at VME addr=0x900000 (local 0xac879000)
+mpdInit: Looking at MPD in slot 19
+mpdInit: DEBUG: Try turning off fiber mode
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800ef900) at VME address 0x980190
+mpdInit: WARN: No addressable board at VME addr=0x980000 (local 0xac8f9000)
+mpdInit: Looking at MPD in slot 20
+mpdInit: DEBUG: Try turning off fiber mode
+jlabgefMemProbe: Clearing VME BERR/2eST (0x800ef900) at VME address 0xa00190
+mpdInit: WARN: No addressable board at VME addr=0xa00000 (local 0xac979000)
+mpdInit: Looking at MPD in slot 21
+mpdInit: DEBUG: Try turning off fiber mode
+mpdInit: WARN: for board at 0xa80000, invalid data code 0x71011500 (expected 0x43524f4d)
+mpdInit: 4 MPD(s) initialized, 4 discovered
+mpdInit: WARN: Unable to initialize all requested MPD Modules (4 found)
+main: MPD discovered = 4
+main: MPD 8 TEST histo memory
+ERROR: HISTO Test fail 20 time / 4096 attempts
+
+main: Try initialize I2C of MPD in slot 8
+mpdI2C_Init: i2c low prescaler register set/read : 100 / 100
+mpdI2C_Init: i2c high prescaler register set/read : 0 / 0
+mpdI2C_Init: i2c speed prescale = 100, (period = 10.000000 us, frequency = 100.000000 kHz)
+mpdI2C_Init: Board temperatures: core=256.00 air=256.00 (dec celsius)
+main: Try APV discovery and init of MPD slot 8
+mpdAPV_Scan: MPD 8 Blind scan on 31 apvs: 
+mpdAPV_Scan MPD 8 I2C addr 0:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 0 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 1:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 1 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 2:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 2 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 3:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 3 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 4:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 4 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 5:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 5 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 6:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 6 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 7:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 7 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 8:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 8 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 9:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 9 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 10:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 10 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 11:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 11 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 12:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 12 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 13:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 13 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 14:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 14 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 15:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 15 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 16:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 16 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 17:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 17 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 18:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 18 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 19:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 19 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 20:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 20 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 21:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 21 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 22:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 22 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 23:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 23 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 24:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 24 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 25:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 25 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 26:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 26 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 27:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 27 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 28:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 28 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 29:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 29 found in MPD in slot 8
+mpdAPV_Scan MPD 8 I2C addr 30:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 8 APV i2c = 30 found in MPD in slot 8
+mpdAPV_Scan: MPD 8 Blind scan done
+mpdAPV_Scan: Try i2c= 0 adc= 0 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 0 matched in MPD in slot 8
+mpdAPV_Scan: APV enable mask 0x0001
+mpdAPV_Scan: Try i2c= 1 adc= 1 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 1 matched in MPD in slot 8
+mpdAPV_Scan: APV enable mask 0x0003
+mpdAPV_Scan: Try i2c= 2 adc= 2 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 2 matched in MPD in slot 8
+mpdAPV_Scan: APV enable mask 0x0007
+mpdAPV_Scan: Try i2c= 3 adc= 3 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 3 matched in MPD in slot 8
+mpdAPV_Scan: APV enable mask 0x000f
+mpdAPV_Scan: Try i2c=11 adc= 6 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 11 matched in MPD in slot 8
+mpdAPV_Scan: APV enable mask 0x004f
+mpdAPV_Scan: Try i2c=10 adc= 7 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 10 matched in MPD in slot 8
+mpdAPV_Scan: APV enable mask 0x00cf
+mpdAPV_Scan: Try i2c= 9 adc= 8 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 9 matched in MPD in slot 8
+mpdAPV_Scan: APV enable mask 0x01cf
+mpdAPV_Scan: Try i2c= 8 adc= 9 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 8 matched in MPD in slot 8
+mpdAPV_Scan: APV enable mask 0x03cf
+mpdAPV_Scan: Try i2c=19 adc=11 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 19 matched in MPD in slot 8
+mpdAPV_Scan: APV enable mask 0x0bcf
+mpdAPV_Scan: Try i2c=18 adc=12 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 18 matched in MPD in slot 8
+mpdAPV_Scan: APV enable mask 0x1bcf
+mpdAPV_Scan: Try i2c=17 adc=13 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 17 matched in MPD in slot 8
+mpdAPV_Scan: APV enable mask 0x3bcf
+mpdAPV_Scan: Try i2c=16 adc=14 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 16 matched in MPD in slot 8
+mpdAPV_Scan: APV enable mask 0x7bcf
+mpdAPV_Scan: 12 APV found matching settings
+Do DELAY setting on MPD slot 8
+mpdDELAY25_Set: start (8: 23 23)
+mpdDELAY25_Set: end
+main: Do APV reset on MPD slot 8
+Configure single APV on MPD slot 8
+APV card i2c=0 to ADC (fifo)=0 (from config file)
+Fifo 0, buffer allocated with word size 11880
+	 id=8  ia=0  dmaHdl = 0x0a059aa0  physMemBase = 0x2b43c000  fBuffer = 0xabee5000
+APV card i2c=1 to ADC (fifo)=1 (from config file)
+Fifo 1, buffer allocated with word size 11880
+	 id=8  ia=1  dmaHdl = 0x0a059c38  physMemBase = 0x2b440000  fBuffer = 0xabee2000
+APV card i2c=2 to ADC (fifo)=2 (from config file)
+Fifo 2, buffer allocated with word size 11880
+	 id=8  ia=2  dmaHdl = 0x0a04b4d0  physMemBase = 0x2b444000  fBuffer = 0xabedf000
+APV card i2c=3 to ADC (fifo)=3 (from config file)
+Fifo 3, buffer allocated with word size 11880
+	 id=8  ia=3  dmaHdl = 0x0a04b2b0  physMemBase = 0x2b448000  fBuffer = 0xabedc000
+APV card i2c=11 to ADC (fifo)=6 (from config file)
+Fifo 6, buffer allocated with word size 11880
+	 id=8  ia=4  dmaHdl = 0x0a04b2f8  physMemBase = 0x2b44c000  fBuffer = 0xabed9000
+APV card i2c=10 to ADC (fifo)=7 (from config file)
+Fifo 7, buffer allocated with word size 11880
+	 id=8  ia=5  dmaHdl = 0x0a04b340  physMemBase = 0x2b450000  fBuffer = 0xabed6000
+APV card i2c=9 to ADC (fifo)=8 (from config file)
+Fifo 8, buffer allocated with word size 11880
+	 id=8  ia=6  dmaHdl = 0x0a04b388  physMemBase = 0x2b454000  fBuffer = 0xabed3000
+APV card i2c=8 to ADC (fifo)=9 (from config file)
+Fifo 9, buffer allocated with word size 11880
+	 id=8  ia=7  dmaHdl = 0x0a04b3d0  physMemBase = 0x2b458000  fBuffer = 0xabed0000
+APV card i2c=19 to ADC (fifo)=11 (from config file)
+Fifo 11, buffer allocated with word size 11880
+	 id=8  ia=8  dmaHdl = 0x0a04ba00  physMemBase = 0x2b45c000  fBuffer = 0xabecd000
+APV card i2c=18 to ADC (fifo)=12 (from config file)
+Fifo 12, buffer allocated with word size 11880
+	 id=8  ia=9  dmaHdl = 0x0a04ba48  physMemBase = 0x2b460000  fBuffer = 0xabeca000
+APV card i2c=17 to ADC (fifo)=13 (from config file)
+Fifo 13, buffer allocated with word size 11880
+	 id=8  ia=10  dmaHdl = 0x0a04ba90  physMemBase = 0x2b464000  fBuffer = 0xabec7000
+APV card i2c=16 to ADC (fifo)=14 (from config file)
+Fifo 14, buffer allocated with word size 11880
+	 id=8  ia=11  dmaHdl = 0x0a04bad8  physMemBase = 0x2b468000  fBuffer = 0xabec4000
+Configure ADC on MPD slot 8
+mpdADS5281_Normal: Board= 0 ADC= 0 No Pattern (Normal Acq)
+mpdADS5281_InvertChannels: Board= 0 ADC= 0 Inverted Polarity
+mpdADS5281_SetGain: Board= 0 ADC= 0 Set Gain 5 5 5 5 5 5 5 5
+mpdADS5281_Normal: Board= 0 ADC= 1 No Pattern (Normal Acq)
+mpdADS5281_InvertChannels: Board= 0 ADC= 1 Inverted Polarity
+mpdADS5281_SetGain: Board= 0 ADC= 1 Set Gain 5 5 5 5 5 5 5 5
+mpdFIR_Config: FIR coefficients (FIRenable=0):
+  0: W 0x2aee 0xf7ae R 0x2aee 0xf7ae
+  2: W 0xff57 0xff18 R 0xff57 0xff18
+  4: W 0xff6d 0xff85 R 0xff6d 0xff85
+  6: W 0xff9e 0xff41 R 0xff9e 0xff41
+  8: W 0xffa8 0x 14d R 0xffa8 0x 14d
+ 10: W 0xfffd 0x  22 R 0xfffd 0x  22
+ 12: W 0x  11 0x   e R 0x  11 0x   e
+ 14: W 0x   b 0x   7 R 0x   b 0x   7
+Do 101 Reset on MPD slot 8
+main: MPD 10 TEST histo memory
+main: HISTO Read/Write test SUCCESS on MPD slot 10
+main: Try initialize I2C of MPD in slot 10
+mpdI2C_Init: i2c low prescaler register set/read : 100 / 100
+mpdI2C_Init: i2c high prescaler register set/read : 0 / 0
+mpdI2C_Init: i2c speed prescale = 100, (period = 10.000000 us, frequency = 100.000000 kHz)
+mpdI2C_Init: Board temperatures: core=256.00 air=256.00 (dec celsius)
+main: Try APV discovery and init of MPD slot 10
+mpdAPV_Scan: MPD 10 Blind scan on 31 apvs: 
+mpdAPV_Scan MPD 10 I2C addr 0:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 0 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 1:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 1 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 2:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 2 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 3:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 3 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 4:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 4 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 5:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 5 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 6:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 6 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 7:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 7 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 8:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 8 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 9:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 9 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 10:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 10 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 11:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 11 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 12:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 12 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 13:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 13 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 14:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 14 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 15:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 15 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 16:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 16 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 17:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 17 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 18:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 18 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 19:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 19 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 20:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 20 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 21:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 21 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 22:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 22 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 23:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 23 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 24:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 24 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 25:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 25 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 26:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 26 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 27:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 27 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 28:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 28 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 29:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 29 found in MPD in slot 10
+mpdAPV_Scan MPD 10 I2C addr 30:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 10 APV i2c = 30 found in MPD in slot 10
+mpdAPV_Scan: MPD 10 Blind scan done
+mpdAPV_Scan: Try i2c= 0 adc= 0 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 0 matched in MPD in slot 10
+mpdAPV_Scan: APV enable mask 0x0001
+mpdAPV_Scan: Try i2c= 1 adc= 1 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 1 matched in MPD in slot 10
+mpdAPV_Scan: APV enable mask 0x0003
+mpdAPV_Scan: Try i2c= 2 adc= 2 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 2 matched in MPD in slot 10
+mpdAPV_Scan: APV enable mask 0x0007
+mpdAPV_Scan: Try i2c= 3 adc= 3 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 3 matched in MPD in slot 10
+mpdAPV_Scan: APV enable mask 0x000f
+mpdAPV_Scan: Try i2c= 4 adc= 4 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 4 matched in MPD in slot 10
+mpdAPV_Scan: APV enable mask 0x001f
+mpdAPV_Scan: Try i2c= 8 adc= 5 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 8 matched in MPD in slot 10
+mpdAPV_Scan: APV enable mask 0x003f
+mpdAPV_Scan: Try i2c= 9 adc= 6 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 9 matched in MPD in slot 10
+mpdAPV_Scan: APV enable mask 0x007f
+mpdAPV_Scan: Try i2c=10 adc= 7 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 10 matched in MPD in slot 10
+mpdAPV_Scan: APV enable mask 0x00ff
+mpdAPV_Scan: Try i2c=11 adc= 8 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 11 matched in MPD in slot 10
+mpdAPV_Scan: APV enable mask 0x01ff
+mpdAPV_Scan: Try i2c=12 adc= 9 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 12 matched in MPD in slot 10
+mpdAPV_Scan: APV enable mask 0x03ff
+mpdAPV_Scan: Try i2c=16 adc=10 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 16 matched in MPD in slot 10
+mpdAPV_Scan: APV enable mask 0x07ff
+mpdAPV_Scan: Try i2c=17 adc=11 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 17 matched in MPD in slot 10
+mpdAPV_Scan: APV enable mask 0x0fff
+mpdAPV_Scan: Try i2c=18 adc=12 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 18 matched in MPD in slot 10
+mpdAPV_Scan: APV enable mask 0x1fff
+mpdAPV_Scan: Try i2c=19 adc=13 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 19 matched in MPD in slot 10
+mpdAPV_Scan: APV enable mask 0x3fff
+mpdAPV_Scan: Try i2c=20 adc=14 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 20 matched in MPD in slot 10
+mpdAPV_Scan: APV enable mask 0x7fff
+mpdAPV_Scan: 15 APV found matching settings
+Do DELAY setting on MPD slot 10
+mpdDELAY25_Set: start (10: 23 23)
+mpdDELAY25_Set: end
+main: Do APV reset on MPD slot 10
+Configure single APV on MPD slot 10
+APV card i2c=0 to ADC (fifo)=0 (from config file)
+Fifo 0, buffer allocated with word size 11880
+	 id=10  ia=0  dmaHdl = 0x0a04bb20  physMemBase = 0x2b46c000  fBuffer = 0xabec1000
+APV card i2c=1 to ADC (fifo)=1 (from config file)
+Fifo 1, buffer allocated with word size 11880
+	 id=10  ia=1  dmaHdl = 0x0a04bb68  physMemBase = 0x2b470000  fBuffer = 0xabebe000
+APV card i2c=2 to ADC (fifo)=2 (from config file)
+Fifo 2, buffer allocated with word size 11880
+	 id=10  ia=2  dmaHdl = 0x0a04bbb0  physMemBase = 0x2b474000  fBuffer = 0xabebb000
+APV card i2c=3 to ADC (fifo)=3 (from config file)
+Fifo 3, buffer allocated with word size 11880
+	 id=10  ia=3  dmaHdl = 0x0a04bbf8  physMemBase = 0x2b478000  fBuffer = 0xabeb8000
+APV card i2c=4 to ADC (fifo)=4 (from config file)
+Fifo 4, buffer allocated with word size 11880
+	 id=10  ia=4  dmaHdl = 0x0a04bc40  physMemBase = 0x2b47c000  fBuffer = 0xabeb5000
+APV card i2c=8 to ADC (fifo)=5 (from config file)
+Fifo 5, buffer allocated with word size 11880
+	 id=10  ia=5  dmaHdl = 0x0a04bc88  physMemBase = 0x2b480000  fBuffer = 0xabeb2000
+APV card i2c=9 to ADC (fifo)=6 (from config file)
+Fifo 6, buffer allocated with word size 11880
+	 id=10  ia=6  dmaHdl = 0x0a04bcd0  physMemBase = 0x2b484000  fBuffer = 0xabeaf000
+APV card i2c=10 to ADC (fifo)=7 (from config file)
+Fifo 7, buffer allocated with word size 11880
+	 id=10  ia=7  dmaHdl = 0x0a04bd18  physMemBase = 0x2b488000  fBuffer = 0xabeac000
+APV card i2c=11 to ADC (fifo)=8 (from config file)
+Fifo 8, buffer allocated with word size 11880
+	 id=10  ia=8  dmaHdl = 0x0a04bd60  physMemBase = 0x2b48c000  fBuffer = 0xabea9000
+APV card i2c=12 to ADC (fifo)=9 (from config file)
+Fifo 9, buffer allocated with word size 11880
+	 id=10  ia=9  dmaHdl = 0x0a04bda8  physMemBase = 0x2b490000  fBuffer = 0xabea6000
+APV card i2c=16 to ADC (fifo)=10 (from config file)
+Fifo 10, buffer allocated with word size 11880
+	 id=10  ia=10  dmaHdl = 0x0a04bdf0  physMemBase = 0x2b494000  fBuffer = 0xabea3000
+APV card i2c=17 to ADC (fifo)=11 (from config file)
+Fifo 11, buffer allocated with word size 11880
+	 id=10  ia=11  dmaHdl = 0x0a04be38  physMemBase = 0x2b498000  fBuffer = 0xabea0000
+APV card i2c=18 to ADC (fifo)=12 (from config file)
+Fifo 12, buffer allocated with word size 11880
+	 id=10  ia=12  dmaHdl = 0x0a04be80  physMemBase = 0x2b49c000  fBuffer = 0xabe9d000
+APV card i2c=19 to ADC (fifo)=13 (from config file)
+Fifo 13, buffer allocated with word size 11880
+	 id=10  ia=13  dmaHdl = 0x0a04bec8  physMemBase = 0x2b4a0000  fBuffer = 0xabe9a000
+APV card i2c=20 to ADC (fifo)=14 (from config file)
+Fifo 14, buffer allocated with word size 11880
+	 id=10  ia=14  dmaHdl = 0x0a04bf10  physMemBase = 0x2b4a4000  fBuffer = 0xabe97000
+Configure ADC on MPD slot 10
+mpdADS5281_Normal: Board= 0 ADC= 0 No Pattern (Normal Acq)
+mpdADS5281_InvertChannels: Board= 0 ADC= 0 Inverted Polarity
+mpdADS5281_SetGain: Board= 0 ADC= 0 Set Gain 5 5 5 5 5 5 5 5
+mpdADS5281_Normal: Board= 0 ADC= 1 No Pattern (Normal Acq)
+mpdADS5281_InvertChannels: Board= 0 ADC= 1 Inverted Polarity
+mpdADS5281_SetGain: Board= 0 ADC= 1 Set Gain 5 5 5 5 5 5 5 5
+mpdFIR_Config: FIR coefficients (FIRenable=0):
+  0: W 0x2aee 0xf7ae R 0x2aee 0xf7ae
+  2: W 0xff57 0xff18 R 0xff57 0xff18
+  4: W 0xff6d 0xff85 R 0xff6d 0xff85
+  6: W 0xff9e 0xff41 R 0xff9e 0xff41
+  8: W 0xffa8 0x 14d R 0xffa8 0x 14d
+ 10: W 0xfffd 0x  22 R 0xfffd 0x  22
+ 12: W 0x  11 0x   e R 0x  11 0x   e
+ 14: W 0x   b 0x   7 R 0x   b 0x   7
+Do 101 Reset on MPD slot 10
+main: MPD 12 TEST histo memory
+main: HISTO Read/Write test SUCCESS on MPD slot 12
+main: Try initialize I2C of MPD in slot 12
+mpdI2C_Init: i2c low prescaler register set/read : 100 / 100
+mpdI2C_Init: i2c high prescaler register set/read : 0 / 0
+mpdI2C_Init: i2c speed prescale = 100, (period = 10.000000 us, frequency = 100.000000 kHz)
+mpdI2C_Init: Board temperatures: core=256.00 air=256.00 (dec celsius)
+main: Try APV discovery and init of MPD slot 12
+mpdAPV_Scan: MPD 12 Blind scan on 31 apvs: 
+mpdAPV_Scan MPD 12 I2C addr 0:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 0 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 1:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 1 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 2:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 2 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 3:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 3 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 4:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 4 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 5:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 5 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 6:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 6 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 7:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 7 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 8:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 8 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 9:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 9 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 10:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 10 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 11:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 11 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 12:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 12 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 13:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 13 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 14:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 14 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 15:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 15 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 16:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 16 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 17:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 17 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 18:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 18 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 19:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 19 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 20:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 20 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 21:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 21 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 22:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 22 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 23:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 23 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 24:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 24 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 25:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 25 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 26:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 26 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 27:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 27 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 28:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 28 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 29:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 29 found in MPD in slot 12
+mpdAPV_Scan MPD 12 I2C addr 30:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 12 APV i2c = 30 found in MPD in slot 12
+mpdAPV_Scan: MPD 12 Blind scan done
+mpdAPV_Scan: Try i2c= 3 adc= 1 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 3 matched in MPD in slot 12
+mpdAPV_Scan: APV enable mask 0x0002
+mpdAPV_Scan: Try i2c= 2 adc= 2 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 2 matched in MPD in slot 12
+mpdAPV_Scan: APV enable mask 0x0006
+mpdAPV_Scan: Try i2c= 1 adc= 3 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 1 matched in MPD in slot 12
+mpdAPV_Scan: APV enable mask 0x000e
+mpdAPV_Scan: Try i2c= 0 adc= 4 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 0 matched in MPD in slot 12
+mpdAPV_Scan: APV enable mask 0x001e
+mpdAPV_Scan: Try i2c=11 adc= 6 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 11 matched in MPD in slot 12
+mpdAPV_Scan: APV enable mask 0x005e
+mpdAPV_Scan: Try i2c=10 adc= 7 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 10 matched in MPD in slot 12
+mpdAPV_Scan: APV enable mask 0x00de
+mpdAPV_Scan: Try i2c= 9 adc= 8 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 9 matched in MPD in slot 12
+mpdAPV_Scan: APV enable mask 0x01de
+mpdAPV_Scan: Try i2c= 8 adc= 9 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 8 matched in MPD in slot 12
+mpdAPV_Scan: APV enable mask 0x03de
+mpdAPV_Scan: Try i2c=16 adc=10 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 16 matched in MPD in slot 12
+mpdAPV_Scan: APV enable mask 0x07de
+mpdAPV_Scan: Try i2c=17 adc=11 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 17 matched in MPD in slot 12
+mpdAPV_Scan: APV enable mask 0x0fde
+mpdAPV_Scan: Try i2c=18 adc=12 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 18 matched in MPD in slot 12
+mpdAPV_Scan: APV enable mask 0x1fde
+mpdAPV_Scan: Try i2c=19 adc=13 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 19 matched in MPD in slot 12
+mpdAPV_Scan: APV enable mask 0x3fde
+mpdAPV_Scan: 12 APV found matching settings
+Do DELAY setting on MPD slot 12
+mpdDELAY25_Set: start (12: 23 23)
+mpdDELAY25_Set: end
+main: Do APV reset on MPD slot 12
+Configure single APV on MPD slot 12
+APV card i2c=3 to ADC (fifo)=1 (from config file)
+Fifo 1, buffer allocated with word size 11880
+	 id=12  ia=0  dmaHdl = 0x0a04bf58  physMemBase = 0x2b4a8000  fBuffer = 0xabe94000
+APV card i2c=2 to ADC (fifo)=2 (from config file)
+Fifo 2, buffer allocated with word size 11880
+	 id=12  ia=1  dmaHdl = 0x0a04bfa0  physMemBase = 0x2b4ac000  fBuffer = 0xabe91000
+APV card i2c=1 to ADC (fifo)=3 (from config file)
+Fifo 3, buffer allocated with word size 11880
+	 id=12  ia=2  dmaHdl = 0x0a04bfe8  physMemBase = 0x2b4b0000  fBuffer = 0xabe8e000
+APV card i2c=0 to ADC (fifo)=4 (from config file)
+Fifo 4, buffer allocated with word size 11880
+	 id=12  ia=3  dmaHdl = 0x0a04c030  physMemBase = 0x2b4b4000  fBuffer = 0xabe8b000
+APV card i2c=11 to ADC (fifo)=6 (from config file)
+Fifo 6, buffer allocated with word size 11880
+	 id=12  ia=4  dmaHdl = 0x0a04c078  physMemBase = 0x2b4b8000  fBuffer = 0xabe88000
+APV card i2c=10 to ADC (fifo)=7 (from config file)
+Fifo 7, buffer allocated with word size 11880
+	 id=12  ia=5  dmaHdl = 0x0a04c0c0  physMemBase = 0x2b4bc000  fBuffer = 0xabe85000
+APV card i2c=9 to ADC (fifo)=8 (from config file)
+Fifo 8, buffer allocated with word size 11880
+	 id=12  ia=6  dmaHdl = 0x0a04c108  physMemBase = 0x2b4c0000  fBuffer = 0xabe82000
+APV card i2c=8 to ADC (fifo)=9 (from config file)
+Fifo 9, buffer allocated with word size 11880
+	 id=12  ia=7  dmaHdl = 0x0a04c150  physMemBase = 0x2b4c4000  fBuffer = 0xabe7f000
+APV card i2c=16 to ADC (fifo)=10 (from config file)
+Fifo 10, buffer allocated with word size 11880
+	 id=12  ia=8  dmaHdl = 0x0a04c198  physMemBase = 0x2b4c8000  fBuffer = 0xabe7c000
+APV card i2c=17 to ADC (fifo)=11 (from config file)
+Fifo 11, buffer allocated with word size 11880
+	 id=12  ia=9  dmaHdl = 0x0a04c1e0  physMemBase = 0x2b4cc000  fBuffer = 0xabe79000
+APV card i2c=18 to ADC (fifo)=12 (from config file)
+Fifo 12, buffer allocated with word size 11880
+	 id=12  ia=10  dmaHdl = 0x0a04c228  physMemBase = 0x2b4d0000  fBuffer = 0xabe76000
+APV card i2c=19 to ADC (fifo)=13 (from config file)
+Fifo 13, buffer allocated with word size 11880
+	 id=12  ia=11  dmaHdl = 0x0a04c270  physMemBase = 0x2b4d4000  fBuffer = 0xabe73000
+Configure ADC on MPD slot 12
+mpdADS5281_Normal: Board= 0 ADC= 0 No Pattern (Normal Acq)
+mpdADS5281_InvertChannels: Board= 0 ADC= 0 Inverted Polarity
+mpdADS5281_SetGain: Board= 0 ADC= 0 Set Gain 5 5 5 5 5 5 5 5
+mpdADS5281_Normal: Board= 0 ADC= 1 No Pattern (Normal Acq)
+mpdADS5281_InvertChannels: Board= 0 ADC= 1 Inverted Polarity
+mpdADS5281_SetGain: Board= 0 ADC= 1 Set Gain 5 5 5 5 5 5 5 5
+mpdFIR_Config: FIR coefficients (FIRenable=0):
+  0: W 0x2aee 0xf7ae R 0x2aee 0xf7ae
+  2: W 0xff57 0xff18 R 0xff57 0xff18
+  4: W 0xff6d 0xff85 R 0xff6d 0xff85
+  6: W 0xff9e 0xff41 R 0xff9e 0xff41
+  8: W 0xffa8 0x 14d R 0xffa8 0x 14d
+ 10: W 0xfffd 0x  22 R 0xfffd 0x  22
+ 12: W 0x  11 0x   e R 0x  11 0x   e
+ 14: W 0x   b 0x   7 R 0x   b 0x   7
+Do 101 Reset on MPD slot 12
+main: MPD 14 TEST histo memory
+main: HISTO Read/Write test SUCCESS on MPD slot 14
+main: Try initialize I2C of MPD in slot 14
+mpdI2C_Init: i2c low prescaler register set/read : 100 / 100
+mpdI2C_Init: i2c high prescaler register set/read : 0 / 0
+mpdI2C_Init: i2c speed prescale = 100, (period = 10.000000 us, frequency = 100.000000 kHz)
+mpdI2C_Init: Board temperatures: core=256.00 air=256.00 (dec celsius)
+main: Try APV discovery and init of MPD slot 14
+mpdAPV_Scan: MPD 14 Blind scan on 31 apvs: 
+mpdAPV_Scan MPD 14 I2C addr 0:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 0 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 1:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 1 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 2:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 2 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 3:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 3 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 4:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 4 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 5:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 5 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 6:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 6 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 7:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 7 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 8:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 8 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 9:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 9 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 10:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 10 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 11:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 11 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 12:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 12 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 13:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 13 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 14:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 14 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 15:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 15 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 16:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 16 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 17:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 17 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 18:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 18 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 19:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 19 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 20:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 20 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 21:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 21 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 22:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 22 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 23:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 23 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 24:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 24 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 25:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 25 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 26:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 26 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 27:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 27 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 28:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 28 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 29:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 29 found in MPD in slot 14
+mpdAPV_Scan MPD 14 I2C addr 30:
+mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan : MPD 14 APV i2c = 30 found in MPD in slot 14
+mpdAPV_Scan: MPD 14 Blind scan done
+mpdAPV_Scan: Try i2c= 0 adc= 0 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 0 matched in MPD in slot 14
+mpdAPV_Scan: APV enable mask 0x0001
+mpdAPV_Scan: Try i2c= 1 adc= 1 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 1 matched in MPD in slot 14
+mpdAPV_Scan: APV enable mask 0x0003
+mpdAPV_Scan: Try i2c= 2 adc= 2 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 2 matched in MPD in slot 14
+mpdAPV_Scan: APV enable mask 0x0007
+mpdAPV_Scan: Try i2c= 3 adc= 3 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 3 matched in MPD in slot 14
+mpdAPV_Scan: APV enable mask 0x000f
+mpdAPV_Scan: Try i2c= 4 adc= 4 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 4 matched in MPD in slot 14
+mpdAPV_Scan: APV enable mask 0x001f
+mpdAPV_Scan: Try i2c= 8 adc= 5 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 8 matched in MPD in slot 14
+mpdAPV_Scan: APV enable mask 0x003f
+mpdAPV_Scan: Try i2c= 9 adc= 6 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 9 matched in MPD in slot 14
+mpdAPV_Scan: APV enable mask 0x007f
+mpdAPV_Scan: Try i2c=10 adc= 7 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 10 matched in MPD in slot 14
+mpdAPV_Scan: APV enable mask 0x00ff
+mpdAPV_Scan: Try i2c=11 adc= 8 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 11 matched in MPD in slot 14
+mpdAPV_Scan: APV enable mask 0x01ff
+mpdAPV_Scan: Try i2c=12 adc= 9 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 12 matched in MPD in slot 14
+mpdAPV_Scan: APV enable mask 0x03ff
+mpdAPV_Scan: Try i2c=16 adc=10 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 16 matched in MPD in slot 14
+mpdAPV_Scan: APV enable mask 0x07ff
+mpdAPV_Scan: Try i2c=17 adc=11 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 17 matched in MPD in slot 14
+mpdAPV_Scan: APV enable mask 0x0fff
+mpdAPV_Scan: Try i2c=18 adc=12 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 18 matched in MPD in slot 14
+mpdAPV_Scan: APV enable mask 0x1fff
+mpdAPV_Scan: Try i2c=19 adc=13 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 19 matched in MPD in slot 14
+mpdAPV_Scan: APV enable mask 0x3fff
+mpdAPV_Scan: Try i2c=20 adc=14 : mpdAPV_Try: timeout 0 : 96 ret = 0
+mpdAPV_Scan: 20 matched in MPD in slot 14
+mpdAPV_Scan: APV enable mask 0x7fff
+mpdAPV_Scan: 15 APV found matching settings
+Do DELAY setting on MPD slot 14
+mpdDELAY25_Set: start (14: 23 23)
+mpdDELAY25_Set: end
+main: Do APV reset on MPD slot 14
+Configure single APV on MPD slot 14
+APV card i2c=0 to ADC (fifo)=0 (from config file)
+Fifo 0, buffer allocated with word size 11880
+	 id=14  ia=0  dmaHdl = 0x0a04c2b8  physMemBase = 0x2b4d8000  fBuffer = 0xabe70000
+APV card i2c=1 to ADC (fifo)=1 (from config file)
+Fifo 1, buffer allocated with word size 11880
+	 id=14  ia=1  dmaHdl = 0x0a04c300  physMemBase = 0x2b4dc000  fBuffer = 0xabe6d000
+APV card i2c=2 to ADC (fifo)=2 (from config file)
+Fifo 2, buffer allocated with word size 11880
+	 id=14  ia=2  dmaHdl = 0x0a04c348  physMemBase = 0x2b4e0000  fBuffer = 0xabe6a000
+APV card i2c=3 to ADC (fifo)=3 (from config file)
+Fifo 3, buffer allocated with word size 11880
+	 id=14  ia=3  dmaHdl = 0x0a04c390  physMemBase = 0x2b4e4000  fBuffer = 0xabe67000
+APV card i2c=4 to ADC (fifo)=4 (from config file)
+Fifo 4, buffer allocated with word size 11880
+	 id=14  ia=4  dmaHdl = 0x0a04c3d8  physMemBase = 0x2b4e8000  fBuffer = 0xabe64000
+APV card i2c=8 to ADC (fifo)=5 (from config file)
+Fifo 5, buffer allocated with word size 11880
+	 id=14  ia=5  dmaHdl = 0x0a04c420  physMemBase = 0x2b4ec000  fBuffer = 0xabe61000
+APV card i2c=9 to ADC (fifo)=6 (from config file)
+Fifo 6, buffer allocated with word size 11880
+	 id=14  ia=6  dmaHdl = 0x0a04c468  physMemBase = 0x2b4f0000  fBuffer = 0xabe5e000
+APV card i2c=10 to ADC (fifo)=7 (from config file)
+Fifo 7, buffer allocated with word size 11880
+	 id=14  ia=7  dmaHdl = 0x0a04c4b0  physMemBase = 0x2b4f4000  fBuffer = 0xabe5b000
+APV card i2c=11 to ADC (fifo)=8 (from config file)
+Fifo 8, buffer allocated with word size 11880
+	 id=14  ia=8  dmaHdl = 0x0a04c4f8  physMemBase = 0x2b4f8000  fBuffer = 0xabe58000
+APV card i2c=12 to ADC (fifo)=9 (from config file)
+Fifo 9, buffer allocated with word size 11880
+	 id=14  ia=9  dmaHdl = 0x0a04c540  physMemBase = 0x2b4fc000  fBuffer = 0xabe55000
+APV card i2c=16 to ADC (fifo)=10 (from config file)
+Fifo 10, buffer allocated with word size 11880
+	 id=14  ia=10  dmaHdl = 0x0a04c588  physMemBase = 0x2b500000  fBuffer = 0xabe52000
+APV card i2c=17 to ADC (fifo)=11 (from config file)
+Fifo 11, buffer allocated with word size 11880
+	 id=14  ia=11  dmaHdl = 0x0a04c5d0  physMemBase = 0x2b504000  fBuffer = 0xabe4f000
+APV card i2c=18 to ADC (fifo)=12 (from config file)
+Fifo 12, buffer allocated with word size 11880
+	 id=14  ia=12  dmaHdl = 0x0a04c618  physMemBase = 0x2b508000  fBuffer = 0xabe4c000
+APV card i2c=19 to ADC (fifo)=13 (from config file)
+Fifo 13, buffer allocated with word size 11880
+	 id=14  ia=13  dmaHdl = 0x0a04c660  physMemBase = 0x2b50c000  fBuffer = 0xabe49000
+APV card i2c=20 to ADC (fifo)=14 (from config file)
+Fifo 14, buffer allocated with word size 11880
+	 id=14  ia=14  dmaHdl = 0x0a04c6a8  physMemBase = 0x2b510000  fBuffer = 0xabe46000
+Configure ADC on MPD slot 14
+mpdADS5281_Normal: Board= 0 ADC= 0 No Pattern (Normal Acq)
+mpdADS5281_InvertChannels: Board= 0 ADC= 0 Inverted Polarity
+mpdADS5281_SetGain: Board= 0 ADC= 0 Set Gain 5 5 5 5 5 5 5 5
+mpdADS5281_Normal: Board= 0 ADC= 1 No Pattern (Normal Acq)
+mpdADS5281_InvertChannels: Board= 0 ADC= 1 Inverted Polarity
+mpdADS5281_SetGain: Board= 0 ADC= 1 Set Gain 5 5 5 5 5 5 5 5
+mpdFIR_Config: FIR coefficients (FIRenable=0):
+  0: W 0x2aee 0xf7ae R 0x2aee 0xf7ae
+  2: W 0xff57 0xff18 R 0xff57 0xff18
+  4: W 0xff6d 0xff85 R 0xff6d 0xff85
+  6: W 0xff9e 0xff41 R 0xff9e 0xff41
+  8: W 0xffa8 0x 14d R 0xffa8 0x 14d
+ 10: W 0xfffd 0x  22 R 0xfffd 0x  22
+ 12: W 0x  11 0x   e R 0x  11 0x   e
+ 14: W 0x   b 0x   7 R 0x   b 0x   7
+Do 101 Reset on MPD slot 14
+
+========== S T A R T . S A M P L E . T E S T ( thr = 2500 ) ==========
+
+main: MPD 8 -------------
+mpdSetAcqMode: Acquisition Mode = 0x2 (sample)
+mpdDELAY25_Set: start (8: 23 23)
+mpdDELAY25_Set: end
+mpdDAQ_Config : ReadoutConfig = 0x2
+mpdDAQ_Config : IOConfig = 0x1
+mpdDAQ_Config : Output buffer base address = 0x0 (0=no SDRAM)
+mpdDAQ_Config : Sdram base address = 0x0 (test only)
+SAMPLE test: 7bcf (7bcf) 8430
+addr: 00003000 
+MPD/ADC : 8 / 0, peaks around: 14-14 (v 2787) 84-84 (v 2787) 154-154 (v 2783) 224-224 (v 2786) 294-294 (v 2785) 364-364 (v 2787) 434-434 (v 2786) 504-504 (v 2784) 574-574 (v 2787) 644-644 (v 2785) 714-714 (v 2785) 784-784 (v 2784) 854-854 (v 2785) 924-924 (v 2787) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 8 / 1, peaks around: 15-16 (v 2730) 85-86 (v 2732) 155-156 (v 2736) 225-226 (v 2732) 295-296 (v 2731) 365-366 (v 2730) 435-436 (v 2729) 505-506 (v 2731) 575-576 (v 2730) 645-646 (v 2733) 715-716 (v 2731) 785-786 (v 2730) 855-856 (v 2729) 925-926 (v 2731) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 8 / 2, peaks around: 14-15 (v 2732) 84-85 (v 2733) 154-155 (v 2731) 224-225 (v 2731) 294-295 (v 2731) 364-365 (v 2727) 434-435 (v 2730) 504-505 (v 2730) 574-575 (v 2729) 644-645 (v 2732) 714-715 (v 2731) 784-785 (v 2729) 854-855 (v 2730) 924-925 (v 2731) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 8 / 3, peaks around: 15-16 (v 2709) 85-86 (v 2711) 155-156 (v 2711) 225-226 (v 2710) 295-296 (v 2712) 365-366 (v 2713) 435-436 (v 2709) 505-506 (v 2712) 575-576 (v 2707) 645-646 (v 2710) 715-716 (v 2712) 785-786 (v 2709) 855-856 (v 2713) 925-926 (v 2712) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 8 / 6, peaks around: 39-40 (v 2718) 109-110 (v 2719) 179-180 (v 2719) 249-250 (v 2721) 319-320 (v 2719) 389-390 (v 2717) 459-460 (v 2718) 529-530 (v 2718) 599-600 (v 2717) 669-670 (v 2718) 739-740 (v 2716) 809-810 (v 2716) 879-880 (v 2720) 949-950 (v 2717) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 8 / 7, peaks around: 13-14 (v 2952) 17-40 (v 2817) 83-84 (v 2948) 87-110 (v 2817) 153-154 (v 2952) 157-180 (v 2815) 223-224 (v 2949) 227-250 (v 2816) 293-294 (v 2947) 297-320 (v 2815) 363-364 (v 2948) 367-390 (v 2816) 433-434 (v 2952) 437-460 (v 2814) 503-504 (v 2953) 507-530 (v 2817) 573-574 (v 2949) 577-600 (v 2817) 643-644 (v 2948) 647-670 (v 2818) 713-714 (v 2949) 717-740 (v 2815) 783-784 (v 2949) 787-810 (v 2816) 853-854 (v 2951) 857-880 (v 2815) 923-924 (v 2951) 927-950 (v 2816) 993-994 (v 2949) 
+ Estimated synch period = 0.882759 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 8 / 8, peaks around: 41-42 (v 2754) 111-112 (v 2754) 181-182 (v 2755) 251-252 (v 2753) 321-322 (v 2752) 391-392 (v 2756) 461-462 (v 2752) 531-532 (v 2756) 601-602 (v 2752) 671-672 (v 2752) 741-742 (v 2755) 811-812 (v 2753) 881-882 (v 2753) 951-952 (v 2754) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 8 / 9, peaks around: 14-40 (v 2814) 84-110 (v 2819) 154-180 (v 2819) 224-250 (v 2819) 294-320 (v 2819) 364-390 (v 2819) 434-460 (v 2818) 504-530 (v 2817) 574-600 (v 2817) 644-670 (v 2817) 714-740 (v 2819) 784-810 (v 2816) 854-880 (v 2818) 924-950 (v 2816) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 8 / 11, peaks around: 15-16 (v 2760) 85-86 (v 2762) 155-156 (v 2761) 225-226 (v 2760) 295-296 (v 2761) 365-366 (v 2761) 435-436 (v 2761) 505-506 (v 2763) 575-576 (v 2761) 645-646 (v 2762) 715-716 (v 2761) 785-786 (v 2761) 855-856 (v 2760) 925-926 (v 2764) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 8 / 12, peaks around: 14-15 (v 2696) 84-85 (v 2699) 154-155 (v 2696) 224-225 (v 2696) 294-295 (v 2697) 364-365 (v 2699) 434-435 (v 2695) 504-505 (v 2696) 574-575 (v 2697) 644-645 (v 2697) 714-715 (v 2699) 784-785 (v 2697) 854-855 (v 2695) 924-925 (v 2697) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 8 / 13, peaks around: 15-16 (v 2801) 85-86 (v 2802) 155-156 (v 2803) 225-226 (v 2800) 295-296 (v 2801) 365-366 (v 2801) 435-436 (v 2801) 505-506 (v 2799) 575-576 (v 2801) 645-646 (v 2801) 715-716 (v 2803) 785-786 (v 2800) 855-856 (v 2799) 925-926 (v 2800) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 8 / 14, peaks around: 15-15 (v 2827) 85-85 (v 2830) 155-155 (v 2830) 225-225 (v 2830) 295-295 (v 2831) 365-365 (v 2827) 435-435 (v 2831) 505-505 (v 2828) 575-575 (v 2831) 645-645 (v 2829) 715-715 (v 2828) 785-785 (v 2829) 855-855 (v 2829) 925-925 (v 2830) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+main: MPD 10 -------------
+mpdSetAcqMode: Acquisition Mode = 0x2 (sample)
+mpdDELAY25_Set: start (10: 23 23)
+mpdDELAY25_Set: end
+mpdDAQ_Config : ReadoutConfig = 0x2
+mpdDAQ_Config : IOConfig = 0x1
+mpdDAQ_Config : Output buffer base address = 0x0 (0=no SDRAM)
+mpdDAQ_Config : Sdram base address = 0x0 (test only)
+SAMPLE test: 7fff (7fff) 8000
+addr: 00003000 
+MPD/ADC : 10 / 0, peaks around: 17-18 (v 2776) 87-88 (v 2777) 157-158 (v 2774) 227-228 (v 2778) 297-298 (v 2777) 367-368 (v 2778) 437-438 (v 2775) 507-508 (v 2776) 577-578 (v 2779) 647-648 (v 2776) 717-718 (v 2775) 787-788 (v 2775) 857-858 (v 2777) 927-928 (v 2778) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 10 / 1, peaks around: 18-19 (v 2779) 88-89 (v 2774) 158-159 (v 2775) 228-229 (v 2775) 298-299 (v 2775) 368-369 (v 2777) 438-439 (v 2776) 508-509 (v 2775) 578-579 (v 2778) 648-649 (v 2774) 718-719 (v 2777) 788-789 (v 2774) 858-859 (v 2778) 928-929 (v 2775) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 10 / 2, peaks around: 17-18 (v 2758) 87-88 (v 2758) 157-158 (v 2757) 227-228 (v 2760) 297-298 (v 2760) 367-368 (v 2758) 437-438 (v 2758) 507-508 (v 2761) 577-578 (v 2760) 647-648 (v 2756) 717-718 (v 2760) 787-788 (v 2758) 857-858 (v 2756) 927-928 (v 2760) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 10 / 3, peaks around: 18-19 (v 2727) 88-89 (v 2727) 158-159 (v 2729) 228-229 (v 2728) 298-299 (v 2729) 368-369 (v 2729) 438-439 (v 2727) 508-509 (v 2728) 578-579 (v 2728) 648-649 (v 2730) 718-719 (v 2730) 788-789 (v 2729) 858-859 (v 2728) 928-929 (v 2729) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 10 / 4, peaks around: 17-18 (v 2573) 87-88 (v 2573) 157-158 (v 2572) 227-228 (v 2574) 297-298 (v 2574) 367-368 (v 2573) 437-438 (v 2574) 507-508 (v 2574) 577-578 (v 2574) 647-648 (v 2574) 717-718 (v 2575) 787-788 (v 2576) 857-858 (v 2574) 927-928 (v 2575) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 10 / 5, peaks around: 17-18 (v 2712) 87-88 (v 2711) 157-158 (v 2709) 227-228 (v 2710) 297-298 (v 2709) 367-368 (v 2713) 437-438 (v 2712) 507-508 (v 2712) 577-578 (v 2712) 647-648 (v 2710) 717-718 (v 2711) 787-788 (v 2711) 857-858 (v 2711) 927-928 (v 2712) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 10 / 6, peaks around: 
+ Estimated synch period = inf (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 10 / 7, peaks around: 17-18 (v 2724) 87-88 (v 2722) 157-158 (v 2722) 227-228 (v 2724) 297-298 (v 2725) 367-368 (v 2725) 437-438 (v 2721) 507-508 (v 2724) 577-578 (v 2725) 647-648 (v 2723) 717-718 (v 2723) 787-788 (v 2724) 857-858 (v 2721) 927-928 (v 2722) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 10 / 8, peaks around: 17-18 (v 2806) 87-88 (v 2807) 157-158 (v 2806) 227-228 (v 2807) 297-298 (v 2807) 367-368 (v 2808) 437-438 (v 2809) 507-508 (v 2807) 577-578 (v 2808) 647-648 (v 2806) 717-718 (v 2808) 787-788 (v 2806) 857-858 (v 2808) 927-928 (v 2808) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 10 / 9, peaks around: 16-17 (v 2537) 86-87 (v 2536) 156-157 (v 2536) 226-227 (v 2539) 296-297 (v 2534) 366-367 (v 2535) 436-437 (v 2538) 506-507 (v 2537) 576-577 (v 2536) 646-647 (v 2533) 716-717 (v 2537) 786-787 (v 2537) 856-857 (v 2536) 926-927 (v 2537) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 10 / 10, peaks around: 16-17 (v 2772) 86-87 (v 2772) 156-157 (v 2769) 226-227 (v 2768) 296-297 (v 2771) 366-367 (v 2772) 436-437 (v 2771) 506-507 (v 2769) 576-577 (v 2775) 646-647 (v 2766) 716-717 (v 2772) 786-787 (v 2771) 856-857 (v 2769) 926-927 (v 2773) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 10 / 11, peaks around: 17-18 (v 2787) 87-88 (v 2783) 157-158 (v 2783) 227-228 (v 2785) 297-298 (v 2785) 367-368 (v 2785) 437-438 (v 2786) 507-508 (v 2781) 577-578 (v 2786) 647-648 (v 2784) 717-718 (v 2786) 787-788 (v 2787) 857-858 (v 2784) 927-928 (v 2786) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 10 / 12, peaks around: 16-17 (v 2738) 86-87 (v 2736) 156-157 (v 2734) 226-227 (v 2736) 296-297 (v 2736) 366-367 (v 2737) 436-437 (v 2736) 506-507 (v 2736) 576-577 (v 2736) 646-647 (v 2736) 716-717 (v 2736) 786-787 (v 2739) 856-857 (v 2736) 926-927 (v 2738) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 10 / 13, peaks around: 17-18 (v 2776) 87-88 (v 2775) 157-158 (v 2774) 227-228 (v 2777) 297-298 (v 2776) 367-368 (v 2777) 437-438 (v 2774) 507-508 (v 2775) 577-578 (v 2776) 647-648 (v 2772) 717-718 (v 2775) 787-788 (v 2775) 857-858 (v 2772) 927-928 (v 2775) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 10 / 14, peaks around: 17-17 (v 2840) 87-87 (v 2839) 157-157 (v 2839) 227-227 (v 2840) 297-297 (v 2839) 367-367 (v 2841) 437-437 (v 2843) 507-507 (v 2840) 577-577 (v 2840) 647-647 (v 2840) 717-717 (v 2841) 787-787 (v 2842) 857-857 (v 2838) 927-927 (v 2840) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+main: MPD 12 -------------
+mpdSetAcqMode: Acquisition Mode = 0x2 (sample)
+mpdDELAY25_Set: start (12: 23 23)
+mpdDELAY25_Set: end
+mpdDAQ_Config : ReadoutConfig = 0x2
+mpdDAQ_Config : IOConfig = 0x1
+mpdDAQ_Config : Output buffer base address = 0x0 (0=no SDRAM)
+mpdDAQ_Config : Sdram base address = 0x0 (test only)
+SAMPLE test: 3fde (3fde) c021
+addr: 00003000 
+MPD/ADC : 12 / 1, peaks around: 46-47 (v 2884) 116-117 (v 2883) 186-187 (v 2884) 256-257 (v 2882) 326-327 (v 2885) 396-397 (v 2883) 466-467 (v 2887) 536-537 (v 2884) 606-607 (v 2884) 676-677 (v 2886) 746-747 (v 2884) 816-817 (v 2885) 886-887 (v 2884) 
+ Estimated synch period = 1.969231 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 12 / 2, peaks around: 45-46 (v 2813) 115-116 (v 2813) 185-186 (v 2812) 255-256 (v 2814) 325-326 (v 2813) 395-396 (v 2812) 465-466 (v 2813) 535-536 (v 2815) 605-606 (v 2815) 675-676 (v 2814) 745-746 (v 2814) 815-816 (v 2814) 885-886 (v 2814) 
+ Estimated synch period = 1.969231 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 12 / 3, peaks around: 46-47 (v 2693) 116-117 (v 2694) 186-187 (v 2694) 256-257 (v 2696) 326-327 (v 2693) 396-397 (v 2694) 466-467 (v 2690) 536-537 (v 2693) 606-607 (v 2693) 676-677 (v 2693) 746-747 (v 2696) 816-817 (v 2697) 886-887 (v 2695) 
+ Estimated synch period = 1.969231 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 12 / 4, peaks around: 45-46 (v 2512) 115-116 (v 2513) 185-186 (v 2513) 255-256 (v 2513) 325-326 (v 2513) 395-396 (v 2513) 465-466 (v 2513) 535-536 (v 2513) 605-606 (v 2517) 675-676 (v 2513) 745-746 (v 2513) 815-816 (v 2516) 885-886 (v 2515) 
+ Estimated synch period = 1.969231 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 12 / 6, peaks around: 46-47 (v 2765) 116-117 (v 2764) 186-187 (v 2764) 256-257 (v 2763) 326-327 (v 2763) 396-397 (v 2766) 466-467 (v 2762) 536-537 (v 2764) 606-607 (v 2767) 676-677 (v 2766) 746-747 (v 2768) 816-817 (v 2765) 886-887 (v 2768) 
+ Estimated synch period = 1.969231 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 12 / 7, peaks around: 45-46 (v 2784) 115-116 (v 2785) 185-186 (v 2782) 255-256 (v 2781) 325-326 (v 2783) 395-396 (v 2785) 465-466 (v 2785) 535-536 (v 2784) 605-606 (v 2785) 675-676 (v 2783) 745-746 (v 2787) 815-816 (v 2785) 885-886 (v 2783) 
+ Estimated synch period = 1.969231 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 12 / 8, peaks around: 46-47 (v 2760) 116-117 (v 2763) 186-187 (v 2760) 256-257 (v 2760) 326-327 (v 2760) 396-397 (v 2762) 466-467 (v 2762) 536-537 (v 2762) 606-607 (v 2763) 676-677 (v 2762) 746-747 (v 2763) 816-817 (v 2763) 886-887 (v 2762) 
+ Estimated synch period = 1.969231 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 12 / 9, peaks around: 45-46 (v 2547) 115-116 (v 2547) 185-186 (v 2544) 255-256 (v 2548) 325-326 (v 2547) 395-396 (v 2546) 465-466 (v 2547) 535-536 (v 2546) 605-606 (v 2547) 675-676 (v 2545) 745-746 (v 2545) 815-816 (v 2547) 885-886 (v 2545) 
+ Estimated synch period = 1.969231 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 12 / 10, peaks around: 45-46 (v 2772) 115-116 (v 2771) 185-186 (v 2770) 255-256 (v 2772) 325-326 (v 2771) 395-396 (v 2770) 465-466 (v 2767) 535-536 (v 2772) 605-606 (v 2769) 675-676 (v 2771) 745-746 (v 2772) 815-816 (v 2772) 885-886 (v 2770) 
+ Estimated synch period = 1.969231 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 12 / 11, peaks around: 46-47 (v 2746) 116-117 (v 2748) 186-187 (v 2748) 256-257 (v 2748) 326-327 (v 2748) 396-397 (v 2744) 466-467 (v 2745) 536-537 (v 2747) 606-607 (v 2747) 676-677 (v 2747) 746-747 (v 2748) 816-817 (v 2748) 886-887 (v 2747) 
+ Estimated synch period = 1.969231 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 12 / 12, peaks around: 45-46 (v 2689) 115-116 (v 2691) 185-186 (v 2691) 255-256 (v 2693) 325-326 (v 2690) 395-396 (v 2690) 465-466 (v 2693) 535-536 (v 2690) 605-606 (v 2693) 675-676 (v 2692) 745-746 (v 2693) 815-816 (v 2693) 885-886 (v 2693) 
+ Estimated synch period = 1.969231 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 12 / 13, peaks around: 46-47 (v 2699) 116-117 (v 2702) 186-187 (v 2702) 256-257 (v 2701) 326-327 (v 2698) 396-397 (v 2702) 466-467 (v 2698) 536-537 (v 2701) 606-607 (v 2703) 676-677 (v 2700) 746-747 (v 2697) 816-817 (v 2701) 886-887 (v 2702) 
+ Estimated synch period = 1.969231 (us), expected (20MHz:1.8, 40MHz:0.9)
+main: MPD 14 -------------
+mpdSetAcqMode: Acquisition Mode = 0x2 (sample)
+mpdDELAY25_Set: start (14: 23 23)
+mpdDELAY25_Set: end
+mpdDAQ_Config : ReadoutConfig = 0x2
+mpdDAQ_Config : IOConfig = 0x1
+mpdDAQ_Config : Output buffer base address = 0x0 (0=no SDRAM)
+mpdDAQ_Config : Sdram base address = 0x0 (test only)
+SAMPLE test: 7fff (7fff) 8000
+addr: 00003000 
+MPD/ADC : 14 / 0, peaks around: 40-41 (v 2728) 110-111 (v 2727) 180-181 (v 2726) 250-251 (v 2727) 320-321 (v 2725) 390-391 (v 2727) 460-461 (v 2728) 530-531 (v 2729) 600-601 (v 2728) 670-671 (v 2728) 740-741 (v 2725) 810-811 (v 2727) 880-881 (v 2728) 950-951 (v 2728) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 14 / 1, peaks around: 41-42 (v 2838) 111-112 (v 2832) 181-182 (v 2833) 251-252 (v 2833) 321-322 (v 2832) 391-392 (v 2834) 461-462 (v 2835) 531-532 (v 2832) 601-602 (v 2834) 671-672 (v 2828) 741-742 (v 2832) 811-812 (v 2835) 881-882 (v 2832) 951-952 (v 2835) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 14 / 2, peaks around: 40-41 (v 2775) 110-111 (v 2775) 180-181 (v 2773) 250-251 (v 2773) 320-321 (v 2776) 390-391 (v 2777) 460-461 (v 2777) 530-531 (v 2772) 600-601 (v 2777) 670-671 (v 2772) 740-741 (v 2772) 810-811 (v 2775) 880-881 (v 2775) 950-951 (v 2775) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 14 / 3, peaks around: 41-42 (v 2740) 111-112 (v 2739) 181-182 (v 2740) 251-252 (v 2740) 321-322 (v 2741) 391-392 (v 2741) 461-462 (v 2741) 531-532 (v 2740) 601-602 (v 2744) 671-672 (v 2739) 741-742 (v 2740) 811-812 (v 2738) 881-882 (v 2741) 951-952 (v 2740) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 14 / 4, peaks around: 41-41 (v 2858) 111-111 (v 2862) 181-181 (v 2859) 251-251 (v 2860) 321-321 (v 2861) 391-391 (v 2858) 461-461 (v 2860) 531-531 (v 2858) 601-601 (v 2858) 671-671 (v 2859) 741-741 (v 2861) 811-811 (v 2861) 881-881 (v 2861) 951-951 (v 2859) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 14 / 5, peaks around: 40-41 (v 2743) 110-111 (v 2744) 180-181 (v 2744) 250-251 (v 2744) 320-321 (v 2746) 390-391 (v 2747) 460-461 (v 2745) 530-531 (v 2744) 600-601 (v 2747) 670-671 (v 2742) 740-741 (v 2743) 810-811 (v 2744) 880-881 (v 2745) 950-951 (v 2744) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 14 / 6, peaks around: 41-42 (v 2789) 111-112 (v 2788) 181-182 (v 2791) 251-252 (v 2791) 321-322 (v 2790) 391-392 (v 2790) 461-462 (v 2791) 531-532 (v 2791) 601-602 (v 2791) 671-672 (v 2791) 741-742 (v 2791) 811-812 (v 2792) 881-882 (v 2791) 951-952 (v 2788) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 14 / 7, peaks around: 40-41 (v 2784) 110-111 (v 2783) 180-181 (v 2783) 250-251 (v 2784) 320-321 (v 2782) 390-391 (v 2783) 460-461 (v 2783) 530-531 (v 2782) 600-601 (v 2784) 670-671 (v 2783) 740-741 (v 2785) 810-811 (v 2784) 880-881 (v 2784) 950-951 (v 2784) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 14 / 8, peaks around: 41-42 (v 2766) 111-112 (v 2767) 181-182 (v 2765) 251-252 (v 2762) 321-322 (v 2764) 391-392 (v 2764) 461-462 (v 2766) 531-532 (v 2765) 601-602 (v 2765) 671-672 (v 2764) 741-742 (v 2764) 811-812 (v 2766) 881-882 (v 2768) 951-952 (v 2766) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 14 / 9, peaks around: 40-41 (v 2513) 110-111 (v 2511) 180-181 (v 2511) 250-251 (v 2513) 320-321 (v 2511) 390-391 (v 2511) 460-461 (v 2512) 530-531 (v 2512) 600-601 (v 2513) 670-671 (v 2512) 740-741 (v 2512) 810-811 (v 2513) 880-881 (v 2513) 950-951 (v 2513) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 14 / 10, peaks around: 40-41 (v 2802) 110-111 (v 2804) 180-181 (v 2803) 250-251 (v 2803) 320-321 (v 2805) 390-391 (v 2804) 460-461 (v 2803) 530-531 (v 2803) 600-601 (v 2803) 670-671 (v 2803) 740-741 (v 2801) 810-811 (v 2805) 880-881 (v 2803) 950-951 (v 2805) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 14 / 11, peaks around: 41-42 (v 2789) 111-112 (v 2786) 181-182 (v 2792) 251-252 (v 2789) 321-322 (v 2787) 391-392 (v 2787) 461-462 (v 2787) 531-532 (v 2787) 601-602 (v 2790) 671-672 (v 2788) 741-742 (v 2788) 811-812 (v 2790) 881-882 (v 2790) 951-952 (v 2788) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 14 / 12, peaks around: 40-41 (v 2717) 110-111 (v 2714) 180-181 (v 2717) 250-251 (v 2714) 320-321 (v 2717) 390-391 (v 2717) 460-461 (v 2716) 530-531 (v 2716) 600-601 (v 2716) 670-671 (v 2714) 740-741 (v 2714) 810-811 (v 2716) 880-881 (v 2716) 950-951 (v 2717) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 14 / 13, peaks around: 41-42 (v 2808) 111-112 (v 2805) 181-182 (v 2808) 251-252 (v 2810) 321-322 (v 2805) 391-392 (v 2807) 461-462 (v 2808) 531-532 (v 2807) 601-602 (v 2809) 671-672 (v 2804) 741-742 (v 2805) 811-812 (v 2807) 881-882 (v 2808) 951-952 (v 2810) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+addr: 00003000 
+MPD/ADC : 14 / 14, peaks around: 41-41 (v 2903) 111-111 (v 2906) 181-181 (v 2904) 251-251 (v 2903) 321-321 (v 2905) 391-391 (v 2903) 461-461 (v 2904) 531-531 (v 2902) 601-601 (v 2905) 671-671 (v 2904) 741-741 (v 2904) 811-811 (v 2905) 881-881 (v 2901) 951-951 (v 2904) 
+ Estimated synch period = 1.828571 (us), expected (20MHz:1.8, 40MHz:0.9)
+Closing A16 Window
+Closing A24 Window
+Closing A32Blt Window
+Closing A32 Window
+Closing CRCSR Window
+Calling gefVmeClose
