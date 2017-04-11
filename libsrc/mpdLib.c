@@ -107,8 +107,8 @@ unsigned short fApvEnableMask[(MPD_MAX_BOARDS)+1];
 int nApv[(MPD_MAX_BOARDS)+1];
 extern GEF_VME_BUS_HDL vmeHdl;
 static int mpdSSPMode=0;
-static uint32_t mpdSSPFiberMask[(MPD_MAX_BOARDS)+1];
-static int mpdSSPFiberMap[(MPD_MAX_BOARDS)+1];
+static uint32_t mpdSSPFiberMask[(MPD_SSP_MAX_BOARDS)+1]; /* index = ssp#, value = fiber port mask of MPDs */
+static int mpdSSPFiberMaskUsed = 0;
 
 /* */
 #define MPD_VERSION_MASK 0xf00f 
@@ -141,18 +141,35 @@ static const uint8_t error_addr = 0x00;
 /*static*/ int  I2C_SendStop(int id);
 /*static*/ int  I2C_SendNack(int id);
 
+extern int sspID[MPD_SSP_MAX_BOARDS + 1];
+extern int nSSP;
 extern uint32_t sspMpdReadReg(int id, int impd, unsigned int reg);
 extern int sspMpdWriteReg(int id, int impd, unsigned int reg, unsigned int value);
 
 uint32_t
 mpdRead32(volatile uint32_t *reg)
 {
+  int issp, impd;
+  uint32_t newreg;
   uint32_t read=0;
 
   if(mpdSSPMode)
     {
-      uint32_t newreg = (uint32_t)reg-(uint32_t)MPDp[0];
-      read =sspMpdReadReg(0,0,newreg);
+      /* SSP stored in bits 29-31, mpd stored in bits 24-28 */
+      issp = (int)(((uint32_t)reg & 0xE0000000)>>29);
+      impd = (int)(((uint32_t)reg & 0x1F000000)>>24);
+
+      /* Check if this is in the mask */
+      if( (mpdSSPFiberMask[issp] & (1<<impd)) == 0)
+	{
+	  MPD_ERR("SSP %d, MPD %d, not initializated\n",
+		  issp, impd);
+	  return ERROR;
+	}
+	
+	newreg = (uint32_t)((uint32_t)reg & 0x00FFFFFF);
+
+      read = sspMpdReadReg(issp, impd, newreg);
     }
   else
     read = vmeRead32(reg);
@@ -164,10 +181,26 @@ mpdRead32(volatile uint32_t *reg)
 void
 mpdWrite32(volatile uint32_t *reg, uint32_t val)
 {
+  int issp, impd;
+  uint32_t newreg;
+  
   if(mpdSSPMode)
     {
-      uint32_t newreg = (uint32_t)reg-(uint32_t)MPDp[0];
-      sspMpdWriteReg(0,0,newreg,val);
+      /* SSP stored in bits 29-31, mpd stored in bits 24-28 */
+      issp = (int)(((uint32_t)reg & 0xE0000000)>>29);
+      impd = (int)(((uint32_t)reg & 0x1F000000)>>24);
+
+      /* Check if this is in the mask */
+      if( (mpdSSPFiberMask[issp] & (1<<impd)) == 0)
+	{
+	  MPD_ERR("SSP %d, MPD %d, not initializated\n",
+		  issp, impd);
+	  return;
+	}
+	
+	newreg = (uint32_t)((uint32_t)reg & 0x00FFFFFF);
+	
+	sspMpdWriteReg(issp , impd, newreg, val);
     }
   else
     vmeWrite32(reg, val);
@@ -182,8 +215,33 @@ mpdWrite32(volatile uint32_t *reg, uint32_t val)
  */
 
 int
-mpdSetSSPFiberMap_preInit(int id, int *ssp, int nmpd)
+mpdSetSSPFiberMap_preInit(int ssp, int mpdmask)
 {
+  int issp, impd;
+
+  if(ssp <= MPD_SSP_MAX_BOARDS)
+    {
+      printf("%s: ERROR: ssp (%d) out of range\n",
+	     __func__, ssp);
+      return ERROR;
+    }
+
+  if(mpdSSPFiberMaskUsed == 0)
+    {
+      /* Initialize fiber mask array */
+      memset(&mpdSSPFiberMask, 0, sizeof(mpdSSPFiberMask));
+    }
+  
+  mpdSSPFiberMask[ssp] = mpdmask;
+
+  /* Count up currently stored ports to use */
+  mpdSSPFiberMaskUsed = 0;
+  for(issp = 0; issp < nSSP; issp++)
+    {
+      for(impd = 0; impd < 32; impd++)
+	if(mpdSSPFiberMask[issp] & (1<<impd))
+	  mpdSSPFiberMaskUsed++;
+    }
   
   return OK;
 }
@@ -224,11 +282,10 @@ STATUS
 mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
 {
 
-  int ii,jj,impd, impd_disc,res, errFlag = 0;
+  int ii, issp, ibit, impd, impd_disc, res, errFlag = 0;
   int boardID = 0;
   int maxSlot = 1;
   int minSlot = 21;
-  int fiber_number=0;
   uint32_t magic_const = MPD_MAGIC_VALUE; 
   uint32_t rdata, laddr, laddr_inc;
   volatile struct mpd_struct *mpd=NULL;
@@ -236,7 +293,8 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
   int useList=0;
   int noFirmwareCheck=0;
   int noConfigFileCheck=0;
-
+  int *mpdssp_list=NULL, nlist=0;
+  
   /* Check if we are to exit when pointers are setup */
   noBoardInit=(iFlag&MPD_INIT_SKIP)?1:0;
   
@@ -255,8 +313,37 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
 
   if(mpdSSPMode)
     { // SSP Mode
-      mpdSSPFiberMask[0] = addr;
-      MPD_MSG("Using Fibermask (0x%08x) scan for MPDs\n",mpdSSPFiberMask[0]);
+      if(nSSP == 0)
+	{
+	  printf("%s: ERROR: Must initialize SSPs first\n",
+		 __func__);
+	  return ERROR;
+	}
+
+      if(mpdSSPFiberMaskUsed > 0)
+	{
+	  printf("%s: WARNING: May Overwrite previously stored SSP Fiber Masks\n",
+		 __func__);
+	}
+      else
+	{
+	  /* Initialize fiber mask array */
+	  memset(&mpdSSPFiberMask, 0, sizeof(mpdSSPFiberMask));
+	}
+      
+      if(addr)
+	{
+	  mpdSSPFiberMask[sspID[0]] = addr;
+	}
+
+      for(issp = 0; issp < nSSP; issp++)
+	{
+	  if(mpdSSPFiberMask[sspID[issp]])
+	    {
+	      MPD_MSG("Using SSP (%d) Fibermask (0x%08x) scan for MPDs\n",
+		      sspID[issp], mpdSSPFiberMask[sspID[issp]]);
+	    }
+	}
     }
   else
     { // VME Mode
@@ -300,6 +387,28 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
   impd = 0;
   impd_disc = 0;
 
+  if(mpdSSPMode)
+    {
+      /* Make a quick and dirty array to use in the next iteration
+	 over mpds up to nmpd */
+      mpdssp_list = (int *)malloc(nmpd*sizeof(int));
+      int value;
+      for(issp = 0; issp < nSSP; issp++)
+	{
+	  value = sspID[issp]<<28;
+	  for(ibit = 0; ibit < 32; ibit++)
+	    {
+	      if(mpdSSPFiberMask[issp] & (1<<ibit))
+		{
+		  mpdssp_list[nlist++] = value | (ibit<<24);
+		  MPD_DBG("Added SSP %2d MPD %2d\n",
+			  issp, ibit);
+		}
+	    }
+	}
+    }
+
+  
   for (ii=0;ii<nmpd;ii++) 
     {
       
@@ -307,6 +416,8 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
 
       if(mpdSSPMode)
 	{
+	  laddr_inc = mpdssp_list[ii];
+	  mpd = (struct mpd_struct *) laddr_inc;
 	  
 	  rdata = mpdRead32(&mpd->magic_value);
 	  res=1;
@@ -440,15 +551,15 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
 
       if(mpdSSPMode)
 	{
-	  printf("%s: MPD %2d at SSP Fiber Connection %d initialized\n",__FUNCTION__,
-		 impd, fiber_number);
+	  MPD_MSG("MPD %2d at SSP %d Fiber Connection %d initialized\n",
+		  impd, (laddr_inc & 0xE0000000)>>29, (laddr_inc & 0x1F000000)>>24);
 	}
       else
 	{
-	  printf("%s: MPD index %2d Slot #%2d at VME address 0x%08x (local 0x%08x)\n\n",__FUNCTION__,
-		 impd, boardID,
-		 (UINT32) MPDp[boardID]-mpdA24Offset,
-		 (UINT32) MPDp[boardID]);
+	  MPD_MSG("MPD index %2d Slot #%2d at VME address 0x%08x (local 0x%08x)\n\n",
+		  impd, boardID,
+		  (UINT32) MPDp[boardID]-mpdA24Offset,
+		  (UINT32) MPDp[boardID]);
 	}
 
       if(!noBoardInit)
