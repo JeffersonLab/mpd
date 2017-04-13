@@ -176,7 +176,7 @@ main(int argc, char *argv[])
     mpdAPV_Reset101(i);
 
     // <- MPD+APV initialization ends here
-
+    return 0;
   } // end loop on mpds
 
     /**********************************

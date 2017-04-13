@@ -16,14 +16,14 @@ default:
 
       trigger_latency = 0; // [clock 25ns, max=31] delay from arrival of the trigger to the MPD input and issue of the trigger to the cards (new in MPD Firmware 4.0)
 
-      trigger_number = 1;	// 0..15 0: disabled, 1: normal, >1: N trigger issued every 3 clock cycles, (that is number of samples)
+      trigger_number = 2;	// 0..15 0: disabled, 1: normal, >1: N trigger issued every 3 clock cycles, (that is number of samples)
 
       apv_Frequency  = 1; // Readout Frequency  : 0=20 MHz, 1=40 MHz
-      apv_SampleMode = 1; // Sampling Mode      : 0=3 samples, 1=1 sample / trigger
+      apv_SampleMode = 0; // Sampling Mode      : 0=3 samples, 1=1 sample / trigger
 
       input_0_level = 1; // LEMO input 0 digital level (1=NIM, 0=TTL)
       input_1_level = 0; // LEMO input 1 digital level (1=NIM, 0=TTL)
-      output_0_level = 1; // LEMO output 0 digital level (1=NIM, 0=TTL)
+      output_0_level = 0; // LEMO output 0 digital level (1=NIM, 0=TTL)
       output_1_level = 0; // LEMO putput 1 digital level (1=NIM, 0=TTL)
 
       en_trig1_P0 = false;    // Enable TRIG1 line on P0 connector
@@ -32,15 +32,15 @@ default:
       en_sync_P0 = false;     // Enable SYNC line on P0 connector
       en_sync_Front = true;   // Enable SYNC line on Front Panel IN1 lemo connector
       common_noise_subtraction=0; // 0 disabled, 1=mean, ...
-      event_building = 1; // 0 = disabled (if = 1, run.mode need to be set to process)
+      event_building = 1	 ; // 0 = disabled (if = 1, run.mode need to be set to process)
       
       event_per_block = 1; //1..255 valid only if event building = 1
-      use_sdram = 0; //0=disbled, valid only if event building = 1
-      fast_readout = 0; // 0:32bit BLT, 1:MBLT, 2:2eVME, 3:2eSST160, 4:2eSST267, 5:2eSST320; valid only if event building = 1
+      use_sdram = 1; //0=disbled, valid only if event building = 1
+      fast_readout = 1; // 0=32bit BLT. 1== 64 bit 2eVME(or 2esst). valid only if event building = 1
 
       common_offset=0; // 0..4095, offset
-      zero_level = 400;  // zero logic below this adc value
-      one_level = 2500;  // one logic above this adc value
+      zero_level = 700;  // zero logic below this adc value
+      one_level = 2300;  // one logic above this adc value
 
       ped_common = 0;     // pedestal value common to all channels, superceded by pedthr_file 
       thr_common = 0;     // threshold value common to all channels, superceded by pedthr_file 

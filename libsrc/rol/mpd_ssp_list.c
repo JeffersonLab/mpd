@@ -195,8 +195,8 @@ rocDownload()
     {
       sspCheckAddresses(sspSlot(issp));
       sspMpdDisable(sspSlot(issp), 0xffffffff);
-      sspMpdEnable(sspSlot(issp), 0x1);
-      sspMpdEnable(sspSlot(issp), 0x2);
+      sspMpdEnable(sspSlot(issp), 0x1); // (1<<0) 
+      sspMpdEnable(sspSlot(issp), 0x2); // (1<<1)
 
       sspEnableBusError(sspSlot(issp));
       sspSetBlockLevel(sspSlot(issp),BLOCKLEVEL);
@@ -220,12 +220,12 @@ rocDownload()
 
   // discover MPDs and initialize memory mapping
 
-
+  fnMPD = 2;
 // discover MPDs and initialize memory mapping
-  mpdInit(0x1,0,1,MPD_INIT_SSP_MODE | MPD_INIT_NO_CONFIG_FILE_CHECK);
+  mpdInit(0x1|0x2, 0, fnMPD, MPD_INIT_SSP_MODE | MPD_INIT_NO_CONFIG_FILE_CHECK);
 
 
-  fnMPD = mpdGetNumberMPD();
+ 
   //fnMPD = 1;
   if (fnMPD<=0) { // test all possible vme slot ?
     printf("ERR: no MPD discovered, cannot continue\n");
@@ -249,6 +249,7 @@ retry:
     printf("Try APV discovery and init on MPD slot %d\n",i);
     if (mpdAPV_Scan(i)<=0 && try_cnt < 10 ) { // no apd found, skip next 
 	try_cnt++;
+	printf("failing retrying\n");
 	goto retry;
     }
     if( try_cnt == 10 )
@@ -328,16 +329,16 @@ rocGo()
 /*Enable MPD*/
     for (k=0;k<fnMPD;k++) { // only active mpd set
       i = mpdSlot(k);
-
+      
       // mpd latest configuration before trigger is enabled
       mpdSetAcqMode(i, "process");
-
+      
       // load pedestal and thr default values
       mpdPEDTHR_Write(i);    
-    
+      
       // enable acq
       mpdDAQ_Enable(i);   
-
+      
       mpdTRIG_Enable(i);
       mpd_evt[i]=0;
     }  
@@ -348,7 +349,7 @@ rocGo()
   sspMpdPrintStatus(0);
   /* Use this info to change block level is all modules */
 
-  // tiSetBlockLimit(1);
+  tiSetBlockLimit(0); // 0: disables block limit
   tiStatus(0);
 }
 
@@ -363,7 +364,9 @@ rocEnd()
 
   tiStatus(0);
   //mpd close
-    mpdTRIG_Disable(i);
+  for (k=0;k<fnMPD;k++) { // only active mpd set
+    mpdTRIG_Disable(mpdSlot(k));
+  }
   //mpd close
   printf("rocEnd: Ended after %d blocks\n",tiGetIntCount());
   tiSetBlockLimit(0);
@@ -401,6 +404,7 @@ static int tcnt = 0;
   if(dCnt<=0)
     {
       printf("No data or error.  dCnt = %d\n",dCnt);
+      //tiSetBlockLimit(1);
     }
   else
     {
@@ -416,76 +420,86 @@ static int tcnt = 0;
  // vmeDmaConfig(2,2,0); 
   rtout=0;
   
-  for (k=0;k<fnMPD;k++) { // only active mpd set
-    i = mpdSlot(k);
-    mpdArmReadout(i); // prepare internal variables for readout
+/*   for (k=0;k<fnMPD;k++) { // only active mpd set */
+/*     i = mpdSlot(k); */
+/*     mpdArmReadout(i); // prepare internal variables for readout */
 
-    int idata;
-	
-    int aaa;
-    
-    //	printf("digit a number then enter to continue\n");
-    //	fscanf(stdin,"%d",&aaa);
-    ssp_timeout=0;
-    while ((sspBReady(i)==0) && (ssp_timeout<1000))
-      {
-	ssp_timeout++;
-	//	sspGetEbStatus(i, &bc, &wc, &ec);
-	//	printf("count %d Blockcount : %d Wordcount : %d Event count : %d\n",ssp_timeout,bc,wc,ec); 
-	//usleep(10);
-      }
-if(ssp_timeout > 12)
-        printf("ssp time = %d\n", ssp_timeout);
-
-    if (ssp_timeout == 1000) 
-      {
-	printf("*** SSP TIMEOUT ***\n");
-	data = mpdRead32(&MPDp[0]->ob_status.output_buffer_flag_wc);
+  int idata;
+  
+  int aaa;
+  
+  //	printf("digit a number then enter to continue\n");
+  //	fscanf(stdin,"%d",&aaa);
+  ssp_timeout=0;
+  while ((sspBReady(0)==0) && (ssp_timeout<1000))
+    {
+      ssp_timeout++;
+      //	sspGetEbStatus(i, &bc, &wc, &ec);
+      //	printf("count %d Blockcount : %d Wordcount : %d Event count : %d\n",ssp_timeout,bc,wc,ec); 
+      //usleep(10);
+    }
+  
+  if(ssp_timeout > 3)
+    {
+      printf("\nssp time = %d\n", ssp_timeout);
+      sspGetEbStatus(0, &blockcnt, &wordcnt, &eventcnt);
+      printf("SSP EB STATUS\nblockcnt = %d\nwordcnt = %d\neventcnt = %d\n",
+	     blockcnt, wordcnt, eventcnt);
+    }
+  
+  if (ssp_timeout == 1000) 
+    {
+      printf("*** SSP TIMEOUT ***\n");
+      
+      for (k=0;k<fnMPD;k++) { // only active mpd set
+	data = mpdRead32(&MPDp[mpdSlot(k)]->ob_status.output_buffer_flag_wc);
 	if( data & 0x20000000 )	// Evt_Fifo_Full
-	  printf ("FIFO full\n");
-	
-	sspGetEbStatus(0, &blockcnt, &wordcnt, &eventcnt);
-	printf("\nblockcnt = %d\nwordcnt = %d\neventcnt = %d\n",
-	       blockcnt, wordcnt, eventcnt);
+	  printf ("MPD %d FIFO full\n", mpdSlot(k));
       }
-    else
-      {
-	vmeDmaConfig(2,5,1);
-	int dCnt = sspReadBlock(0, dma_dabufp, SSP_MAX_EVENT_LENGTH>>2,1);
-unsigned int *pBuf = (unsigned int *)dma_dabufp;
-tcnt++;
-if(!(tcnt & 0x3ff))
-   printf("tcnt = %u, EV Header: %u, MPD HDR = %u\n", tcnt&0xFFF, LSWAP(pBuf[1])&0xFFF, LSWAP(pBuf[5])&0xFFF);
 
-	if(dCnt<=0)
-	  {
+      sspGetEbStatus(0, &blockcnt, &wordcnt, &eventcnt);
+      printf("SSP EB STATUS\nblockcnt = %d\nwordcnt = %d\neventcnt = %d\n",
+	     blockcnt, wordcnt, eventcnt);
+      //tiSetBlockLimit(1);
+    }
+  else
+    {
+      vmeDmaConfig(2,5,1);
+      int dCnt = sspReadBlock(0, dma_dabufp, SSP_MAX_EVENT_LENGTH>>2,1);
+      unsigned int *pBuf = (unsigned int *)dma_dabufp;
+      tcnt++;
+      if(!(tcnt & 0x3ff))
+	printf("tcnt = %u, EV Header: %u, MPD HDR = %u\n", tcnt&0xFFF, LSWAP(pBuf[1])&0xFFF, LSWAP(pBuf[5])&0xFFF);
+      
+      if(dCnt<=0)
+	{
 	  printf("No data or error.  dCnt = %d\n",dCnt);
-	  }
-	else
-	  {
-	    dma_dabufp += dCnt;
-	  }
-	
-
-
-	//printf("  dCnt = %d\n",dCnt);
-        dCnt=0;
-	for(idata=0;idata<dCnt;idata++)
-	  {
-	    if((idata%5)==0) printf("\n\t");
-	    datao = (unsigned int)LSWAP(the_event->data[idata]);
-	    printf("  0x%08x ",datao);
-	    
-	    
-	    // 	if( (datao & 0x00E00000) == 0x00A00000 ) {
-	    // 	    mpd_evt[i]++;
-	    // 	    evt=mpd_evt[i];
-	    // 	}
-	// 	evt = (evt > mpd_evt[i]) ? mpd_evt[i] : evt; // evt is the smallest number of events of an MPD
-	  }
-	//printf("\n\n");
-      }
-  }
+	  tiSetBlockLimit(1);
+	}
+      else
+	{
+	  dma_dabufp += dCnt;
+	}
+      
+      
+      
+      //printf("  dCnt = %d\n",dCnt);
+      dCnt=0;
+      for(idata=0;idata<dCnt;idata++)
+	{
+	  if((idata%5)==0) printf("\n\t");
+	  datao = (unsigned int)LSWAP(the_event->data[idata]);
+	  printf("  0x%08x ",datao);
+	  
+	  
+	  // 	if( (datao & 0x00E00000) == 0x00A00000 ) {
+	  // 	    mpd_evt[i]++;
+	  // 	    evt=mpd_evt[i];
+	  // 	}
+	  // 	evt = (evt > mpd_evt[i]) ? mpd_evt[i] : evt; // evt is the smallest number of events of an MPD
+	}
+      //printf("\n\n");
+    }
   
   BANKCLOSE;
   tiSetOutputPort(0,0,0,0);

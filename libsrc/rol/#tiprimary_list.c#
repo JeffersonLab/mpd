@@ -1,3 +1,4 @@
+
 /*****************************************************************
  * 
  * tiprimary_list.c - "Primary" Readout list routines for tiprimary
@@ -21,12 +22,12 @@
 
 #define ROL_NAME__ "TIPRIMARY"
 #ifndef MAX_EVENT_LENGTH
-  /* Check if an older definition is used */
-  #ifdef MAX_SIZE_EVENTS
-    #define MAX_EVENT_LENGTH MAX_SIZE_EVENTS
-  #else
-    #define MAX_EVENT_LENGTH 10240
-  #endif /* MAX_SIZE_EVENTS */
+/* Check if an older definition is used */
+#ifdef MAX_SIZE_EVENTS
+#define MAX_EVENT_LENGTH MAX_SIZE_EVENTS
+#else
+#define MAX_EVENT_LENGTH 10240
+#endif /* MAX_SIZE_EVENTS */
 #endif /* MAX_EVENT_LENGTH */
 #ifndef MAX_EVENT_POOL
 /* Check if an older definition is used */

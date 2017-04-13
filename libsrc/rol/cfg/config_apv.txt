@@ -40,7 +40,7 @@ bus: // interface to the MPD
                                             // sub-ch 0, 1, 2, ... 7
           invert = true;
           pattern = "none";  // none, sync, deskew, ramp
-          clock_phase = 23;	 // 0..63 (0.5 ns step) time offset between
+          clock_phase = 31;	 // 0..63 (0.5 ns step) time offset between
                              // adc-clock and apv-clock
         },
         {
@@ -48,7 +48,7 @@ bus: // interface to the MPD
                                             // sub-ch 0, 1, 2, ... 7
           invert = true;
           pattern = "none"; // none, sync, deskew, ramp
-          clock_phase = 23;	 // 0..63 (0.5 ns step) time offset between adc-clock and apv-clock //
+          clock_phase = 43;	 // 0..63 (0.5 ns step) time offset between adc-clock and apv-clock //
         }
       );
     apv:
@@ -97,7 +97,7 @@ bus: // interface to the MPD
                                             // sub-ch 0, 1, 2, ... 7
           invert = true;
           pattern = "none";  // none, sync, deskew, ramp
-          clock_phase = 23;	 // 0..63 (0.5 ns step) time offset between
+          clock_phase = 38;	 // 0..63 (0.5 ns step) time offset between
                              // adc-clock and apv-clock
         },
         {
@@ -105,7 +105,7 @@ bus: // interface to the MPD
                                             // sub-ch 0, 1, 2, ... 7
           invert = true;
           pattern = "none"; // none, sync, deskew, ramp
-          clock_phase = 23;	 // 0..63 (0.5 ns step) time offset between adc-clock and apv-clock //
+          clock_phase = 44;	 // 0..63 (0.5 ns step) time offset between adc-clock and apv-clock //
         }
     );
     apv:

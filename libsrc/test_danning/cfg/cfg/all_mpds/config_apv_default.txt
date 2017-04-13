@@ -16,14 +16,14 @@ default:
 
       trigger_latency = 0; // [clock 25ns, max=31] delay from arrival of the trigger to the MPD input and issue of the trigger to the cards (new in MPD Firmware 4.0)
 
-      trigger_number = 1;	// 0..15 0: disabled, 1: normal, >1: N trigger issued every 3 clock cycles, (that is number of samples)
+      trigger_number = 2;	// 0..15 0: disabled, 1: normal, >1: N trigger issued every 3 clock cycles, (that is number of samples)
 
       apv_Frequency  = 1; // Readout Frequency  : 0=20 MHz, 1=40 MHz
-      apv_SampleMode = 1; // Sampling Mode      : 0=3 samples, 1=1 sample / trigger
+      apv_SampleMode = 0; // Sampling Mode      : 0=3 samples, 1=1 sample / trigger
 
       input_0_level = 1; // LEMO input 0 digital level (1=NIM, 0=TTL)
       input_1_level = 0; // LEMO input 1 digital level (1=NIM, 0=TTL)
-      output_0_level = 1; // LEMO output 0 digital level (1=NIM, 0=TTL)
+      output_0_level = 0; // LEMO output 0 digital level (1=NIM, 0=TTL)
       output_1_level = 0; // LEMO putput 1 digital level (1=NIM, 0=TTL)
 
       en_trig1_P0 = false;    // Enable TRIG1 line on P0 connector
