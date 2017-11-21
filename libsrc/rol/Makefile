@@ -66,6 +66,11 @@ event_list.so: event_list.c
 	@echo
 	${CC} ${CODA_CFLAGS} -o $@ $<
 
+%.c: %.crl GEN_source.h Makefile
+	@echo
+	@echo "Converting $< to $@"
+	@${CCRL} $<
+
 %.so: %.c Makefile
 	@echo
 	@echo "Building $@ from $<"

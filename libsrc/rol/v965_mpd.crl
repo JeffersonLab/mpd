@@ -1,0 +1,192 @@
+#  General User readout list
+#   For use with using a CAEN 965 QDC to trigger readout of MPD
+#
+#    Bryan Moffit, TJNAF 2013
+#
+
+readout list GEN_USER
+maximum 10240,512   # create 512 10240 byte buffers
+general readout
+
+# A24 Address for CAEN 965
+const TRIG_ADDR=0xA00000
+const ADC_ID=0
+
+extern int bigendian_out;
+
+begin download
+
+%%
+{
+  int trigchannels=0, coinc_level=0;
+#ifndef VXWORKSPPC
+  vmeOpenDefaultWindows();
+#endif
+
+#ifdef VXWORKSPPC
+  /* vxWorks (ROC) -> Linux (EB), bigendian_out = 0 */
+  bigendian_out = 0;
+#else
+  /* Linux (ROC) -> Linux (EB), bigendian_out = 1 */
+  bigendian_out = 1;
+#endif
+
+
+
+  /* Setup Address and data modes for DMA transfers
+   *   
+   *  vmeDmaConfig(addrType, dataType, sstMode);
+   *
+   *  addrType = 0 (A16)    1 (A24)    2 (A32)
+   *  dataType = 0 (D16)    1 (D32)    2 (BLK32) 3 (MBLK) 4 (2eVME) 5 (2eSST)
+   *  sstMode  = 0 (SST160) 1 (SST267) 2 (SST320)
+   */
+  vmeDmaConfig(1,3,0); 
+
+  c965Init(TRIG_ADDR,0,1,0);
+
+}
+%%
+
+
+  log inform "User Download Executed"
+
+end download
+   
+begin prestart
+
+  variable jj, adc_id
+  short buf;
+
+  log inform "Entering User Prestart"
+
+  init trig source GEN
+  link async trig source GEN 1 to usrtrig and usrtrig_done
+  event type 1 then read GEN 1
+
+%%
+{
+  /* Setup ADCs (no sparcification, enable berr for block reads) */
+  c965Sparse(ADC_ID,0,0);
+  c965Clear(ADC_ID);
+  c965EnableBerr(ADC_ID);
+
+  c965Status(ADC_ID,0,0);
+}
+%%
+  log inform "User Prestart Executed"
+
+end prestart
+
+begin end
+
+  CDODISABLE(GEN,1,1);
+%%
+{
+  /* Disable modules here... print status */
+  c965Status(ADC_ID,0,0);
+}
+%%
+  log inform "User End Executed"
+
+end end
+
+begin pause
+
+  CDODISABLE(GEN,1,1);
+
+  log inform "User Pause Executed"
+
+end pause
+
+begin go
+ 
+  log inform "Entering User Go"
+ 
+%%
+{
+  int id=0; 
+  /* Enable Modules here, if needed */
+}
+%%
+  CDOENABLE(GEN,1,1);
+
+end go
+
+begin trigger usrtrig
+
+  rol->dabufp = (long *) 0;
+  open event type EVTYPE of BT_UI4
+ 
+
+%%
+{
+  /* Just a way to insert a word into the data stream */
+  *rol->dabufp++ = 0x12345678;
+
+  int iwait=0, maxwait=1000;
+  int status=0, nwords=0;
+  int itimeout=0;
+
+  while(itimeout<maxwait)
+    {
+      itimeout++;
+      status = c965Dready(ADC_ID);
+      if(status>0) break;
+    }
+  if(status > 0) 
+    {
+      nwords = c965ReadEvent(ADC_ID,rol->dabufp);
+      if(nwords<=0) 
+	{
+	  logMsg("ERROR: ADC Read Failed - Status 0x%x\n",nwords,0,0,0,0,0);
+	  *rol->dabufp++ = 0xda000bad;
+	  c965Clear(ADC_ID);
+	} 
+      else 
+	{
+	  rol->dabufp += nwords;
+	}
+
+    }
+  else
+    {
+      logMsg("ERROR: NO data in ADC  datascan = 0x%x, itimeout=%d\n",status,itimeout,0,0,0,0);
+      c965Clear(ADC_ID);
+    }
+
+  *rol->dabufp++ = LSWAP(0xd00dd00d); /* Example: Event EOB */
+
+
+}
+%%
+
+ close event
+
+end trigger
+
+begin done usrtrig
+
+end done
+
+begin done
+
+# Re-enable Trigger Source here
+ CDOACK(GEN,1,0);
+
+end done
+
+begin status
+
+end status
+
+%%
+#ifndef VXWORKSPPC
+__attribute__((destructor)) void end (void)
+{
+  printf("ROC Cleanup\n");
+  dmaPFreeAll();
+  vmeCloseDefaultWindows();
+}
+#endif
+%%
