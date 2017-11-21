@@ -1361,7 +1361,7 @@ int
 mpdAPV_Read(int id, uint8_t apv_addr, uint8_t reg_addr, uint8_t *val)
 {
   int success;
-  uint8_t rval;
+  uint8_t rval = 0;
 
   if(id==0) id=mpdID[0];
   if((MPDp[id]==NULL) || (id<0) || (id>21))
@@ -1632,7 +1632,7 @@ mpdApvBufferAlloc(int id, int ia)
     {
       MPD_ERR("id=%d, ia=%d\n\tgefVmeAllocDmaBuf returned 0x%x\n",id,ia,status);
     }
-  fApv[id][ia].fBuffer     = mapPtr;
+  fApv[id][ia].fBuffer     = (uint32_t *)mapPtr;
   fApv[id][ia].physMemBase = dmaHdl_to_PhysAddr(dma_hdl);
   fApv[id][ia].dmaHdl      = dma_hdl;
   // fApv[id][ia].fBuffer = (uint32_t *) malloc(fApv[id][ia].fBufSize*sizeof(uint32_t));
@@ -1642,9 +1642,9 @@ mpdApvBufferAlloc(int id, int ia)
 	  fApv[id][ia].fBufSize,
 	  id,
 	  ia,
-	  fApv[id][ia].dmaHdl,
-	  fApv[id][ia].physMemBase,
-	  fApv[id][ia].fBuffer);
+	  (uint32_t)fApv[id][ia].dmaHdl,
+	  (uint32_t)fApv[id][ia].physMemBase,
+	  (uint32_t)fApv[id][ia].fBuffer);
 #else
   fApv[id][ia].fBuffer = (uint32_t *) malloc(fApv[id][ia].fBufSize*sizeof(uint32_t));
   fApv[id][ia].fBi1 = 0;
@@ -2449,13 +2449,13 @@ mpdFIFO_ReadSingle(int id,
   MPD_DBG("dbuf addr = 0x%lx  fBuffer = 0x%lx  offset = 0x%lx\n",
   	  (unsigned long)dbuf, (unsigned long)fApv[id][k].fBuffer, (unsigned long)offset);
 
-  vmeAdrs = &MPDp[id]->ApvDaq.Data_Ch[channel][0];
+  vmeAdrs = (uint32_t)&MPDp[id]->ApvDaq.Data_Ch[channel][0];
   retVal = vmeDmaSendPhys(fApv[id][k].physMemBase+offset,vmeAdrs,(size<<2));
   if(retVal != 0)
     {
       MPD_ERR("ERROR in DMA transfer Initialization (returned 0x%x)\n",retVal);
       MPD_ERR("  id=%d  channel=%d  physMemBase = 0x%08x\n",
-	      id,channel,fApv[id][k].physMemBase);
+	      id,channel,(uint32_t)fApv[id][k].physMemBase);
       *wrec=0;
       MPDUNLOCK;
       return(retVal);
@@ -2917,7 +2917,7 @@ mpdFIFO_ReadAll(int id, int *timeout, int *global_fifo_error) {
   unsigned int k;
   int sample_left;
 
-  int nread, err;
+  int nread, err = OK;
 
 
    if((MPDp[id]==NULL) || (id<0) || (id>21))
@@ -2949,11 +2949,14 @@ mpdFIFO_ReadAll(int id, int *timeout, int *global_fifo_error) {
 	    MPD_ERR("MPD/APV(i2c)/(adc) = %d/%d, no space in memory buffer adc=%d\n",id, k, fApv[id][k].adc);
 	}
 
-	if ((err == ERROR) || (nread == 0)) *timeout++; // timeout
+	if ((err == ERROR) || (nread == 0))
+	  (*timeout)++;
 
-       	int n = mpdApvGetBufferSample(id,k);
-
-	//if(*global_fifo_error==0){MPD_DBG("MPD: %d APV_idx= %d, ADC_FIFO= %d, word read= %d, event/sample read= %d, error=%d\n",id, k,fApv[id][k].adc,nread ,n, *global_fifo_error);}
+       	/* int n = mpdApvGetBufferSample(id,k); */
+	/* if(*global_fifo_error==0) */
+	/*   { */
+	/*     MPD_DBG("MPD: %d APV_idx= %d, ADC_FIFO= %d, word read= %d, event/sample read= %d, error=%d\n",id, k,fApv[id][k].adc,nread ,n, *global_fifo_error); */
+	/*   } */
 
 	sample_left += mpdApvGetSampleLeft(id, k);
 
