@@ -2,7 +2,7 @@
 #define __MPDLIB__
 /******************************************************************************
  *
- *  mpdLib.h  
+ *  mpdLib.h
  *             - Driver library header file for the MultiPurpose
  *             Digitizer (MPD) using a VxWorks 5.5 (PPC) or Linux
  *             2.6.18 (Intel) or later based single board computer.
@@ -13,7 +13,8 @@
  *
  */
 
-#include "stdio.h"
+#include <stdio.h>
+#include "gef/gefcmn_vme.h"
 #define MPD_BOARD_ID       0x12345678
 #define MPD_MAX_BOARDS             21
 //#define MPD_MAX_APV                16
@@ -43,10 +44,10 @@
 
 #define DAQ_FIFO_SIZE	1024
 
-#define MPD_MSG(format, ...) {printf("%s: ",__FUNCTION__); printf(format, ## __VA_ARGS__);} 
-#define MPD_DUM(format, ...) {printf("%s: ",__FUNCTION__); printf(format, ## __VA_ARGS__);} 
-#define MPD_DBG(format, ...) {printf("%s: DEBUG: ",__FUNCTION__); printf(format, ## __VA_ARGS__);} 
-#define MPD_ERR(format, ...) {fprintf(stderr,"%s: ERROR: ",__FUNCTION__); fprintf(stderr,format, ## __VA_ARGS__);} 
+#define MPD_MSG(format, ...) {printf("%s: ",__FUNCTION__); printf(format, ## __VA_ARGS__);}
+#define MPD_DUM(format, ...) {printf("%s: ",__FUNCTION__); printf(format, ## __VA_ARGS__);}
+#define MPD_DBG(format, ...) {printf("%s: DEBUG: ",__FUNCTION__); printf(format, ## __VA_ARGS__);}
+#define MPD_ERR(format, ...) {fprintf(stderr,"%s: ERROR: ",__FUNCTION__); fprintf(stderr,format, ## __VA_ARGS__);}
 
 
 struct mpd_i2c_control_struct
@@ -56,8 +57,8 @@ struct mpd_i2c_control_struct
   volatile uint32_t Control; ///* 0x0008 */
   volatile uint32_t TxRx; ///* 0x000C */
   volatile uint32_t CommStat;// /* 0x0010 */
-  uint32_t blank0; ///* 0x0014 */ 
-  uint32_t blank1; ///* 0x0018 */ 
+  uint32_t blank0; ///* 0x0014 */
+  uint32_t blank1; ///* 0x0018 */
   volatile uint32_t ApvReset;///* 0x001C */
   // /* 0x0020 */
 };
@@ -136,7 +137,7 @@ struct mpd_struct_csr
   volatile uint32_t revisionTime[4];
 };
 
-struct mpd_struct 
+struct mpd_struct
 {
   /* 0x00000000 */ volatile uint32_t            SdramFifo[(0x01000000-0x0)>>2];
   /* 0x01000000 */ volatile uint32_t            AdcConfig;
@@ -162,7 +163,7 @@ typedef struct apvparm_struct // actually a structure
   uint8_t i2cAddr;
 
   short enabled; // if 0 card is disabled
-  
+
   // config settings
   short i2c;
   short adc;
@@ -191,8 +192,8 @@ typedef struct apvparm_struct // actually a structure
    * 7       Not Used
    * 6       Not Used
    * 5       Preamp Pol.     Non-Inverting   Inverting
-   * 4       Read-out Freq.  20MHz           40MHz 
-   * 3       Read-out Mode   Deconvolution   Peak  
+   * 4       Read-out Freq.  20MHz           40MHz
+   * 3       Read-out Mode   Deconvolution   Peak
    * 2       Calibr. Inhibit OFF             ON
    * 1       Trigger Mode    3-sample        1-sample
    * 0       Analogue Bias   OFF             ON
@@ -326,7 +327,7 @@ int  mpdLM95235_Read(int id, double *core_t, double *air_t);
 
 /* service methods */
 int mpdGetNumberAPV(int id); // get number of apv in config file
-void mpdSetNumberAPV(int id, uint16_t v); // set number of apv in config file 
+void mpdSetNumberAPV(int id, uint16_t v); // set number of apv in config file
 int mpdGetNumberConfiguredAPV(int id); // return number of apv properly configured by the hardware
 
 /* I2C methods */
@@ -337,11 +338,11 @@ int  mpdGetI2CMaxRetry(int id);
 
 int  mpdI2C_ApvReset(int id);
 int  mpdI2C_Init(int id);
-int  mpdI2C_ByteWrite(int id, uint8_t dev_addr, uint8_t int_addr, 
+int  mpdI2C_ByteWrite(int id, uint8_t dev_addr, uint8_t int_addr,
 		 int ndata, uint8_t *data);
-int  mpdI2C_ByteRead(int id, uint8_t dev_addr, uint8_t int_addr, 
+int  mpdI2C_ByteRead(int id, uint8_t dev_addr, uint8_t int_addr,
 		int ndata, uint8_t *data);
-int  mpdI2C_ByteWriteRead(int id, uint8_t dev_addr, uint8_t int_addr, 
+int  mpdI2C_ByteWriteRead(int id, uint8_t dev_addr, uint8_t int_addr,
 			  int ndata, uint8_t *data);
 int  mpdI2C_ByteRead1(int id, uint8_t dev_addr, uint8_t *data);
 
@@ -417,8 +418,8 @@ int  mpdADS5281_Normal(int id, int adc);
 int  mpdADS5281_Sync(int id, int adc);
 int  mpdADS5281_Deskew(int id, int adc);
 int  mpdADS5281_Ramp(int id, int adc);
-int  mpdADS5281_SetGain(int id, int adc, 
-			int gain0, int gain1, int gain2, int gain3, 
+int  mpdADS5281_SetGain(int id, int adc,
+			int gain0, int gain1, int gain2, int gain3,
 			int gain4, int gain5, int gain6, int gain7);
 
 // histogramming methods
@@ -432,8 +433,8 @@ int  mpdHISTO_Read(int id, int ch, uint32_t *histogram);
 // Daq-Readout methods
 int  mpdFIFO_ReadSingle(int id, int k, int channel, uint32_t *dbuf, int *wrec, int max_retry);
 int  mpdFIFO_ReadSingle0(int id, int channel, int blen, uint32_t *event, int *nread);
-int  mpdFIFO_Samples(int id, 
-		     int channel, 
+int  mpdFIFO_Samples(int id,
+		     int channel,
 		     uint32_t *event, int *nread, int max_samples, int *err);
 int  mpdFIFO_IsSynced(int id, int channel, int *synced);
 int  mpdFIFO_AllSynced(int id, int *synced);
@@ -475,7 +476,7 @@ void mpdSetPedThrCommon(int id, int p, int t);
 int  mpdGetPedCommon(int id);
 int  mpdGetThrCommon(int id);
 
-int mpdGetNumberMPD(); 
+int mpdGetNumberMPD();
 
 #ifdef NOTDONE
 int  mpdReadPedThr(int id, std::string pname);

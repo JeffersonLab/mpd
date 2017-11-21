@@ -1,7 +1,7 @@
 /*************************************************************************
  *
- *  mpd_list.c - Library of routines for readout and buffering of 
- *                events using a JLAB Trigger Interface V3 (TI) with 
+ *  mpd_list.c - Library of routines for readout and buffering of
+ *                events using a JLAB Trigger Interface V3 (TI) with
  *                a Linux VME controller.
  *
  */
@@ -15,8 +15,8 @@
 #define TI_READOUT TI_READOUT_EXT_POLL  /* Poll for available data, external triggers */
 #define TI_ADDR    (21<<19)          /* GEO slot 21 */
 
-/* Decision on whether or not to readout the TI for each block 
-   - Comment out to disable readout 
+/* Decision on whether or not to readout the TI for each block
+   - Comment out to disable readout
 */
 #define TI_DATA_READOUT
 
@@ -94,14 +94,14 @@ rocDownload()
 {
 
   /* Setup Address and data modes for DMA transfers
-   *   
+   *
    *  vmeDmaConfig(addrType, dataType, sstMode);
    *
    *  addrType = 0 (A16)    1 (A24)    2 (A32)
    *  dataType = 0 (D16)    1 (D32)    2 (BLK32) 3 (MBLK) 4 (2eVME) 5 (2eSST)
    *  sstMode  = 0 (SST160) 1 (SST267) 2 (SST320)
    */
-  vmeDmaConfig(2,5,1); 
+  vmeDmaConfig(2,5,1);
 
   /*****************
    *   TI SETUP
@@ -123,7 +123,7 @@ rocDownload()
   /* Set needed TS input bits */
   tiEnableTSInput( TI_TSINPUT_1 );
 
-  /* Load the trigger table that associates 
+  /* Load the trigger table that associates
      pins 21/22 | 23/24 | 25/26 : trigger1
      pins 29/30 | 31/32 | 33/34 : trigger2
   */
@@ -171,7 +171,7 @@ rocDownload()
   if (fnMPD<=0) { // test all possible vme slot ?
     printf("ERR: no MPD discovered, cannot continue\n");
     return -1;
-  } 
+  }
 
   printf(" MPD discovered = %d\n",fnMPD);
 
@@ -185,10 +185,10 @@ rocDownload()
     }
 
     printf("Try APV discovery and init on MPD slot %d\n",i);
-    if (mpdAPV_Scan(i)<=0) { // no apd found, skip next 
+    if (mpdAPV_Scan(i)<=0) { // no apd found, skip next
         continue;
     }
-      
+
     // board configuration (APV-ADC clocks phase)
     printf("Do DELAY setting on MPD slot %d\n",i);
     mpdDELAY25_Set(i, mpdGetAdcClockPhase(i,0), mpdGetAdcClockPhase(i,1));
@@ -207,7 +207,7 @@ rocDownload()
       }
     }
 
-    // configure adc on MPD 
+    // configure adc on MPD
     printf("Configure ADC on MPD slot %d\n",i);
     mpdADS5281_Config(i);
 
@@ -259,12 +259,12 @@ rocGo()
       mpdSetAcqMode(i, "event");
 
       // load pedestal and thr default values
-      mpdPEDTHR_Write(i);    
-    
-      // enable acq
-      mpdDAQ_Enable(i);      
+      mpdPEDTHR_Write(i);
 
-    }  
+      // enable acq
+      mpdDAQ_Enable(i);
+
+    }
   /* Get the current block level */
   BLOCKLEVEL = tiGetCurrentBlockLevel();
   printf("%s: Current Block Level = %d\n",
@@ -288,7 +288,7 @@ rocEnd()
     mpdTRIG_Disable(i);
   //mpd close
   printf("rocEnd: Ended after %d blocks\n",tiGetIntCount());
-  
+
 }
 
 /****************************************
@@ -311,7 +311,7 @@ rocTrigger(int arg)
 #ifdef TI_DATA_READOUT
   BANKOPEN(4,BT_UI4,0);
 
-  vmeDmaConfig(2,5,1); 
+  vmeDmaConfig(2,5,1);
   dCnt = tiReadBlock(dma_dabufp,8+(3*BLOCKLEVEL),1);
   if(dCnt<=0)
     {
@@ -328,14 +328,14 @@ rocTrigger(int arg)
     // open out file
 
  BANKOPEN(10,BT_UI4,0);
- vmeDmaConfig(2,2,0); 
+ vmeDmaConfig(2,2,0);
   rtout=0;
 
   for (k=0;k<fnMPD;k++) { // only active mpd set
     i = mpdSlot(k);
     mpdArmReadout(i); // prepare internal variables for readout
   }
-  
+
   rdone = 1;
 
   for (kk=0;kk<fnMPD;kk++) { // only active mpd set
@@ -343,48 +343,50 @@ rocTrigger(int arg)
      do
        { // wait for data in MPD
      	 rdone = mpdFIFO_ReadAll(i,&rtout,&error_count);
-	 printf(" fn: %d Evt: %d Rdone/ Tout/ error = %d %d %d\n", kk,evt,rdone, rtout, error_count);
+	 //printf(" fn: %d Evt: %d Rdone/ Tout/ error = %d %d %d\n", kk,evt,rdone, rtout, error_count);
 	 rtout++;
        }while((rdone!=1||error_count!=0)&&(rtout < MPD_TIMEOUT)); // timeout can be changed
-  
+
   if ((error_count != 0) || (rtout > MPD_TIMEOUT)) { // reset MPD on error or timeout
 	  printf("%s: ERROR in readout, clear fifo\n",__FUNCTION__);
 	  mpdFIFO_ClearAll(i);
 	  mpdTRIG_Enable(i);
 	  }
-    
-    if(rdone!=0&&error_count==0)
+
+    if(rdone==1&&error_count==0)
       { // data need to be written on file
 
 
 	for (j=0; j < mpdGetNumberAPV(i); j++) // loop on APV (ADC channels)
-	  { 
+	  {
 	    //CODA buf_MPDNumber
 	    *dma_dabufp=LSWAP(i |MPD_TAG);
-	    dma_dabufp++;		
+	    dma_dabufp++;
 	    //CODA buf_MPDNumber
 
 	    //CODA buf_apvNumber
 	    v_data = mpdApvGetAdc(i,j);
 	    *dma_dabufp=LSWAP(v_data| ADC_TAG);
-	    dma_dabufp++;		
+	    dma_dabufp++;
 	    //CODA buf_apvNumber
 	    k=0; // buffer element index
-	    v_data=mpdApvGetBufferSample(i,j);printf("number of sample:%d",v_data);
-	    for (h=0; h<mpdApvGetBufferSample(i,j); h++)// loop on samples 
+	    v_data=mpdApvGetBufferSample(i,j);//printf("number of sample:%d",v_data);
+	    for (h=0; h<mpdApvGetBufferSample(i,j); h++)// loop on samples
 	      { e_size=130;
 		e_head0 = mpdApvGetBufferElement(i, j, k);
 		k++;
 		//CODA buf_header
+		e_head0 = LSWAP(e_head0);
 		*dma_dabufp=LSWAP(e_head0 | HEADER_TAG);
-		dma_dabufp++;		
+		dma_dabufp++;
 		//CODA buf_header
 		for (m=0;m<e_size-2;m++)
 		  {
 		    //CODA buf_128Channel
 		    v_data=mpdApvGetBufferElement(i,j,k);
-		    *dma_dabufp=LSWAP((v_data & 0xfff) | DATA_TAG);
-		    dma_dabufp++;		
+		    v_data = LSWAP(v_data) & 0xFFFF;
+		    *dma_dabufp=LSWAP(v_data | DATA_TAG);
+		    dma_dabufp++;
 		    //CODA buf_128Channel
 		    k++;
 		  }
@@ -397,11 +399,11 @@ rocTrigger(int arg)
 	      }
 	    mpdApvShiftDataBuffer(i,j,k);
 	  } // end loop on apv
-	  
+
 	}
-    
+
     evt++;
-	  mpdFIFO_ClearAll(i);
+    //mpdFIFO_ClearAll(i);//removed
       }
  BANKCLOSE;
   tiSetOutputPort(0,0,0,0);
@@ -414,5 +416,5 @@ rocCleanup()
   int islot=0;
 
   printf("%s: Reset all FADCs\n",__FUNCTION__);
-  
+
 }

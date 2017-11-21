@@ -45,11 +45,11 @@ mpdConfigInit(char *confFileName)
     }
 
   config_init(&mpd_cfg);
-  
+
   /* Read the file. If there is an error, report it and exit. */
   if(! config_read_file(&mpd_cfg, confFileName))
     {
-      printf("%s: ERROR: %s:%d - %s\n", 
+      printf("%s: ERROR: %s:%d - %s\n",
 	     __FUNCTION__,config_error_file(&mpd_cfg),
 	     config_error_line(&mpd_cfg), config_error_text(&mpd_cfg));
       config_destroy(&mpd_cfg);
@@ -81,11 +81,11 @@ mpdConfigInit(char *confFileName)
 	     confFileName);
       return ERROR;
     }
-  
+
   nMPD = config_setting_length(mpd_set[0]);
 
   run_set[0] = config_lookup(&mpd_cfg,"run");
-  
+
   d_setting = config_lookup(&mpd_cfg,"default");
   bus_set[1]   = config_setting_get_member(d_setting,"bus");
   d_busset        = config_setting_get_elem(bus_set[1],0);
@@ -101,9 +101,9 @@ int
 mpdConfigLoad()
 {
   config_setting_t *mpdset[2]={NULL,NULL},
-    *adc_set[2]={NULL, NULL}, 
+    *adc_set[2]={NULL, NULL},
       *adcset[2]={NULL, NULL},
-	*apv_set[2]={NULL, NULL}, 
+	*apv_set[2]={NULL, NULL},
 	  *apvset[2]={NULL, NULL},
 	    *i2c_set[2]={NULL, NULL}; /* settings to iterate */
   int impd=0, iadc=0, iapv=0, igain=0;
@@ -117,7 +117,7 @@ mpdConfigLoad()
       mpdset[1] = config_setting_get_elem(mpd_set[1],0);
 
       slot = mpdReadSettingInt(mpdset, "rotary", 0);
-      
+
       printf("%s: Loading MPD idx= %2d rotary (slot) = %2d\n",
 	     __FUNCTION__,impd, slot);
 
@@ -134,11 +134,11 @@ mpdConfigLoad()
       mpdSetZeroLevel(slot, mpdReadSettingInt(mpdset, "zero_level", 0));
       mpdSetOneLevel(slot, mpdReadSettingInt(mpdset, "one_level", 0));
 
-      mpdSetTriggerMode(slot, 
+      mpdSetTriggerMode(slot,
       			mpdReadSettingInt(mpdset, "calib_latency", 0),
       			mpdReadSettingInt(mpdset, "trigger_number", 0));
 
-      
+
       mpdSetAcqMode(slot,
 		    (char *)mpdReadSettingString(run_set,"mode",0));
 
@@ -159,7 +159,7 @@ mpdConfigLoad()
       mpdSetChannelMark(slot,mpdReadSettingInt(mpdset, "channel_mark",0));
 
 
-      mpdSetInPath0(slot, 
+      mpdSetInPath0(slot,
 		    mpdReadSettingBool(mpdset, "en_trig1_P0",0),
 		    mpdReadSettingBool(mpdset, "en_trig2_P0",0),
 		    mpdReadSettingBool(mpdset, "en_trig_Front",0),
@@ -180,11 +180,11 @@ mpdConfigLoad()
       adc_set[1] = config_setting_get_member(mpdset[1],"adc");
 
       for(iadc=0; iadc<2; iadc++)
-	{    
-	  adcset[0] = config_setting_get_elem(adc_set[0],iadc); 
-	  adcset[1] = config_setting_get_elem(adc_set[1],0); 
+	{
+	  adcset[0] = config_setting_get_elem(adc_set[0],iadc);
+	  adcset[1] = config_setting_get_elem(adc_set[1],0);
 	  mpdSetAdcClockPhase(slot, iadc, mpdReadSettingInt(adcset,"clock_phase",0));
-	  
+
 	  for(igain=0; igain<8; igain++)
 	    {
 	      mpdSetAdcGain(slot, iadc, igain,
@@ -228,7 +228,7 @@ mpdConfigLoad()
       /* APV */
       int apv_freq=0, apv_smode=0, mode=0;
       int apv_count=0;
-      
+
       apv_freq  = mpdReadSettingInt(mpdset, "apv_Frequency",0);
       apv_smode = mpdReadSettingInt(mpdset, "apv_SampleMode",0);
 
@@ -236,7 +236,7 @@ mpdConfigLoad()
 	{
 	  apvset[0] = config_setting_get_elem(apv_set[0],iapv);
 	  apvset[1] = config_setting_get_elem(apv_set[1],0);
-	  
+
 	  if(mpdReadSettingInt(apvset, "i2c",0) < 0)
 	    continue;
 
@@ -295,10 +295,10 @@ mpdConfigLoad()
 	  mpdAddApv(slot, gApv);
 	  apv_count++;
 	}
-      
+
       printf("%s: %2d APV loaded in Slot=%d MPD settings\n",
 	     __FUNCTION__,apv_count,slot);
-      
+
     }
   return OK;
 }
@@ -365,7 +365,7 @@ mpdReadSettingInt(config_setting_t **setting, char *name, int index)
     //    printf(" %s = %d\n", name, rval);
     return rval;
   }
-  else 
+  else
     if(config_setting_lookup_int(setting[1], name, &rval)) {
       //      printf(" %s = %d (default)\n",name, rval);
       return rval;
@@ -393,7 +393,7 @@ mpdReadSettingBool(config_setting_t **setting, char *name, int index)
     //    printf(" %s = %d\n", name, rval);
     return rval;
   }
-  else 
+  else
     if(config_setting_lookup_bool(setting[1], name, &rval)) {
       //   printf(" %s = %d (default)\n",name, rval);
       return rval;
@@ -435,4 +435,3 @@ mpdReadSettingString(config_setting_t **setting, char *name, int index)
   return NULL;
 
 }
-
