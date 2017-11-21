@@ -88,7 +88,7 @@ all: echoarch mpdLib.o
 endif
 
 clean:
-	rm -f mpd*.o libmpd.{a,so} *~
+	rm -f mpd*.o mpd*.d libmpd.{a,so} *~
 
 echoarch:
 	@echo "Make for $(ARCH)"
@@ -119,6 +119,6 @@ install: libmpd.a libmpd.so
 	@cp -v $(PWD)/$< $(LINUXVME_LIB)/$<
 	@cp -v $(PWD)/$(<:%.a=%.so) $(LINUXVME_LIB)/$(<:%.a=%.so)
 	@cp -v ${PWD}/*Lib.h $(LINUXVME_INC)
-
+	@cp -v ${PWD}/mpdConfig.h $(LINUXVME_INC)
 endif
 
