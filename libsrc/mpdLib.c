@@ -196,13 +196,10 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
   int boardID = 0;
   int maxSlot = 1;
   int minSlot = 21;
-  int trigSrc=0, clkSrc=0, srSrc=0;
   uint32_t csrdata;
   uint32_t csr_const[9]={'C','R',0x08,0x00,0x30,0x00,0x03,0x09,0x04};
-  uint32_t rdata, laddr, laddr_inc, laddr_csr, a32addr, a16addr=0;
-  volatile struct mpd_struct *mpd;
+  uint32_t rdata, laddr, laddr_inc, laddr_csr, a32addr;
   volatile struct mpd_struct_csr *mpd_csr;
-  uint16_t sdata;
   int noBoardInit=0;
   int useList=0;
   int noFirmwareCheck=0;
@@ -401,6 +398,7 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
 	}
 #else
 
+      // FIXME: Replace OLDWAY with a vmeBusRead32 on ID or something.
 #ifdef OLDWAY
       res = vmeBusToLocalAdrs(0x09,(char *)a32addr,(char **)&laddr);
       if (res != 0) 
@@ -1946,7 +1944,7 @@ mpdDELAY25_Set(int id, int apv1_delay, int apv2_delay)
       return ERROR;
     }
 
-  printf("%s: start\n",__FUNCTION__);
+  printf("%s: start : set clock phase %d %d\n",__FUNCTION__,apv1_delay, apv2_delay);
 
   //      mpdI2C_ByteWrite(0xF0 , (apv2_delay & 0x3F) | 0x40, 0, &val);      // CR0: APV2 out
   mpdI2C_ByteWrite(id, 0xF0 , 0x40, 0, &val);    // CR0: APV2 out not delayed
@@ -1961,6 +1959,9 @@ mpdDELAY25_Set(int id, int apv1_delay, int apv2_delay)
   usleep(10000);
   //      mpdI2C_ByteWrite(0xF8 , (apv1_delay & 0x3F) | 0x40, 0, &val);      // CR4: APV1 out
   mpdI2C_ByteWrite(id, 0xF8 , 0x40, 0, &val);    // CR4: APV1 out not delayed
+  usleep(10000);
+
+  mpdI2C_ByteWrite(id, 0xFA , 0x40, 0, &val);    // resync DDL
   usleep(10000);
   mpdI2C_ByteWrite(id, 0xFA , 0x00, 0, &val);    // GCR (40 MHz)
   usleep(10000);
@@ -2423,19 +2424,13 @@ mpdFIFO_ReadSingle(int id,
   nwords = 0;
   
   i = 0;
-  /*
-  while( (nwords !=780 ) && (i <= max_retry) ) {
-    if( max_retry > 0 ) i++;
-    success = mpdFIFO_GetNwords(id, channel, &nwords);
-    if( success != OK ) return success;
-  }
   
+  // FIXME: MPD_DBG
   //printf("%s: Number of words to be read %d\n",__FUNCTION__,nwords);
-  if(nwords!=780){return ERROR;}
-  */
-  //printf("%s: number of words to be read %d\n",__FUNCTION__,nwords);
-  size = 780;//(nwords < wmax) ? nwords : wmax;
-  
+  nwords = 780;
+
+  size = (nwords < wmax) ? nwords : wmax;  
+
   //MPD_DBG("fifo ch = %d, words in fifo= %d, retries= %d (max %d)\n",channel, nwords,i, max_retry);
   //MPD_DBG("  id=%d  channel=%d  physMemBase = 0x%08x   dbuf = 0x%08x\n\n",
   //	  id,channel,fApv[id][0].physMemBase, &dbuf[0]);
@@ -2497,7 +2492,7 @@ mpdFIFO_ReadSingle(int id,
 	  printf("0xx%08x   ",LSWAP(fApv[id][k].fBuffer[iword]));
 #endif
 	  /* Byte swap necessary for block transfers */
-	  fApv[id][k].fBuffer[iword] = LSWAP(fApv[id][k].fBuffer[iword]);
+	  //  fApv[id][k].fBuffer[iword] = LSWAP(fApv[id][k].fBuffer[iword]);
 	}
 #ifdef DEBUG_BLOCKREAD
       printf("\n");
@@ -2944,7 +2939,7 @@ mpdFIFO_ReadAll(int id, int *timeout, int *global_fifo_error) {
 	nread = mpdApvGetBufferAvailable(id, k);
 	// printf(" EC: card %d %d buffer size available = %d\n",id, k,nread);
 	if (nread>0) { // space in memory buffer
-	  err = mpdFIFO_ReadSingle(id, k,fApv[id][k].adc,mpdApvGetBufferPWrite(id, k), &nread, 100); 
+	  err = mpdFIFO_ReadSingle(id, k,fApv[id][k].adc,mpdApvGetBufferPWrite(id, k), &nread, 10); 
 
 	  mpdApvIncBufferPointer(id, k, nread);
 
