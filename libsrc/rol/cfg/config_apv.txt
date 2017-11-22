@@ -7,7 +7,7 @@ time = "12:00:00";   // time format: hh:mm:ss
 
 // @includeDir ...
 
-@include "/home/daq/ben/mpd/libsrc/rol/cfg/config_apv_default.txt"
+@include "cfg/config_apv_default.txt"
 
 bus: // interface to the MPD
 (
