@@ -11,9 +11,6 @@
 
 static int GEN_handlers,GENflag;
 static int GEN_isAsync;
-static unsigned int *GENPollAddr = NULL;
-static unsigned int GENPollMask;
-static unsigned int GENPollValue;
 static unsigned long GEN_prescale = 1;
 static unsigned long GEN_count = 0;
 
@@ -47,7 +44,7 @@ GEN_int_handler()
   void gentriglink();       link interrupt with trigger
   void gentenable();        enable trigger
   void gentdisable();       disable trigger
-  char genttype();          return trigger type 
+  char genttype();          return trigger type
   int  genttest();          test for trigger  (POLL Routine)
   ------------------------------------------------------------------------------*/
 
@@ -65,11 +62,11 @@ gentriglink(int code, VOIDFUNCPTR isr)
 
   /* Connect the ISR */
 #ifdef VXWORKSPPC
-  if(intDisconnect((int)(GEN_VEC)) != 0) 
+  if(intDisconnect((int)(GEN_VEC)) != 0)
     {
       printf("ERROR disconnecting Interrupt\n");
     }
-  if(intConnect(GEN_VEC,isr,1) != 0) 
+  if(intConnect(GEN_VEC,isr,1) != 0)
     {
       printf("ERROR in intConnect()\n");
     }
@@ -78,7 +75,7 @@ gentriglink(int code, VOIDFUNCPTR isr)
     {
       printf("ERROR disconnecting Interrupt\n");
     }
-  if(vmeIntConnect(GEN_VEC,GEN_LEVEL,isr,1) != OK) 
+  if(vmeIntConnect(GEN_VEC,GEN_LEVEL,isr,1) != OK)
     {
       printf("ERROR in intConnect()\n");
     }
@@ -88,11 +85,11 @@ gentriglink(int code, VOIDFUNCPTR isr)
 
 }
 
-static void 
+static void
 gentenable(int code, int intMask)
 {
 
-  
+
 
 #ifdef POLLING_MODE
   GENflag = 1;
@@ -104,7 +101,7 @@ gentenable(int code, int intMask)
 #endif
 }
 
-static void 
+static void
 gentdisable(int code, int intMask)
 {
 
@@ -115,35 +112,37 @@ gentdisable(int code, int intMask)
 #endif
 }
 
-static void 
+static void
 gentack(int code, int val)
 {
   /* Need some sort of acknowledge here */
 }
 
 
-static unsigned long 
+static unsigned long
 genttype(int code)
 {
   return(1);
 }
 
-static int 
+static int
 genttest(int code)
 {
   unsigned int ret;
 
-  if((GENflag>0) && (GENPollAddr > 0)) {
-    GEN_count++;
-    
+  if(GENflag>0)
+    {
+      GEN_count++;
 
-    ret = c965Dready(0);
+      ret = c965Dready(0);
 
-    return ret;
+      return ret;
 
-  } else {
-    return(0);
-  }
+    }
+  else
+    {
+      return(0);
+    }
 }
 
 
@@ -184,4 +183,3 @@ genttest(int code)
 
 
 #endif
-
