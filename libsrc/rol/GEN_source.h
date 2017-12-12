@@ -94,7 +94,7 @@ gentenable(int code, int intMask)
 
   
 
-#ifdef POLLING
+#ifdef POLLING_MODE
   GENflag = 1;
 #else
 #ifdef VXWORKS
@@ -108,7 +108,7 @@ static void
 gentdisable(int code, int intMask)
 {
 
-#ifdef POLLING
+#ifdef POLLING_MODE
   GENflag = 0;
 #else
   c965IntDisable (0);
