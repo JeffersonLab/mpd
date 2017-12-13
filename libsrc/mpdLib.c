@@ -1684,7 +1684,7 @@ mpdApvGetBufferPointer(int id, int ia, int ib)
   if (ib<fApv[id][ia].fBufSize) { // probably not required !!
     return &(fApv[id][ia].fBuffer[ib]);
   }
-  MPD_ERR("MPD %d Fifo %d, index %d is out of range (buf size = %d)\n",id, fApv[id][ia].adc, ib, fApv[id][ia].fBufSize);
+  MPD_ERR("MPD %d Fifo %d, ia=%d, index %d is out of range (buf size = %d)\n",id, fApv[id][ia].adc, ia, ib, fApv[id][ia].fBufSize);
   exit(1);
 }
 
@@ -2964,16 +2964,15 @@ mpdFIFO_ReadAll(int id, int *timeout, int *global_fifo_error) {
       //MPD_DBG("Fifo= %d, total sample left= %d (<0 means more samples than requested)\n",k, sample_left);
     } // loop on ADC
 
-if(*global_fifo_error==0)
-  {
-    for(k=0; k<fMpd[id].nAPV; k++)
+    if(*global_fifo_error==0)
       {
-	//MPD_DBG("MPD: %d APV_idx= %d, ADC_FIFO= %d, word read= %d, event/sample read= %d, error=%d\n",id, k,fApv[id][k].adc,nread ,mpdApvGetBufferSample(id,k), *global_fifo_error);
+	for(k=0; k<fMpd[id].nAPV; k++)
+	  {
+	    //MPD_DBG("MPD: %d APV_idx= %d, ADC_FIFO= %d, word read= %d, event/sample read= %d, error=%d\n",id, k,fApv[id][k].adc,nread ,mpdApvGetBufferSample(id,k), *global_fifo_error);
+	  }
+
+	fMpd[id].fReadDone = (sample_left==0) ? 1 : 0;
       }
-
-
-     fMpd[id].fReadDone = (sample_left==0) ? 1 : 0;
-  }
   } // if fReadDone
   return fMpd[id].fReadDone;
 
