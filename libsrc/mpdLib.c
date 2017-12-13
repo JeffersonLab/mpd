@@ -1313,7 +1313,7 @@ mpdAPV_Scan(int id)
   nApv[id]=0;
   for(iapv=0; iapv<fMpd[id].nAPV; iapv++)
     {
-      printf("%s: Try i2c=%2d adc=%2d : ", __FUNCTION__, fApv[id][iapv].i2c, fApv[id][iapv].adc);
+      printf("%s(%d): Try i2c=%2d adc=%2d iapv=%d: ", __FUNCTION__, id, fApv[id][iapv].i2c, fApv[id][iapv].adc, iapv);
 
       if ( mpdAPV_Try(id, fApv[id][iapv].i2c)>-1 && fApv[id][iapv].adc>-1 )
 	{
