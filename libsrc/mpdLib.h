@@ -380,6 +380,7 @@ int  mpdAPV_Read(int id, uint8_t apv_addr, uint8_t reg_addr, uint8_t *val);
 int  mpdAPV_Config(int id, int apv_index);
 int  mpdApvGetPeakMode(int id);
 
+void mpdInitApvParameters(int id);
 void mpdAddApv(int id, ApvParameters v);
 int  mpdApvGetFrequency(int id);
 uint8_t mpdApvGetMaxLatency(int id);

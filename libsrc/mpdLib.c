@@ -1542,6 +1542,13 @@ mpdApvGetPeakMode(int id)
 }
 
 void
+mpdInitApvParameters(int id)
+{
+  nApv[id] = 0;
+  memset((void *)&fApv[id], 0, MPD_MAX_APV*sizeof(ApvParameters));
+}
+
+void
 mpdAddApv(int id, ApvParameters v)
 {
   /*

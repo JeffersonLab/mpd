@@ -232,6 +232,8 @@ mpdConfigLoad()
       apv_freq  = mpdReadSettingInt(mpdset, "apv_Frequency",0);
       apv_smode = mpdReadSettingInt(mpdset, "apv_SampleMode",0);
 
+      mpdInitApvParameters(slot);
+
       for(iapv=0; iapv<nApv; iapv++)
 	{
 	  apvset[0] = config_setting_get_elem(apv_set[0],iapv);
