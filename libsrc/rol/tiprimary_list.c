@@ -483,7 +483,7 @@ void asyncTrigger()
 
   /* grap a buffer from the queue */
   GETEVENT(vmeIN,intCount);
-  if(the_event->length!=0) 
+  if(the_event->length!=0)
     {
       printf("Interrupt Count = %d\t",intCount);
       printf("the_event->length = %d\n",the_event->length);

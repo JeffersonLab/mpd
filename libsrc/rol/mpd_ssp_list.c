@@ -10,8 +10,8 @@
 /* Default block level */
 unsigned int BLOCKLEVEL=1;
 #define BUFFERLEVEL 1
-#define MAX_EVENT_LENGTH   32768*6*BLOCKLEVEL      /* Size in Bytes */ 
-#define SSP_MAX_EVENT_LENGTH 32000*6*BLOCKLEVEL     //SSP block length
+#define MAX_EVENT_LENGTH   32768*12*BLOCKLEVEL      /* Size in Bytes */ 
+#define SSP_MAX_EVENT_LENGTH 32000*12*BLOCKLEVEL     //SSP block length
 #define MAX_EVENT_POOL     50
 
 
@@ -195,8 +195,15 @@ rocDownload()
     {
       sspCheckAddresses(sspSlot(issp));
       sspMpdDisable(sspSlot(issp), 0xffffffff);
-      sspMpdEnable(sspSlot(issp), 0x1); // (1<<0) 
-      sspMpdEnable(sspSlot(issp), 0x2); // (1<<1)
+      sspMpdEnable(sspSlot(issp), 0x1<<0); // (1<<0) 
+      sspMpdEnable(sspSlot(issp), 0x1<<1); // (1<<1)
+      sspMpdEnable(sspSlot(issp), 0x1<<2);
+      sspMpdEnable(sspSlot(issp), 0x1<<3);
+       
+      sspMpdEnable(sspSlot(issp), 0x1<<4);
+      sspMpdEnable(sspSlot(issp), 0x1<<5);
+      // sspMpdEnable(sspSlot(issp), 0x1<<6);
+      // sspMpdEnable(sspSlot(issp), 0x1<<7);
 
       sspEnableBusError(sspSlot(issp));
       sspSetBlockLevel(sspSlot(issp),BLOCKLEVEL);
@@ -220,9 +227,9 @@ rocDownload()
 
   // discover MPDs and initialize memory mapping
 
-  fnMPD = 2;
+  fnMPD = 6;
 // discover MPDs and initialize memory mapping
-  mpdInit(0x1|0x2, 0, fnMPD, MPD_INIT_SSP_MODE | MPD_INIT_NO_CONFIG_FILE_CHECK);
+  mpdInit(0x3f, 0, fnMPD, MPD_INIT_SSP_MODE | MPD_INIT_NO_CONFIG_FILE_CHECK);
 
 
  
@@ -379,14 +386,15 @@ rocEnd()
 void
 rocTrigger(int arg)
 {
+  //usleep(1000);//for testing ssp wordcnt, needs to be removed
   int ii, islot;
   int stat, dCnt, len=0, idata;
   int ssp_timeout;
   uint32_t bc, wc, ec, blockcnt, wordcnt, eventcnt;
   uint32_t data;
-static int tcnt = 0;
+  static int tcnt = 0;
 
-
+  //tiStatus(1);
   
   tiSetOutputPort(1,0,0,0);
 
@@ -431,7 +439,8 @@ static int tcnt = 0;
   //	printf("digit a number then enter to continue\n");
   //	fscanf(stdin,"%d",&aaa);
   ssp_timeout=0;
-  while ((sspBReady(0)==0) && (ssp_timeout<1000))
+  int ssp_timeout_max=3000;
+  while ((sspBReady(0)==0) && (ssp_timeout<ssp_timeout_max))
     {
       ssp_timeout++;
       //	sspGetEbStatus(i, &bc, &wc, &ec);
@@ -439,15 +448,23 @@ static int tcnt = 0;
       //usleep(10);
     }
   
-  if(ssp_timeout > 3)
+  
+  if(1)//tcnt%1000==1)
+    {
+      sspPrintEbStatus(0);
+      //  sspMpdPrintStatus(0);
+    }
+
+  if(ssp_timeout >100)
     {
       printf("\nssp time = %d\n", ssp_timeout);
       sspGetEbStatus(0, &blockcnt, &wordcnt, &eventcnt);
       printf("SSP EB STATUS\nblockcnt = %d\nwordcnt = %d\neventcnt = %d\n",
 	     blockcnt, wordcnt, eventcnt);
     }
-  
-  if (ssp_timeout == 1000) 
+
+
+  if (ssp_timeout == ssp_timeout_max) 
     {
       printf("*** SSP TIMEOUT ***\n");
       
@@ -471,6 +488,7 @@ static int tcnt = 0;
       if(!(tcnt & 0x3ff))
 	printf("tcnt = %u, EV Header: %u, MPD HDR = %u\n", tcnt&0xFFF, LSWAP(pBuf[1])&0xFFF, LSWAP(pBuf[5])&0xFFF);
       
+    
       if(dCnt<=0)
 	{
 	  printf("No data or error.  dCnt = %d\n",dCnt);
@@ -483,9 +501,9 @@ static int tcnt = 0;
       
       
       
-      //printf("  dCnt = %d\n",dCnt);
-      dCnt=0;
-      for(idata=0;idata<dCnt;idata++)
+      printf("  dCnt = %d\n",dCnt);
+        
+      for(idata=0;idata<100;idata++)
 	{
 	  if((idata%5)==0) printf("\n\t");
 	  datao = (unsigned int)LSWAP(the_event->data[idata]);
@@ -497,10 +515,13 @@ static int tcnt = 0;
 	  // 	    evt=mpd_evt[i];
 	  // 	}
 	  // 	evt = (evt > mpd_evt[i]) ? mpd_evt[i] : evt; // evt is the smallest number of events of an MPD
-	}
+	  }
+      
       //printf("\n\n");
     }
   
+
+
   BANKCLOSE;
   tiSetOutputPort(0,0,0,0);
 

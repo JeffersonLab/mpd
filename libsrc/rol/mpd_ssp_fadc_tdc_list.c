@@ -46,7 +46,7 @@ unsigned int BLOCKLEVEL=1;
 
 /* FADC250 Global Definitions */
 int faMode=1;
-#define FADC_WINDOW_LAT      0  /* Trigger Window Latency */
+#define FADC_WINDOW_LAT      270  /* Trigger Window Latency */
 #define FADC_WINDOW_WIDTH     50  /* Trigger Window Width */
 #define FADC_DAC_LEVEL       3300 /* Internal DAC Level */
 #define FADC_THRESHOLD       0x10 /* Threshold for data readout */
@@ -67,10 +67,97 @@ unsigned int MAXTIWORDS  = 0;
 
 
 
+/*MPD Definitions*/
+
+int h,i,j,k,kk,m, evt=0;
+  int fnMPD=4;
+  int error_count;
+  int rdone, rtout;
+
+  uint16_t mfull,mempty;
+  uint32_t e_head, e_head0, e_size;
+  uint32_t e_data32[130];
+  uint32_t e_trai, e_eblo;
+
+  char outfile[1000];
+  int acq_mode = 1;
+  int n_event=10;
+
+  int vint_data;
+  uint32_t v_data;
+
+int mpd_evt[21];
+    int UseSdram, FastReadout;
+    int empty, full, nwords;
+ 
+    uint32_t datao;
+
+DMA_MEM_ID vmeIN,vmeOUT;
+DMANODE *outEvent;
+
+extern volatile struct mpd_struct *MPDp[(MPD_MAX_BOARDS+1)]; /* pointers to MPD memory map */
+
+#define MPD_TIMEOUT 10
+
+//Output file TAG
+#define VERSION_TAG 0xE0000000
+#define EVENT_TAG   0x10000000
+#define MPD_TAG     0x20000000
+#define ADC_TAG     0x30000000
+#define HEADER_TAG  0x00000040
+#define DATA_TAG    0x0
+#define TRAILER_TAG 0x00000050
+
+#define FILE_VERSION 0x1
+// End of MPD definition
+
+
+void sspPrintBlock(unsigned int *pBuf, int dCnt){
+  int dd, tag, val, pos = 0;
+
+  int d[6], apv, ch;
+  while(dCnt--)
+    {
+      val = *pBuf++;
+      val = LSWAP(val);
+      if(val & 0x80000000)
+	{
+	dd = 1;
+	tag = (val>>27) & 0xf;
+	pos = 0;
+	}
+
+      if(tag != 5)
+	continue;
+
+      if(pos==0)
+	  printf("MPD Rotary = %d, SSP Fiber = %d\n", (val>>0)&0x1f, (val>>16)&0x1f);
+      else
+	{
+	  int idx = (pos-1) % 3;
+	  d[idx*2+0] = (val>>0) & 0x1fff;
+	  if(d[idx*2+0] & 0x1000) d[idx*2+0] |= 0xfffff000;
+	  d[idx*2+1] = (val>>13) & 0x1fff;
+	  if(d[idx*2+1] & 0x1000) d[idx*2+1] |= 0xfffff000;
+
+	  if(idx == 0)
+	    ch = (val>>26) & 0x1f;
+	  else if(idx == 1)
+	    ch|= ((val>>26) & 0x3) << 5;
+	  else if(idx == 2)
+	    {
+	    apv = (val>>26) & 0x1f;
+
+	    printf("APV%2d, CH%3d: %4d %4d %4d %4d %4d %4d\n", apv,ch,d[0],d[1],d[2],d[3],d[4],d[5]);
+	    }
+	}
+      
+	 pos++;
+    }
 
 
 
-
+}
 
 /* Redefine tsCrate according to TI_MASTER or TI_SLAVE */
 #ifdef TI_SLAVE
@@ -171,8 +258,132 @@ rocDownload()
   tiStatus(0);
 
 
+  /*****************
+   *   SSP SETUP
+   *****************/
+ int iFlag = SSP_INIT_SKIP_FIRMWARE_CHECK | SSP_INIT_MODE_VXSLOCAL | 0xFFFF0000;
+
+  sspInit(20<<19,1<<19,1,iFlag);
+  extern int nSSP;
+  sspA32Base = 0x08800000;
+  int issp=0;
+  sspMpdFiberReset(0);
+  sspMpdFiberLinkReset(0,0xffffffff);
+
+  for(issp=0; issp<nSSP; issp++)
+    {
+      sspCheckAddresses(sspSlot(issp));
+      sspMpdDisable(sspSlot(issp), 0xffffffff);
+      sspMpdEnable(sspSlot(issp), 0x1<<0); // (1<<0) 
+      sspMpdEnable(sspSlot(issp), 0x1<<1); // (1<<1)
+      sspMpdEnable(sspSlot(issp), 0x1<<2);
+      // sspMpdEnable(sspSlot(issp), 0x1<<3);
+
+      //  sspMpdEnable(sspSlot(issp), 0x1<<4);
+      // sspMpdEnable(sspSlot(issp), 0x1<<5);
+      // sspMpdEnable(sspSlot(issp), 0x1<<6);
+      // sspMpdEnable(sspSlot(issp), 0x1<<7);
+
+      sspEnableBusError(sspSlot(issp));
+      sspSetBlockLevel(sspSlot(issp),BLOCKLEVEL);
+    }
+  sspSoftReset(0);
+  sspPrintMigStatus(0);
   
+  sspGStatus(0);
+  sspMpdPrintStatus(0);
+
+  /*****************
+   *   MPD SETUP
+   *****************/
+
+  //vmeDmaConfig(2,2,0);
+  /*Read config file and fill internal variables*/
+  mpdConfigInit("/home/daq/ben/mpd/libsrc/rol/cfg/config_apv.txt");
+  mpdConfigLoad();
+
+  /* Init and config MPD+APV */
+
+  // discover MPDs and initialize memory mapping
+
+  fnMPD = 3;
+// discover MPDs and initialize memory mapping
+  mpdInit(0x7, 0, fnMPD, MPD_INIT_SSP_MODE | MPD_INIT_NO_CONFIG_FILE_CHECK);
+
+
  
+  //fnMPD = 1;
+  if (fnMPD<=0) { // test all possible vme slot ?
+    printf("ERR: no MPD discovered, cannot continue\n");
+    return -1;
+  } 
+
+  printf(" MPD discovered = %d\n",fnMPD);
+
+  // APV configuration on all active MPDs
+  for (k=0;k<fnMPD;k++) { // only active mpd set
+    i = mpdSlot(k);
+
+    int try_cnt = 0;
+retry:
+
+    printf(" Try initialize I2C mpd in slot %d\n",i);
+    if (mpdI2C_Init(i) != OK) {
+      printf("WRN: I2C fails on MPD %d\n",i);
+    }
+
+    printf("Try APV discovery and init on MPD slot %d\n",i);
+    if (mpdAPV_Scan(i)<=0 && try_cnt < 10 ) { // no apd found, skip next 
+	try_cnt++;
+	printf("failing retrying\n");
+	goto retry;
+    }
+    if( try_cnt == 10 )
+	{
+		printf("CANNOT CONFIGURE APV FOR %d TIMES !!!!\n\n", try_cnt);
+	}
+      
+    // board configuration (APV-ADC clocks phase)
+    printf("Do DELAY setting on MPD slot %d\n",i);
+    mpdDELAY25_Set(i, mpdGetAdcClockPhase(i,0), mpdGetAdcClockPhase(i,1));
+
+    // apv reset----this check will never fail...see "mpdI2C_ApvReset()"
+    printf("Do APV reset on MPD slot %d\n",i);
+    if (mpdI2C_ApvReset(i) != OK) {
+      printf("ERR: apv resert faild on mpd %d\n",i);
+    }
+
+    // apv configuration
+    printf("Configure single %d APV on MPD slot %d\n",mpdGetNumberAPV(i),i);
+    for (j=0; j < mpdGetNumberAPV(i); j++) {
+      //sspMpdSetAvg(0, i, j, 0, 1000);
+      int istrip;
+      for(istrip=0; istrip<128; istrip++) {
+	//sspMpdSetApvOffset(0, i, j, istrip, 0);
+	sspMpdSetApvThreshold(0, i, j, istrip, 200);
+      }
+      //
+      if(j<mpdGetNumberAPV(i))
+	if (mpdAPV_Config(i,j) != OK) {
+	  printf("ERR: config apv card %d failed in mpd %d\n",j,i);
+	}
+    }
+
+    // configure adc on MPD 
+    printf("Configure ADC on MPD slot %d\n",i);
+    mpdADS5281_Config(i);
+
+    // configure fir
+    // not implemented yet
+
+    // 101 reset on the APV
+    printf("Do 101 Reset on MPD slot %d\n",i);
+    mpdAPV_Reset101(i);
+
+    // <- MPD+APV initialization ends here
+
+  } // end loop on mpds
+  //END of MPD configure
 
 
   /*****************
@@ -195,11 +406,11 @@ rocDownload()
    */
   int islot;
 
-  NFADC = 2;   /* 3 slots  */
+  NFADC = 1;   /* 3 slots  */
   fadcA32Base=0x09000000;
 
   /* Setup the iFlag.. flags for FADC initialization */
-  int iFlag=0;
+  iFlag=0;
   /* Sync Source */
   iFlag |= (1<<0);    /* VXS */
   /* Trigger Source */
@@ -359,12 +570,32 @@ rocGo()
 
 
 
+/*Enable MPD*/
+    UseSdram = mpdGetUseSdram(mpdSlot(0)); // assume sdram and fastreadout are the same for all MPDs
+    FastReadout = mpdGetFastReadout(mpdSlot(0));
+    printf(" UseSDRAM= %d , FastReadout= %d\n",UseSdram, FastReadout);
 
+    for (k=0;k<fnMPD;k++) { // only active mpd set
+      i = mpdSlot(k);
+      
+      // mpd latest configuration before trigger is enabled
+      mpdSetAcqMode(i, "process");
+      
+      // load pedestal and thr default values
+      mpdPEDTHR_Write(i);    
+      
+      // enable acq
+      mpdDAQ_Enable(i);   
+      
+      mpdTRIG_Enable(i);
+      mpd_evt[i]=0;
+    }  
   /* Get the current block level */
   BLOCKLEVEL = tiGetCurrentBlockLevel();
   printf("%s: Current Block Level = %d\n",
 	 __FUNCTION__,BLOCKLEVEL);
- 
+  //sspSoftReset(0);
+  sspMpdPrintStatus(0);
   /* Use this info to change block level is all modules */
 
   tiSetBlockLimit(0); // 0: disables block limit
@@ -390,7 +621,11 @@ rocEnd()
 
   tiStatus(0);
 
-
+  //mpd close
+  for (k=0;k<fnMPD;k++) { // only active mpd set
+    mpdTRIG_Disable(mpdSlot(k));
+  }
+  //mpd close
 
   c775Status(TDC_ID,0,0);
 
@@ -446,6 +681,145 @@ rocTrigger(int arg)
 #endif
 
 
+
+
+
+
+/* Readout MPD */
+    // open out file
+
+ BANKOPEN(10,BT_UI4,0);
+ // vmeDmaConfig(2,2,0); 
+  rtout=0;
+  
+/*   for (k=0;k<fnMPD;k++) { // only active mpd set */
+/*     i = mpdSlot(k); */
+/*     mpdArmReadout(i); // prepare internal variables for readout */
+
+  int idata;
+  
+  int aaa;
+  
+  //	printf("digit a number then enter to continue\n");
+  //	fscanf(stdin,"%d",&aaa);
+  ssp_timeout=0;
+  int ssp_timeout_max=3000;
+  while ((sspBReady(0)==0) && (ssp_timeout<ssp_timeout_max))
+    {
+      ssp_timeout++;
+      //	sspGetEbStatus(i, &bc, &wc, &ec);
+      //	printf("count %d Blockcount : %d Wordcount : %d Event count : %d\n",ssp_timeout,bc,wc,ec); 
+      //usleep(10);
+    }
+  
+  
+  if(1)//tcnt%1000==1)
+    {
+      sspPrintEbStatus(0);
+      //  sspMpdPrintStatus(0);
+    }
+
+  if(ssp_timeout >100)
+    {
+      printf("\nssp time = %d\n", ssp_timeout);
+      sspGetEbStatus(0, &blockcnt, &wordcnt, &eventcnt);
+      printf("SSP EB STATUS\nblockcnt = %d\nwordcnt = %d\neventcnt = %d\n",
+	     blockcnt, wordcnt, eventcnt);
+    }
+
+
+  if (ssp_timeout == ssp_timeout_max) 
+    {
+      printf("*** SSP TIMEOUT ***\n");
+      
+      for (k=0;k<fnMPD;k++) { // only active mpd set
+	data = mpdRead32(&MPDp[mpdSlot(k)]->ob_status.output_buffer_flag_wc);
+	if( data & 0x20000000 )	// Evt_Fifo_Full
+	  printf ("MPD %d FIFO full\n", mpdSlot(k));
+      }
+
+      sspGetEbStatus(0, &blockcnt, &wordcnt, &eventcnt);
+      printf("SSP EB STATUS\nblockcnt = %d\nwordcnt = %d\neventcnt = %d\n",
+	     blockcnt, wordcnt, eventcnt);
+      //tiSetBlockLimit(1);
+    }
+  else
+    {
+      vmeDmaConfig(2,5,1);
+      int dCnt = sspReadBlock(0, dma_dabufp, SSP_MAX_EVENT_LENGTH>>2,1);
+      unsigned int *pBuf = (unsigned int *)dma_dabufp;
+      tcnt++;
+      if(!(tcnt & 0x3ff))
+	printf("tcnt = %u, EV Header: %u, MPD HDR = %u\n", tcnt&0xFFF, LSWAP(pBuf[1])&0xFFF, LSWAP(pBuf[5])&0xFFF);
+    
+      sspPrintBlock(pBuf, dCnt);  
+    
+      if(0&&wordcnt!=36196) 
+	{
+	  printf("word count not equal to 51932, setting dCnt to 0!\n specific for SOLID scint test, otherwise remove this in readout list !!!\n");
+	  dCnt=0;
+	}
+
+
+      if(dCnt<=0)
+	{
+	  printf("No data or error.  dCnt = %d\n",dCnt);
+	  // tiSetBlockLimit(1); ---danning comment for the following try on resetting mpd
+	  //---------trying to reset mpd ---danning
+	  int i_re;
+	  for(i_re=0;i_re<fnMPD;i_re++)
+	    {
+	      mpdTRIG_Disable(i_re);
+	    }
+	  usleep(100);
+   	  for(i_re=0;i_re<fnMPD;i_re++)
+	    {
+	      printf("Do 101 Reset on MPD slot %d\n",i);
+	      mpdAPV_Reset101(i_re);
+	    }
+	  usleep(100);
+	  for(i_re=0;i_re<fnMPD;i_re++)
+	    {
+	      mpdFIFO_ClearAll(i_re);
+	    }
+	  usleep(100);
+	  sspSoftReset(0);
+	  for(i_re=0;i_re<fnMPD;i_re++)
+	    {
+	      mpdTRIG_Enable(i_re);
+	    }
+
+	  FILE *fout;
+	  fout = fopen("errorCount_out.txt","a");
+	  fprintf(fout,"reset, wordcount: %d  \n",wordcnt);
+	  fclose(fout);
+	  
+
+	}
+      else
+	{
+	  //comment next line to disable GEM data for now --- Aug 14 2017 --- Danning
+	  dma_dabufp += dCnt;
+	}
+       printf("  dCnt = %d\n",dCnt);
+        
+      for(idata=0;idata<30;idata++)
+	{
+	  if((idata%5)==0) printf("\n\t");
+	  datao = (unsigned int)LSWAP(the_event->data[idata]);
+	  printf("  0x%08x ",datao);
+	  
+	  
+	  // 	if( (datao & 0x00E00000) == 0x00A00000 ) {
+	  // 	    mpd_evt[i]++;
+	  // 	    evt=mpd_evt[i];
+	  // 	}
+	  // 	evt = (evt > mpd_evt[i]) ? mpd_evt[i] : evt; // evt is the smallest number of events of an MPD
+	  }
+      
+      //printf("\n\n");
+    }
+  BANKCLOSE;
 
  /* Readout FADC */
   if(NFADC!=0)
@@ -515,7 +889,7 @@ rocTrigger(int arg)
 	}
       else
 	{
-	  int nwords = c775ReadEvent(TDC_ID,dma_dabufp);
+	  nwords = c775ReadEvent(TDC_ID,dma_dabufp);
 	  /* or use c775ReadBlock, if BERR was enabled */
 /* 	  nwords = c775ReadBlock(TDC_ID,dma_dabufp,MAX_TDC_DATA); */
 	  if(nwords<=0) 

@@ -16,10 +16,10 @@ default:
 
       trigger_latency = 0; // [clock 25ns, max=31] delay from arrival of the trigger to the MPD input and issue of the trigger to the cards (new in MPD Firmware 4.0)
 
-      trigger_number = 1;	// 0..15 0: disabled, 1: normal, >1: N trigger issued every 3 clock cycles, (that is number of samples)
+      trigger_number = 2;	// 0..15 0: disabled, 1: normal, >1: N trigger issued every 3 clock cycles, (that is number of samples)
 
       apv_Frequency  = 1; // Readout Frequency  : 0=20 MHz, 1=40 MHz
-      apv_SampleMode = 1; // Sampling Mode      : 0=3 samples, 1=1 sample / trigger
+      apv_SampleMode = 0; // Sampling Mode      : 0=3 samples, 1=1 sample / trigger
 
       input_0_level = 1; // LEMO input 0 digital level (1=NIM, 0=TTL)
       input_1_level = 0; // LEMO input 1 digital level (1=NIM, 0=TTL)
@@ -47,7 +47,7 @@ default:
 
       pedthr_file = "no_pedthr_path"; // pedestals and thresholds, for apv_ch=0 ... 2048
 
-      channel_mark = 255;     // 0...127, mark the corresponding adc channel, for frame alignment check; >127 disable mark (normal operation)
+      channel_mark = 50;//255;     // 0...127, mark the corresponding adc channel, for frame alignment check; >127 disable mark (normal operation)
 
       fir_enable = 0; // enable (1) or disable (0) the FIR filter (see 2012 JINST 7 C01082)
       fir_coeff = [10990, -2130, -169, -232, -147, -123, -98, -191, -88, 333, -3, 34, 17, 14, 11, 7]; // FIR filter coefficients 16bits (/2^13 to get "real" values) need to be in the specific config file!!!
@@ -89,7 +89,7 @@ default:
 	Csel = 0;    // Seems very few effects at scope level: at least 1 bit = 0
 	CalPulse = 0; // Calibration Pulse  : 0=off, 1=on
 
-	Latency = 34;// 34---0..191, suggested less than 160 (?) A Reset101 is needed after changing this value
+	Latency = 16;// 34---0..191, suggested less than 160 (?) A Reset101 is needed after changing this value
 	Muxgain = 4; // 1(-20%), 2(-10%), 4(nominal), 8(+10%), 16(+20%)
 
 	Polarization = 0; // Preamp Polarization: 0=non-inverting, 1=inverting
