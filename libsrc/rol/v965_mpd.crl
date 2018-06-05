@@ -1,0 +1,403 @@
+#  General User readout list
+#   For use with using a CAEN 965 QDC to trigger readout of MPD
+#
+#    Bryan Moffit, TJNAF 2013
+#
+
+readout list GEN_USER
+maximum 10240,512   # create 512 10240 byte buffers
+general readout
+
+# A24 Address for CAEN 965
+const TRIG_ADDR=0xA00000
+const ADC_ID=0
+
+%%
+#include <stdint.h>
+#include "mpdLib.h"
+#include "mpdConfig.h"
+
+extern int bigendian_out;
+
+/*MPD Definitions*/
+int h,i,j,k,kk,m, evt=0;
+int fnMPD=10;
+int error_count;
+int rdone, rtout;
+
+uint16_t mfull,mempty;
+uint32_t e_head, e_head0, e_size;
+uint32_t e_data32[130];
+uint32_t e_trai, e_eblo;
+
+char outfile[1000];
+int acq_mode = 1;
+int n_event=10;
+
+int vint_data;
+uint32_t v_data;
+#define MPD_TIMEOUT 10
+
+//Output file TAG
+#define VERSION_TAG 0xE0000000
+#define EVENT_TAG   0x10000000
+#define MPD_TAG     0x20000000
+#define ADC_TAG     0x30000000
+#define HEADER_TAG  0x40000000
+#define DATA_TAG    0x0
+#define TRAILER_TAG 0x50000000
+
+#define FILE_VERSION 0x1
+// End of MPD definition
+%%
+
+begin download
+
+%%
+{
+  int trigchannels=0, coinc_level=0;
+#ifndef VXWORKSPPC
+  vmeOpenDefaultWindows();
+#endif
+
+#ifdef VXWORKSPPC
+  /* vxWorks (ROC) -> Linux (EB), bigendian_out = 0 */
+  bigendian_out = 0;
+#else
+  /* Linux (ROC) -> Linux (EB), bigendian_out = 1 */
+  bigendian_out = 1;
+#endif
+
+
+
+  /* Setup Address and data modes for DMA transfers
+   *
+   *  vmeDmaConfig(addrType, dataType, sstMode);
+   *
+   *  addrType = 0 (A16)    1 (A24)    2 (A32)
+   *  dataType = 0 (D16)    1 (D32)    2 (BLK32) 3 (MBLK) 4 (2eVME) 5 (2eSST)
+   *  sstMode  = 0 (SST160) 1 (SST267) 2 (SST320)
+   */
+  vmeDmaConfig(1,3,0);
+
+  c965Init(TRIG_ADDR,0,1,0);
+
+
+  /* MPD Initializaiton and Configuration */
+  /*****************
+   *   MPD SETUP
+   *****************/
+
+   vmeDmaConfig(2,2,0);
+  /*Read config file and fill internal variables*/
+  mpdConfigInit("cfg/config_apv.txt");
+  mpdConfigLoad();
+
+  /* Init and config MPD+APV */
+
+  // discover MPDs and initialize memory mapping
+  mpdInit(0x80000,0x80000,21,0x0);
+  fnMPD = mpdGetNumberMPD();
+
+  if (fnMPD<=0) { // test all possible vme slot ?
+    printf("ERR: no MPD discovered, cannot continue\n");
+    return -1;
+  }
+
+  printf(" MPD discovered = %d\n",fnMPD);
+
+  // APV configuration on all active MPDs
+  for (k=0;k<fnMPD;k++) { // only active mpd set
+    i = mpdSlot(k);
+
+    printf(" Try initialize I2C mpd in slot %d\n",i);
+    if (mpdI2C_Init(i) != OK) {
+      printf("WRN: I2C fails on MPD %d\n",i);
+    }
+
+    printf("Try APV discovery and init on MPD slot %d\n",i);
+    if (mpdAPV_Scan(i)<=0) { // no apd found, skip next
+        continue;
+    }
+
+    // board configuration (APV-ADC clocks phase)
+    printf("Do DELAY setting on MPD slot %d\n",i);
+    mpdDELAY25_Set(i, mpdGetAdcClockPhase(i,0), mpdGetAdcClockPhase(i,1));
+
+    // apv reset----this check will never fail...see "mpdI2C_ApvReset()"
+    printf("Do APV reset on MPD slot %d\n",i);
+    if (mpdI2C_ApvReset(i) != OK) {
+      printf("ERR: apv resert faild on mpd %d\n",i);
+    }
+
+    // apv configuration
+    printf("Configure single APV on MPD slot %d\n",i);
+    for (j=0; j < mpdGetNumberAPV(i); j++) {
+      if (mpdAPV_Config(i,j) != OK) {
+	printf("ERR: config apv card %d failed in mpd %d\n",j,i);
+      }
+    }
+
+    // configure adc on MPD
+    printf("Configure ADC on MPD slot %d\n",i);
+    mpdADS5281_Config(i);
+
+    // configure fir
+    // not implemented yet
+
+    // 101 reset on the APV
+    printf("Do 101 Reset on MPD slot %d\n",i);
+    mpdAPV_Reset101(i);
+
+    // <- MPD+APV initialization ends here
+
+  } // end loop on mpds
+  //END of MPD configure
+}
+%%
+
+
+  log inform "User Download Executed"
+
+end download
+
+begin prestart
+
+  variable jj, adc_id
+  short buf;
+
+  log inform "Entering User Prestart"
+
+  init trig source GEN
+  link async trig source GEN 1 to usrtrig and usrtrig_done
+  event type 1 then read GEN 1
+
+%%
+{
+  /* Setup ADCs (no sparcification, enable berr for block reads) */
+  c965Sparse(ADC_ID,0,0);
+  c965Clear(ADC_ID);
+  c965EnableBerr(ADC_ID);
+
+  c965Status(ADC_ID,0,0);
+}
+%%
+  log inform "User Prestart Executed"
+
+end prestart
+
+begin end
+
+  CDODISABLE(GEN,1,1);
+%%
+{
+  /* Disable modules here... print status */
+  c965Status(ADC_ID,0,0);
+
+  //mpd close
+  mpdTRIG_Disable(i);
+  //mpd close
+}
+%%
+  log inform "User End Executed"
+
+end end
+
+begin pause
+
+  CDODISABLE(GEN,1,1);
+
+  log inform "User Pause Executed"
+
+end pause
+
+begin go
+
+  log inform "Entering User Go"
+
+%%
+{
+  int id = 0;
+  /* Enable Modules here, if needed */
+
+  /*Enable MPD */
+  for (k = 0; k < fnMPD; k++)
+    {				// only active mpd set
+      i = mpdSlot(k);
+
+      // mpd latest configuration before trigger is enabled
+      mpdSetAcqMode(i, "event");
+
+      // load pedestal and thr default values
+      mpdPEDTHR_Write(i);
+
+      // enable acq
+      mpdDAQ_Enable(i);
+
+    }
+}
+%%
+  CDOENABLE(GEN,1,1);
+
+end go
+
+begin trigger usrtrig
+
+  rol->dabufp = (long *) 0;
+  open event type EVTYPE of BT_BANK
+
+
+%%
+{
+  int iwait = 0, maxwait = 1000;
+  int status = 0, nwords = 0;
+  int itimeout = 0;
+
+  /* Readout QDC - Bank 1 */
+  CBOPEN(1, BT_UI4, 0);
+  while (itimeout < maxwait)
+    {
+      itimeout++;
+      status = c965Dready(ADC_ID);
+      if (status > 0)
+	break;
+    }
+
+  if (status > 0)
+    {
+      nwords = c965ReadEvent(ADC_ID, rol->dabufp);
+      if (nwords <= 0)
+	{
+	  logMsg("ERROR: ADC Read Failed - Status 0x%x\n", nwords, 0, 0, 0, 0,
+		 0);
+	  *rol->dabufp++ = 0xda00bad1;
+	  c965Clear(ADC_ID);
+	}
+      else
+	{
+	  rol->dabufp += nwords;
+	}
+    }
+  else
+    {
+      logMsg("ERROR: NO data in ADC  datascan = 0x%x, itimeout=%d\n", status,
+	     itimeout, 0, 0, 0, 0);
+      *rol->dabufp++ = 0xda00bad2;
+      c965Clear(ADC_ID);
+    }
+
+  CBCLOSE;
+
+  /* Readout MPD - Bank 2 */
+  CBOPEN(2, BT_UI4, 0);
+  vmeDmaConfig(2, 2, 0);
+  rtout = 0;
+
+  for (k = 0; k < fnMPD; k++)
+    {				// only active mpd set
+      i = mpdSlot(k);
+      mpdArmReadout(i);		// prepare internal variables for readout
+    }
+
+  rdone = 1;
+
+  for (kk = 0; kk < fnMPD; kk++)
+    {				// only active mpd set
+      i = mpdSlot(kk);
+      do
+	{			// wait for data in MPD
+	  rdone = mpdFIFO_ReadAll(i, &rtout, &error_count);
+	  //printf(" fn: %d Evt: %d Rdone/ Tout/ error = %d %d %d\n", kk,evt,rdone, rtout, error_count);
+	  rtout++;
+	}
+      while ((rdone != 1 || error_count != 0) && (rtout < MPD_TIMEOUT));	// timeout can be changed
+
+      if ((error_count != 0) || (rtout > MPD_TIMEOUT))
+	{			// reset MPD on error or timeout
+	  printf("%s: ERROR in readout, clear fifo\n", __FUNCTION__);
+	  mpdFIFO_ClearAll(i);
+	  mpdTRIG_Enable(i);
+	}
+
+      if (rdone == 1 && error_count == 0)
+	{			// data need to be written on file
+
+
+	  for (j = 0; j < mpdGetNumberAPV(i); j++)	// loop on APV (ADC channels)
+	    {
+	      //CODA buf_MPDNumber
+	      *rol->dabufp++ = (i | MPD_TAG);
+	      //CODA buf_MPDNumber
+
+	      //CODA buf_apvNumber
+	      v_data = mpdApvGetAdc(i, j);
+	      *rol->dabufp++ = (v_data | ADC_TAG);
+	      //CODA buf_apvNumber
+	      k = 0;		// buffer element index
+	      v_data = mpdApvGetBufferSample(i, j);	//printf("number of sample:%d",v_data);
+	      for (h = 0; h < mpdApvGetBufferSample(i, j); h++)	// loop on samples
+		{
+		  e_size = 130;
+		  e_head0 = mpdApvGetBufferElement(i, j, k);
+		  e_head0 = LSWAP(e_head0);
+		  k++;
+		  //CODA buf_header
+		  *rol->dabufp++ = (e_head0 | HEADER_TAG);
+		  //CODA buf_header
+		  for (m = 0; m < e_size - 2; m++)
+		    {
+		      //CODA buf_128Channel
+		      v_data = mpdApvGetBufferElement(i, j, k);
+		      v_data = LSWAP(v_data) & 0xFFFF;
+		      *rol->dabufp++ = (v_data | DATA_TAG);
+		      //CODA buf_128Channel
+		      k++;
+		    }
+		  // CODA buf_trailer_TSNumber
+		  v_data = mpdApvGetBufferElement(i, j, k);
+		  *rol->dabufp++ = ((v_data & 0xfff) | TRAILER_TAG);
+		  // CODA buf_trailer_TSNumber
+		  k++;
+		}
+	      mpdApvShiftDataBuffer(i, j, k);
+	    }			// end loop on apv
+
+	}
+
+      evt++;
+      //mpdFIFO_ClearAll(i);//removed
+    }
+  CBCLOSE;
+
+}
+%%
+
+ close event
+
+end trigger
+
+begin done usrtrig
+
+end done
+
+begin done
+
+# Re-enable Trigger Source here
+ CDOACK(GEN,1,0);
+
+end done
+
+begin status
+
+end status
+
+%%
+#ifndef VXWORKSPPC
+__attribute__((destructor)) void end (void)
+{
+  printf("ROC Cleanup\n");
+  dmaPFreeAll();
+  vmeCloseDefaultWindows();
+}
+#endif
+%%
