@@ -180,14 +180,14 @@ am__define_uniq_tagged_files = \
 ETAGS = etags
 CTAGS = ctags
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
-ACLOCAL = ${SHELL} /root/git/mpd/libconfig-1.5/aux-build/missing aclocal-1.14
+ACLOCAL = ${SHELL} /home/daq/ben/mpd/libsrc/libconfig/aux-build/missing aclocal-1.14
 AMTAR = $${TAR-tar}
 AM_DEFAULT_VERBOSITY = 1
 AR = ar
 AS = as
-AUTOCONF = ${SHELL} /root/git/mpd/libconfig-1.5/aux-build/missing autoconf
-AUTOHEADER = ${SHELL} /root/git/mpd/libconfig-1.5/aux-build/missing autoheader
-AUTOMAKE = ${SHELL} /root/git/mpd/libconfig-1.5/aux-build/missing automake-1.14
+AUTOCONF = ${SHELL} /home/daq/ben/mpd/libsrc/libconfig/aux-build/missing autoconf
+AUTOHEADER = ${SHELL} /home/daq/ben/mpd/libsrc/libconfig/aux-build/missing autoheader
+AUTOMAKE = ${SHELL} /home/daq/ben/mpd/libsrc/libconfig/aux-build/missing automake-1.14
 AWK = gawk
 CC = gcc
 CCDEPMODE = depmode=gcc3
@@ -195,9 +195,9 @@ CFLAGS = -g -O2 -Wall -Wshadow -Wextra -Wdeclaration-after-statement -Wno-unused
 CPP = gcc -E
 CPPFLAGS = 
 CXX = g++
-CXXCPP = g++ -E
-CXXDEPMODE = depmode=gcc3
-CXXFLAGS = -g -O2 -Wall -Wshadow -Wextra -Wno-unused-parameter
+CXXCPP = 
+CXXDEPMODE = depmode=none
+CXXFLAGS =  -Wall -Wshadow -Wextra -Wno-unused-parameter
 CYGPATH_W = echo
 DEFS = -DHAVE_CONFIG_H
 DEPDIR = .deps
@@ -218,7 +218,7 @@ INSTALL_SCRIPT = ${INSTALL}
 INSTALL_STRIP_PROGRAM = $(install_sh) -c -s
 LD = /usr/bin/ld
 LDFLAGS = 
-LEX = ${SHELL} /root/git/mpd/libconfig-1.5/aux-build/missing flex
+LEX = ${SHELL} /home/daq/ben/mpd/libsrc/libconfig/aux-build/missing flex
 LEXLIB = 
 LEX_OUTPUT_ROOT = 
 LIBOBJS = 
@@ -227,7 +227,7 @@ LIBTOOL = $(SHELL) $(top_builddir)/libtool
 LIPO = 
 LN_S = ln -s
 LTLIBOBJS = 
-MAKEINFO = ${SHELL} /root/git/mpd/libconfig-1.5/aux-build/missing makeinfo
+MAKEINFO = ${SHELL} /home/daq/ben/mpd/libsrc/libconfig/aux-build/missing makeinfo
 MANIFEST_TOOL = :
 MKDIR_P = /bin/mkdir -p
 NM = /usr/bin/nm -B
@@ -252,13 +252,13 @@ STRIP = strip
 VERSION = 1.5
 YACC = yacc
 YFLAGS = 
-abs_builddir = /root/git/mpd/libconfig-1.5/examples/c++
-abs_srcdir = /root/git/mpd/libconfig-1.5/examples/c++
-abs_top_builddir = /root/git/mpd/libconfig-1.5
-abs_top_srcdir = /root/git/mpd/libconfig-1.5
+abs_builddir = /home/daq/ben/mpd/libsrc/libconfig/examples/c++
+abs_srcdir = /home/daq/ben/mpd/libsrc/libconfig/examples/c++
+abs_top_builddir = /home/daq/ben/mpd/libsrc/libconfig
+abs_top_srcdir = /home/daq/ben/mpd/libsrc/libconfig
 ac_ct_AR = ar
 ac_ct_CC = gcc
-ac_ct_CXX = g++
+ac_ct_CXX = 
 ac_ct_DUMPBIN = 
 am__include = include
 am__leading_dot = .
@@ -285,7 +285,7 @@ host_vendor = pc
 htmldir = ${docdir}
 includedir = ${prefix}/include
 infodir = ${datarootdir}/info
-install_sh = ${SHELL} /root/git/mpd/libconfig-1.5/aux-build/install-sh
+install_sh = ${SHELL} /home/daq/ben/mpd/libsrc/libconfig/aux-build/install-sh
 libdir = ${exec_prefix}/lib
 libexecdir = ${exec_prefix}/libexec
 localedir = ${datarootdir}/locale
@@ -391,25 +391,25 @@ include ./$(DEPDIR)/example3.Po
 include ./$(DEPDIR)/example4.Po
 
 .cpp.o:
-	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
-#	$(AM_V_CXX)source='$<' object='$@' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(AM_V_CXX_no)$(CXXCOMPILE) -c -o $@ $<
+#	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+#	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+	$(AM_V_CXX)source='$<' object='$@' libtool=no \
+	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
+	$(AM_V_CXX_no)$(CXXCOMPILE) -c -o $@ $<
 
 .cpp.obj:
-	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
-	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
-#	$(AM_V_CXX)source='$<' object='$@' libtool=no \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(AM_V_CXX_no)$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
+#	$(AM_V_CXX)$(CXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ `$(CYGPATH_W) '$<'`
+#	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Po
+	$(AM_V_CXX)source='$<' object='$@' libtool=no \
+	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
+	$(AM_V_CXX_no)$(CXXCOMPILE) -c -o $@ `$(CYGPATH_W) '$<'`
 
 .cpp.lo:
-	$(AM_V_CXX)$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
-	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
-#	$(AM_V_CXX)source='$<' object='$@' libtool=yes \
-#	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
-#	$(AM_V_CXX_no)$(LTCXXCOMPILE) -c -o $@ $<
+#	$(AM_V_CXX)$(LTCXXCOMPILE) -MT $@ -MD -MP -MF $(DEPDIR)/$*.Tpo -c -o $@ $<
+#	$(AM_V_at)$(am__mv) $(DEPDIR)/$*.Tpo $(DEPDIR)/$*.Plo
+	$(AM_V_CXX)source='$<' object='$@' libtool=yes \
+	DEPDIR=$(DEPDIR) $(CXXDEPMODE) $(depcomp) \
+	$(AM_V_CXX_no)$(LTCXXCOMPILE) -c -o $@ $<
 
 mostlyclean-libtool:
 	-rm -f *.lo

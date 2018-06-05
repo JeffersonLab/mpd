@@ -7,7 +7,7 @@ time = "12:00:00";   // time format: hh:mm:ss
 
 // @includeDir ...
 
-@include "cfg/config_apv_default.txt"
+@include "/home/daq/ben/mpd/libsrc/test_danning/cfg/config_apv_default.txt"
 
 bus: // interface to the MPD
 (
@@ -19,8 +19,8 @@ bus: // interface to the MPD
    
     // --- mpd 0
     {
-      rotary = 19; // rotary switch setting
-     // rotary = 0; // for ssp 
+     // rotary = 17; // rotary switch setting
+      rotary = 3; // for ssp 
 
       zero_level = 500; // zero logic level
       one_level = 1900;  // one logic level: above this adc value signal is assumed to be a digital "one"
@@ -40,7 +40,7 @@ bus: // interface to the MPD
                                             // sub-ch 0, 1, 2, ... 7
           invert = true;
           pattern = "none";  // none, sync, deskew, ramp
-          clock_phase = 23;	 // 0..63 (0.5 ns step) time offset between
+          clock_phase = 31;	 // 0..63 (0.5 ns step) time offset between
                              // adc-clock and apv-clock
         },
         {
@@ -48,30 +48,30 @@ bus: // interface to the MPD
                                             // sub-ch 0, 1, 2, ... 7
           invert = true;
           pattern = "none"; // none, sync, deskew, ramp
-          clock_phase = 23;	 // 0..63 (0.5 ns step) time offset between adc-clock and apv-clock //
+          clock_phase = 43;	 // 0..63 (0.5 ns step) time offset between adc-clock and apv-clock //
         }
       );
     apv:
       (
-	{ adc = 15; i2c = 1; }, 
-	{ adc = 14; i2c = 2; }, 
-	{ adc = 13; i2c = 3; }
-	
-/*	{ adc = 13; i2c = 4; }, 
-	{ adc = 12; i2c = 5; },
-	{ adc = 11; i2c = 6; },
-	{ adc = 10; i2c = 7; },
+	{ adc = 11; i2c = 4; }, 
+	{ adc = 10; i2c = 5; },
+	{ adc = 9; i2c = 6; },
+	{ adc = 8; i2c = 7; },
 
-	{ adc = 8; i2c =8; },
-	{ adc = 7; i2c =9; },
-	{ adc = 6; i2c = 10; },
-	{ adc = 5; i2c = 11; },
+	{ adc = 7; i2c =8; },
+	{ adc = 6; i2c =9; },
+	{ adc = 5; i2c = 10; },
+	{ adc = 4; i2c = 11; },
 
 	{ adc = 3; i2c = 12; },
 	{ adc = 2; i2c = 13; },
 	{ adc = 1; i2c = 14; },
 	{ adc = 0; i2c = 15; }
-*/
+
+
+//{adc = 8; i2c = 10; }
+
+//
       );
     },
     //end MPD 0
@@ -87,7 +87,7 @@ bus: // interface to the MPD
       fir_coeff = [10990, -2130, -169, -232, -147, -123, -98, -191, -88, 333, -3, 34, 17, 14, 11, 7]; // FIR filter coefficients 16bits (/2^13 to get "real" values)
     i2c: // I2C section, configuration
       {
-        speed = 1124; // (x10^-5 s) period of the i2c clock
+        speed = 100; // (x10^-5 s) period of the i2c clock
         timeout = 2500; // number of retries before timeout
       };
     adc:
@@ -97,7 +97,7 @@ bus: // interface to the MPD
                                             // sub-ch 0, 1, 2, ... 7
           invert = true;
           pattern = "none";  // none, sync, deskew, ramp
-          clock_phase = 23;	 // 0..63 (0.5 ns step) time offset between
+          clock_phase = 38;	 // 0..63 (0.5 ns step) time offset between
                              // adc-clock and apv-clock
         },
         {
@@ -105,27 +105,31 @@ bus: // interface to the MPD
                                             // sub-ch 0, 1, 2, ... 7
           invert = true;
           pattern = "none"; // none, sync, deskew, ramp
-          clock_phase = 23;	 // 0..63 (0.5 ns step) time offset between adc-clock and apv-clock //
+          clock_phase = 44;	 // 0..63 (0.5 ns step) time offset between adc-clock and apv-clock //
         }
     );
     apv:
     (
-	{ adc = 4; i2c = 0; }, 
-        { adc = 3; i2c = 1; },
-        { adc = 2; i2c = 2; },
-        { adc = 1; i2c = 3; },
-        { adc = 0; i2c = 4; },
 
-        { adc = 9; i2c = 8; },
-        { adc = 8; i2c = 9; },
-        { adc = 7; i2c = 10; },
-        { adc = 6; i2c = 11; },
-	{ adc = 5; i2c = 12; }
+	{ adc = 11; i2c = 4; }, 
+	{ adc = 10; i2c = 5; },
+	{ adc = 9; i2c = 6; },
+	{ adc = 8; i2c = 7; },
+
+	{ adc = 7; i2c =8; },
+	{ adc = 6; i2c =9; },
+	{ adc = 5; i2c = 10; },
+	{ adc = 4; i2c = 11; },
+
+	{ adc = 3; i2c = 12; },
+	{ adc = 2; i2c = 13; },
+	{ adc = 1; i2c = 14; },
+	{ adc = 0; i2c = 15; }
     
     );
     }//,//end MPD 1
-    
-    /*   // --- mpd 2
+    /*
+       // --- mpd 2
     {
       rotary = 5; // rotary switch setting
 
@@ -157,11 +161,11 @@ bus: // interface to the MPD
     );
     apv:
     (
-     //{ adc = 4; i2c = 0; }, 
-	// { adc = 3; i2c = 1; },
-     // { adc = 2; i2c = 2; }//,
-	//{ adc = 1; i2c = 3; },
-	//   { adc = 9; i2c = 8; },
+	{ adc = 4; i2c = 0; }, 
+	{ adc = 3; i2c = 1; },
+        { adc = 2; i2c = 2; }//,
+	{ adc = 1; i2c = 3; },
+	   { adc = 9; i2c = 8; },
         //{ adc = 8; i2c = 9; },
      // { adc = 0; i2c = 11; }//,
 	// { adc = 6; i2c = 11; }//,

@@ -15,10 +15,10 @@ DEBUG=1
 #
 
 # Plug in your primary readout lists here..
-VMEROL			= mpd_list.so
+VMEROL			= mpd_list.so mpd_ssp_list.so mpd_ssp_fadc_tdc_list.so mpd_ssp_fadc_list.so fadc_list.so fadc_list_withTimer.so
 # Add shared library dependencies here.  (jvme, ti, are already included)
 #ROLLIBS			= 
-ROLLIBS			= -lfadc  -lmpd -lssp -lconfig #-lremex
+ROLLIBS			=  -lc775 -lfadc -lsd -lts -lremex -lmpd -lssp -lconfig #-lremex
 
 ifndef LINUXVME_LIB
 	LINUXVME_LIB	= $CODA/extensions/linuxvme/libs
@@ -38,7 +38,7 @@ CFLAGS			= -O3
 endif
 CFLAGS			+= -w -I${LINUXVME_INC} -I. -I/usr/include -I${CODA}/common/include\
 			  -L${LINUXVME_LIB} -L. -DJLAB
-CFLAGS			+= -lrt -lpthread -ljvme -lti $(ROLLIBS)
+CFLAGS			+= -lrt -lpthread -ljvme -lti -lremex -lfadc $(ROLLIBS)
 CFLAGS			+= -DLINUX -DDAYTIME=\""`date`"\"
 
 # DEFs for compiling CODA readout lists

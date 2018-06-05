@@ -1,0 +1,187 @@
+/* Default Configuration file
+ * version 0.4
+ */
+
+default:
+{
+  bus:	
+  ({
+    controller = "v1718"; // v1718, v2718, sis3104, eth, fiber ...
+
+    mpd:
+    ({
+      rotary = -1; // rotary switch setting (address of the mpd, must be provided as specific setting)
+
+      calib_latency = 0;     // 0..255: 0: disabled, > 0 issue a calib followed by trigger after given latency, trigger - calibration pulse delay
+
+      trigger_latency = 0; // [clock 25ns, max=31] delay from arrival of the trigger to the MPD input and issue of the trigger to the cards (new in MPD Firmware 4.0)
+
+      trigger_number = 2;	// 0..15 0: disabled, 1: normal, >1: N trigger issued every 3 clock cycles, (that is number of samples)
+
+      apv_Frequency  = 1; // Readout Frequency  : 0=20 MHz, 1=40 MHz
+      apv_SampleMode = 0; // Sampling Mode      : 0=3 samples, 1=1 sample / trigger
+
+      input_0_level = 1; // LEMO input 0 digital level (1=NIM, 0=TTL)
+      input_1_level = 0; // LEMO input 1 digital level (1=NIM, 0=TTL)
+      output_0_level = 0; // LEMO output 0 digital level (1=NIM, 0=TTL)
+      output_1_level = 0; // LEMO putput 1 digital level (1=NIM, 0=TTL)
+
+      en_trig1_P0 = false;    // Enable TRIG1 line on P0 connector
+      en_trig2_P0 = false;    // Enable TRIG2 line on P0 connector
+      en_trig_Front = true;   // Enable TRIGGER line on Front Panel IN0 lemo connector
+      en_sync_P0 = false;     // Enable SYNC line on P0 connector
+      en_sync_Front = true;   // Enable SYNC line on Front Panel IN1 lemo connector
+      common_noise_subtraction=0; // 0 disabled, 1=mean, ...
+      event_building = 1	 ; // 0 = disabled (if = 1, run.mode need to be set to process)
+      
+      event_per_block = 1; //1..255 valid only if event building = 1
+      use_sdram = 1; //0=disbled, valid only if event building = 1
+      fast_readout = 1; // 0=32bit BLT. 1== 64 bit 2eVME(or 2esst). valid only if event building = 1
+
+      common_offset=0; // 0..4095, offset
+      zero_level = 700;  // zero logic below this adc value
+      one_level = 2300;  // one logic above this adc value
+
+      ped_common = 0;     // pedestal value common to all channels, superceded by pedthr_file 
+      thr_common = 0;     // threshold value common to all channels, superceded by pedthr_file 
+
+      pedthr_file = "no_pedthr_path"; // pedestals and thresholds, for apv_ch=0 ... 2048
+
+      channel_mark = 255;     // 0...127, mark the corresponding adc channel, for frame alignment check; >127 disable mark (normal operation)
+
+      fir_enable = 0; // enable (1) or disable (0) the FIR filter (see 2012 JINST 7 C01082)
+      fir_coeff = [10990, -2130, -169, -232, -147, -123, -98, -191, -88, 333, -3, 34, 17, 14, 11, 7]; // FIR filter coefficients 16bits (/2^13 to get "real" values) need to be in the specific config file!!!
+
+      adc: // ADC section, array for 2 ADCs (for ch. 0-7 and 8-15)
+      ({ 
+        gain = [5, 5, 5, 5, 5, 5, 5, 5];	// (0...12 dB) gain settings for sub-ch 0, 1, 2, ... 7
+        invert = true;
+        pattern = "none";	// none, sync, deskew, ramp  
+        clock_phase = 25;	 // 0..63 (0.5 ns step) time offset between adc-clock and apv-clock
+      });
+
+      i2c: // I2C section, configuration
+      {
+	speed = 1124; // (x10^-5 s) period of the i2c clock --- 1124
+	timeout = 2000; // number of retries before timeout
+      };
+
+      apv: // APV section, up to 16 apv in one MPD
+      ({
+        i2c = -1; // i2c address (-1 means card disabled or not connected)
+        adc = -1; // adc channel (-1 means conversion disabled )
+        // Configuration parameters (7 bits)
+        Ipre = 85;   // 98
+        Ipcasc = 45; // 52
+	Ipsf = 30;   // 34
+	Isha = 30;   // 34
+	Issf = 30;   // 34
+	Ipsp = 48;   // 55 FIR Filter
+	Imuxin = 30; // 34 
+	Ispare = 0;
+	Vfp = 30;    // 30
+	Vfs = 60;    // 60
+	Vpsp = 40;   // 40 analog baseline, larger the value, smaller the baseline
+
+// Calibration intensity, pattern and delay
+	Ical = 120; // calibration pulse value
+	Cdrv = 0xEF;
+	Csel = 0;    // Seems very few effects at scope level: at least 1 bit = 0
+	CalPulse = 0; // Calibration Pulse  : 0=off, 1=on
+
+	Latency = 34;// 34---0..191, suggested less than 160 (?) A Reset101 is needed after changing this value
+	Muxgain = 4; // 1(-20%), 2(-10%), 4(nominal), 8(+10%), 16(+20%)
+
+	Polarization = 0; // Preamp Polarization: 0=non-inverting, 1=inverting
+        ReadOutMode  = 1; // Readout Mode       : 0=Deconvolution, 1=Peak
+	AnalogBias   = 1; // Analogue Bias      : 0=Off, 1=on 
+      }); // end APV
+    }); // end MPD
+
+    user: // user specific setting (e.g. additional vme module in bus)
+    {
+	scaler: { 
+          model = "v260";
+	  ba = 0xFD0000; // base address
+	  refresh=60; // seconds between scaler reads
+	  first_channel = 0;
+	  last_channel = 4;
+        }; 
+	pulser: {
+          model = "v462";
+          ba = 0xfe0000; // base address
+          period=0x100; 
+        };   // pulser period in us, BCD Format (Hex with limitation)
+	ioreg: {
+          model = "v513";
+	  ba = 0xFFE00000;// base address
+	  veto_phys = 10; // channel of physics veto (pmt coincidence ...)
+	  veto_puls = 9;  // channel of pulser veto
+	  reset_veto = 8; // channel of trigger veto reset 
+	  pulse_on = -1;  // set to 11 if you want ioreg to generate the pedestal pulse
+	  pulse_period = 10000; // minimum microseconds between pulses
+    
+	  // model = "v1495";
+	  // ba = 0xB0000000;
+	}; // input/output register (veto et al)
+	qdc: { // Charge digital converter 
+          model = "v465";
+          ba = 0xcabaaa; // base address
+          delay=0x0;
+	  thr_high=0xC7;
+	  thr_low=0; 
+	  mode=0; // Fifo Half full or Fifo Full
+        };   
+	hv: { // high voltage module
+	  model = "v6521";
+	  ba = 0xFF660000;
+	  refresh=60; // read time interval (sec)
+	  first_channel=0;
+	  last_channel=5;
+	};
+    };
+
+  }); // end Bus
+
+# run parameters
+
+  run:
+  {
+    file_prefix = "out/1203_iss/test";	// Output Filename Prefix
+
+    lastrun = "../cfg/last.run";  // keep track of the last run 
+
+    index = -1; // run index to be used, if negative, increment run number by abs(index) and use lastrun as run number source
+
+    mode = "event";	// event, histo, sample, process , in mpd ?
+
+    info = "Info setting"; // comemnt on the run
+
+    format = "bin";	// hex, dec, bin; output data file format
+
+    histo: // histo mode only
+    { 
+      time = 1;  // second of acquisition for histogramming 
+      channel = [ 0, 7 ];	// start stop single adc channel scan (range: 0 .. 7)
+      board = [ 0, 0 ]; 	// start and stop board scan (range: 0 .. 20)
+    };
+
+    sync: // sync mode only
+    {
+     l0 = [ 0, 1500, 10 ] ;   // start, stop and step for level "zero" scan in sync mode
+     l1 = [ 1800, 3500, 10 ]; // start, stop and step for level "one" scan in sync mode
+     phase = [ 0, 60, 2 ];    // start, stop and step for clock phase scan in sync mode
+     gain = [ 2, 14, 2 ];    // start, stop and step for adc gain scan in sync mode
+    };
+
+    time_preset = 10;	        // Acquisition time (in seconds)
+    event_preset = 10000;	// Number of events to acquire
+
+    progress_step = 20;  // progress bar step
+    max_retry = 500;	 // 0 = disabled
+
+    trigger_source = 0;
+
+  };
+
+};

@@ -119,6 +119,7 @@ install: libmpd.a libmpd.so
 	@cp -v $(PWD)/$< $(LINUXVME_LIB)/$<
 	@cp -v $(PWD)/$(<:%.a=%.so) $(LINUXVME_LIB)/$(<:%.a=%.so)
 	@cp -v ${PWD}/*Lib.h $(LINUXVME_INC)
+	@cp -v ${PWD}/*Config.h $(LINUXVME_INC)
 
 endif
 

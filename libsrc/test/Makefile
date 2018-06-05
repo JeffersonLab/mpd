@@ -3,13 +3,21 @@
 #    Makefile
 #
 # Description:
-#    Makefile for MPD library test programs
+#    Makefile for the JLAB extensions to the GEFANUC Controller API
 #
 #
 # $Date$
 # $Rev$
 #
 DEBUG=1
+
+ifndef ARCH
+	ifdef LINUXVME_LIB
+		ARCH=Linux
+	else
+		ARCH=VXWORKSPPC
+	endif
+endif
 
 LINUXVME_LIB	?= ${CODA}/extensions/linuxvme/libs
 LINUXVME_INC	?= ${CODA}/extensions/linuxvme/include
@@ -18,13 +26,13 @@ CROSS_COMPILE		=
 CC			= $(CROSS_COMPILE)gcc
 AR                      = ar
 RANLIB                  = ranlib
-CFLAGS			= -I. -I../ -I../libconfig/ -I${LINUXVME_INC} \
-			  -L. -L../libconfig -L${LINUXVME_LIB}
+CFLAGS			= -I${LINUXVME_INC} -I. -I/usr/include -I../libconfig -I../\
+			  -L${LINUXVME_LIB} -L. -L../libconfig
 ifdef DEBUG
 CFLAGS			+= -Wall -g
 endif
 
-PROGS			= mpdLibTest mpdSSPReadoutTest
+PROGS			= mpdLibTest mpdSSPLibTest mpdReset mpdDMAexercise
 
 all: $(PROGS)
 
@@ -35,6 +43,6 @@ clean distclean:
 
 %: %.c
 	echo "Making $@"
-	$(CC) $(CFLAGS) -o $@ $(@:%=%.c) -lrt -ljvme -lti -lmpd -lconfig -lssp
+	$(CC) $(CFLAGS) -o $@ $(@:%=%.c) -I../ -L../ -lrt -ljvme -lmpd -lconfig -lssp
 
 .PHONY: all clean distclean

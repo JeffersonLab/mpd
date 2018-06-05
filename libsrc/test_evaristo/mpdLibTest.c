@@ -40,29 +40,37 @@ main(int argc, char *argv[])
   uint32_t sdata[MAX_SDATA]; // samples data buffer
 
   char outfile[1000];
-  int acq_mode = 1;
+  int acq_mode = 0;
+  int opt1 = 0;
+  int sample_thr = 2000;
   int n_event=10;
 
+  int histo_sleep_ms=100;
+
   if (argc<2) {
-    printf("SYNTAX: %s [out_data_file 0xacq_mode #events]\n",argv[0]);
-    printf("        acq_mode_bit0 : EVENT readout");
-    printf("        acq_mode_bit1 : SAMPLE check");
-    printf("        acq_mode_bit2 : HISTO output");
-    printf("        #events: number of events only for EVENT_READOUT\n");
+    printf("SYNTAX: %s [acq_mode opt1 out_data_file]\n",argv[0]);
+    printf("        acq_mode: bit0= EVENT readout, bit1= SAMPLE check, bit2= HISTO output");
+    printf("        opt: EVENT mode= number of events, SAMPLE mode= threshold\n");
   }
 
   if (argc>1) {
-    sprintf(outfile,"%s",argv[1]);
-  } else {
-    sprintf(outfile,"out.txt");
+    sscanf(argv[1],"%x",&acq_mode);
   }
 
   if (argc>2) {
-    sscanf(argv[2],"%x",&acq_mode);
+    sscanf(argv[2],"%d",&opt1);
+    if (acq_mode & 1) {
+      n_event=opt1;
+    }
+    if (acq_mode & 2) {
+      sample_thr = opt1;
+    }
   }
-
+    
   if (argc>3) {
-    sscanf(argv[3],"%d",&n_event);
+    sprintf(outfile,"%s",argv[3]);
+  } else {
+    sprintf(outfile,"out.txt");
   }
 
   printf("\nMPD Library Tests\n");
@@ -98,31 +106,32 @@ main(int argc, char *argv[])
     return -1;
   } 
 
-  printf(" MPD discovered = %d\n",fnMPD);
+  printf("%s: MPD discovered = %d\n",__FUNCTION__, fnMPD);
 
   // APV configuration on all active MPDs
   for (k=0;k<fnMPD;k++) { // only active mpd set
     i = mpdSlot(k);
 
     // first test MPD histo memory write/read
-    printf(" test mpd %d histo memory\n",i);
+    printf("%s: MPD %d TEST histo memory\n",__FUNCTION__,i);
 
     mpdHISTO_Clear(i,0,-1);
     mpdHISTO_Read(i,0,hdata);   
     error_count=0;
     for (j=0;j<MAX_HDATA;j++) {
-      if (hdata[j]!=j) {
+      if (hdata[j] != j) {
 	//	printf("ERROR matching histo read/write ch=%d rval=%d\n",j,hdata[j]);
 	error_count++;
       }
     }
     if (error_count) {
-      printf("ERROR: HISTO Test fail %d time / %d attempts\n",error_count, MAX_HDATA);
+      printf("ERROR: HISTO Test fail %d time / %d attempts\n\n",error_count, MAX_HDATA);
+      //      continue;
     } else {
-      printf("HISTO Read/Write test SUCCESS on MPD slot %d\n",i);
+      printf("%s: HISTO Read/Write test SUCCESS on MPD slot %d\n",__FUNCTION__,i);
     }
 
-    printf(" Try initialize I2C mpd in slot %d\n",i);
+    printf("%s: Try initialize I2C of MPD in slot %d\n",__FUNCTION__,i);
     if (mpdI2C_Init(i) != OK) {
       printf("WRN: I2C fails on MPD %d\n",i);
     }
@@ -130,7 +139,7 @@ main(int argc, char *argv[])
       printf("WRN: I2C ApvReset fails on MPD %d\n",i);
     }
 
-    printf("Try APV discovery and init on MPD slot %d\n",i);
+    printf("%s: Try APV discovery and init of MPD slot %d\n",__FUNCTION__,i);
     if (mpdAPV_Scan(i)<=0) { // no apd found, skip next 
       //  continue;
     }
@@ -140,7 +149,7 @@ main(int argc, char *argv[])
     mpdDELAY25_Set(i, mpdGetAdcClockPhase(i,0), mpdGetAdcClockPhase(i,1));
 
     // apv reset
-    printf("Do APV reset on MPD slot %d\n",i);
+    printf("%s: Do APV reset on MPD slot %d\n",__FUNCTION__,i);
     if (mpdI2C_ApvReset(i) != OK) {
       printf("ERR: apv resert faild on mpd %d\n",i);
     }
@@ -168,15 +177,21 @@ main(int argc, char *argv[])
 
   } // end loop on mpds
 
-    /*
+    /*******************************************
      * SAMPLES TEST
      * sample APV output at 40 MHz
      * only for testing not for normal daq
      */
+
   if (acq_mode & 0x2) { 
+
+    printf("\n========== S T A R T . S A M P L E . T E S T ( thr = %d ) ==========\n\n",sample_thr);
   
     for (k=0;k<fnMPD;k++) { // only active mpd set
+
       i = mpdSlot(k);
+
+      printf("%s: MPD %d -------------\n",__FUNCTION__,i);
 
       mpdSetAcqMode(i, "sample");
 
@@ -184,7 +199,8 @@ main(int argc, char *argv[])
       mpdPEDTHR_Write(i);
     
       // set clock phase 
-      mpdDELAY25_Set(i, 20, 20); // use 20 as test, but other values may work better
+      mpdDELAY25_Set(i, mpdGetAdcClockPhase(i,0), mpdGetAdcClockPhase(i,1));
+      //      mpdDELAY25_Set(i, 20, 20); // use 20 as test, but other values may work better
     
       // enable acq
       mpdDAQ_Enable(i);
@@ -192,11 +208,13 @@ main(int argc, char *argv[])
       // wait for FIFOs to get full
       mfull=0;
       mempty=1;
+      int sample_timeout = 0;
       do {
 	mpdFIFO_GetAllFlags(i,&mfull,&mempty);
 	printf("SAMPLE test: %x (%x) %x\n",mfull,mpdGetApvEnableMask(i),mempty);
 	sleep(1);
-      } while (mfull!=mpdGetApvEnableMask(i));
+	sample_timeout++;
+      } while ((mfull!=mpdGetApvEnableMask(i)) && (sample_timeout<10));
       
       // read data from FIFOs and estimate synch pulse period
       for (j=0;j<16;j++) { // 16 = number of ADC channel in one MPD
@@ -205,13 +223,13 @@ main(int argc, char *argv[])
 	  if (error_count != 0) {
 	    printf("ERROR returned from FIFO_Samples %d\n",error_count);
 	  }
-	  printf("MPD/APV : %d / %d, peaks around: ",i,j);
+	  printf("MPD/ADC : %d / %d, peaks around: ",i,j);
 	  sch0=-1;
 	  sch1=-1;
 	  sfreq=0;
 	  for (h=0;h<scount;h++) { // detects synch peaks
 	    //	  printf("%04x ", sdata[h]); // output data
-	    if (sdata[h]>2500) { // threshold could be lower
+	    if (sdata[h]>sample_thr) { // threshold could be lower
 	      if (sch0<0) { sch0=h; sch1=sch0;} else { 
 		if (h==(sch1+1)) { sch1=h; } else {
 		  printf("%d-%d (v %d) ",sch0,sch1, sdata[h]);
@@ -222,7 +240,7 @@ main(int argc, char *argv[])
 	      }
 	    }
 	  }
-	  printf("\n Estimated synch period = %f (us) ,expected (20MHz:1.8, 40MHz:0.9)\n",((float) scount)/sfreq/40);
+	  printf("\n Estimated synch period = %f (us), expected (20MHz:1.8, 40MHz:0.9)\n",((float) scount)/sfreq/40);
 	}
       }
 
@@ -230,35 +248,43 @@ main(int argc, char *argv[])
 
   } // sample check mode
 
-    /*
+    /*******************************************
      * HISTO Mode; sampled data are histogrammed
      * only for testing, non for normal daq
      */
 
   if (acq_mode & 0x4) { 
 
+    printf("\n========== S T A R T . H I S T O . T E S T ==========\n\n");
+
     for (k=0;k<fnMPD;k++) { // only active mpd set
       i = mpdSlot(k);
 
       mpdSetAcqMode(i, "histo");
+
       hgain = 5; // this will be read from config file
 
       // load pedestal and thr default values
       mpdPEDTHR_Write(i);
-
 
       // set ADC gain
       mpdADS5281_SetGain(i,0,hgain,hgain,hgain,hgain,hgain,hgain,hgain,hgain);
 
       // loop on adc channels
 
+      uint32_t histo_peak[16];
+      int histo_peak_ch[16];
+
       for (j=0;j<16;j++) {
+
+	histo_peak[j]=0;
+	histo_peak_ch[j]=-1;
 
 	mpdHISTO_Clear(i,j,0);
 
 	mpdHISTO_Start(i,j);
 
-	sleep(1); // wait to get some data
+	usleep(histo_sleep_ms*1000); // wait to get some data
       
 	mpdHISTO_Stop(i,j);
 
@@ -276,6 +302,13 @@ main(int argc, char *argv[])
 	sch1=0;
 	for (h=0;h<4096;h++) {
 
+	  if (h>1000) { // check "1-state" peak
+	    if (hdata[h]>histo_peak[j]) { 
+	      histo_peak_ch[j]=h;
+	      histo_peak[j]=hdata[h];
+	    }
+	  }
+
 	  if (hdata[h]>0) { 
 	    if (sch0<0) { printf(" first bin= %d: ", h); } else {
 	      if ((sch0+1) < h) { printf( "%d last bin= %d\n first bin= %d: ",sch1,sch0,h); sch1=0; }
@@ -291,6 +324,28 @@ main(int argc, char *argv[])
 	} else { printf("\n");}
 	
       } // end loop adc channels in histo mode
+
+      printf("%s: MPD %d ----- HISTO Test Summary -----\n",__FUNCTION__,i);
+      for (j=0;j<16;j++) {
+	// try to classify the adc channel
+	printf("%s: ADC ch %2d ( %4d )",__FUNCTION__,j, histo_peak_ch[j]);
+	if (histo_peak_ch[j] <= 1900) {
+	  printf(" undefined");
+	}
+	if ((histo_peak_ch[j] > 1900) && (histo_peak_ch[j] <= 2100)) {
+	  printf(" not connected");
+	}
+	if ((histo_peak_ch[j] > 2100) && (histo_peak_ch[j] <= 2600)) {
+	  printf(" connected but not configured OR HDMI ch 5");
+	}
+	if ((histo_peak_ch[j] > 2600) && (histo_peak_ch[j] <= 3200)) {
+	  printf(" connected and configured");
+	}
+	if (histo_peak_ch[j] > 3200) {
+	  printf(" undefined");
+	}
+	printf("\n");
+      }
 
     }
 

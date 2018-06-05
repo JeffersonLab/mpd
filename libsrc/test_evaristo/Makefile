@@ -26,7 +26,7 @@ CROSS_COMPILE		=
 CC			= $(CROSS_COMPILE)gcc
 AR                      = ar
 RANLIB                  = ranlib
-CFLAGS			= -I${LINUXVME_INC} -I. -I/usr/include -I../libconfig -I../\
+CFLAGS			= -I${LINUXVME_INC} -I. -I/usr/include -I../libconfig -I../ \
 			  -L${LINUXVME_LIB} -L. -L../libconfig
 ifdef DEBUG
 CFLAGS			+= -Wall -g
@@ -43,6 +43,6 @@ clean distclean:
 
 %: %.c
 	echo "Making $@"
-	$(CC) $(CFLAGS) -o $@ $(@:%=%.c) -I../ -L../ -lrt -ljvme -lmpd -lconfig
+	$(CC) $(CFLAGS) -o $@ $(@:%=%.c) -I../ -L../ -lrt -ljvme -L../ -lmpd -lssp -lconfig
 
 .PHONY: all clean distclean

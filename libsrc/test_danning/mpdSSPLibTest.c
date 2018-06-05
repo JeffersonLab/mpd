@@ -107,6 +107,7 @@ main(int argc, char *argv[])
   int iFlag = SSP_INIT_SKIP_FIRMWARE_CHECK | 0xFFFF0000;
 
   sspInit(20<<19,1<<19,1,iFlag);
+//  sspInit(7<<19,1<<19,1,iFlag);
   extern int nSSP;
   int issp=0;
   sspMpdFiberReset(0);
@@ -529,6 +530,7 @@ main(int argc, char *argv[])
     printf(" ============ START ACQ MPD EVT_BUILDER ===========\n");
     do { // simulate loop on trigger
       sleep(1); // wait for event
+      
       printf(" ---- At least %d events acquired on each active MPDs -----\n",evt);
       // event occurred ... need some trigger logic
       rtout=0;
@@ -538,6 +540,13 @@ main(int argc, char *argv[])
       for (k=0;k<fnMPD;k++) { // only active mpd set
 	i = mpdSlot(k);
 	mpdArmReadout(i); // prepare internal variables for readout @@ use old buffer scheme, need improvement
+	
+	//--------------------------------//
+	//		mpdFIFO_ClearAll(i); // @@@ THIS SEEMS TO BE IN THE WRONG PLACE, should go above! before any event @@@
+		//mpdTRIG_Disable(i);
+		//mpdDAQ_Enable(i);
+		//	mpdTRIG_PauseEnable(i,5000);
+	//--------------------------------//
 
 #ifdef VMEREADOUT
 	blen = mpdApvGetBufferAvailable(i, 0);
@@ -635,6 +644,8 @@ main(int argc, char *argv[])
 	{
 	  if((idata%5)==0) printf("\n\t");
 	  datao = (unsigned int)LSWAP(outEvent->data[idata]);
+	  // datao = (unsigned int)outEvent->data[idata];
+ 
 	  printf("  0x%08x ",datao);
 	  fprintf(fout,"%x\n",datao);
 

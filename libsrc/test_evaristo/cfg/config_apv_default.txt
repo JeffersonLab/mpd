@@ -14,15 +14,17 @@ default:
 
       calib_latency = 0;     // 0..255: 0: disabled, > 0 issue a calib followed by trigger after given latency, trigger - calibration pulse delay
 
+      trigger_latency = 0; // [clock 25ns, max=31] delay from arrival of the trigger to the MPD input and issue of the trigger to the cards (new in MPD Firmware 4.0)
+
       trigger_number = 2;	// 0..15 0: disabled, 1: normal, >1: N trigger issued every 3 clock cycles, (that is number of samples)
 
       apv_Frequency  = 1; // Readout Frequency  : 0=20 MHz, 1=40 MHz
       apv_SampleMode = 0; // Sampling Mode      : 0=3 samples, 1=1 sample / trigger
 
-      input_0_level = 0; // LEMO input 0 digital level (0=NIM, 1=TTL)
-      input_1_level = 0; // LEMO input 1 digital level (0=NIM, 1=TTL)
-      output_0_level = 0; // LEMO output 0 digital level (0=NIM, 1=TTL)
-      output_1_level = 0; // LEMO putput 1 digital level (0=NIM, 1=TTL)
+      input_0_level = 1; // LEMO input 0 digital level (1=NIM, 0=TTL)
+      input_1_level = 0; // LEMO input 1 digital level (1=NIM, 0=TTL)
+      output_0_level = 0; // LEMO output 0 digital level (1=NIM, 0=TTL)
+      output_1_level = 0; // LEMO putput 1 digital level (1=NIM, 0=TTL)
 
       en_trig1_P0 = false;    // Enable TRIG1 line on P0 connector
       en_trig2_P0 = false;    // Enable TRIG2 line on P0 connector
@@ -31,6 +33,11 @@ default:
       en_sync_Front = true;   // Enable SYNC line on Front Panel IN1 lemo connector
       common_noise_subtraction=0; // 0 disabled, 1=mean, ...
       event_building = 0; // 0 = disabled
+
+      event_per_block = 1; //1..255 valid only if event building = 1
+      use_sdram = 1; //0=disbled, valid only if event building = 1
+      fast_readout = 0; // 0:32bit BLT, 1:MBLT, 2:2eVME, 3:2eSST160, 4:2eSST267, 5:2eSST320; valid only if event building = 1
+
       common_offset=0; // 0..4095, offset
       zero_level = 700;  // zero logic below this adc value
       one_level = 2300;  // one logic above this adc value
@@ -42,6 +49,9 @@ default:
 
       channel_mark = 255;     // 0...127, mark the corresponding adc channel, for frame alignment check; >127 disable mark (normal operation)
 
+      fir_enable= 0;
+      fir_coeff = [10990, -2130, -169, -232, -147, -123, -98, -191, -88, 333, -3, 34, 17, 14, 11, 7]; // FIR filter coefficients 16bits (/2^13 to get "real" values)
+
       adc: // ADC section, array for 2 ADCs (for ch. 0-7 and 8-15)
       ({ 
         gain = [5, 5, 5, 5, 5, 5, 5, 5];	// (0...12 dB) gain settings for sub-ch 0, 1, 2, ... 7
@@ -52,7 +62,7 @@ default:
 
       i2c: // I2C section, configuration
       {
-	speed = 1124; // (x10^-5 s) period of the i2c clock --- 1124
+	speed = 100; // (x10^-5 s) period of the i2c clock --- 1124
 	timeout = 2000; // number of retries before timeout
       };
 
