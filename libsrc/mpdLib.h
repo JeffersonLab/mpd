@@ -2,7 +2,7 @@
 #define __MPDLIB__
 /******************************************************************************
  *
- *  mpdLib.h  
+ *  mpdLib.h
  *             - Driver library header file for the MultiPurpose
  *             Digitizer (MPD) using a VxWorks 5.5 (PPC) or Linux
  *             2.6.18 (Intel) or later based single board computer.
@@ -44,10 +44,10 @@
 
 #define DAQ_FIFO_SIZE	1024
 
-#define MPD_MSG(format, ...) {printf("%s: ",__FUNCTION__); printf(format, ## __VA_ARGS__);} 
-#define MPD_DUM(format, ...) {printf("%s: ",__FUNCTION__); printf(format, ## __VA_ARGS__);} 
-#define MPD_DBG(format, ...) {printf("%s: DEBUG: ",__FUNCTION__); printf(format, ## __VA_ARGS__);} 
-#define MPD_ERR(format, ...) {fprintf(stderr,"%s: ERROR: ",__FUNCTION__); fprintf(stderr,format, ## __VA_ARGS__);} 
+#define MPD_MSG(format, ...) {printf("%s: ",__FUNCTION__); printf(format, ## __VA_ARGS__);}
+#define MPD_DUM(format, ...) {printf("%s: ",__FUNCTION__); printf(format, ## __VA_ARGS__);}
+#define MPD_DBG(format, ...) {printf("%s: DEBUG: ",__FUNCTION__); printf(format, ## __VA_ARGS__);}
+#define MPD_ERR(format, ...) {fprintf(stderr,"%s: ERROR: ",__FUNCTION__); fprintf(stderr,format, ## __VA_ARGS__);}
 
 struct output_buffer_struct
 {
@@ -72,7 +72,7 @@ struct mpd_i2c_control_struct
   /* 0x0408 */ volatile uint32_t control;
   /* 0x040C */ volatile uint32_t tx_rx;
   /* 0x0410 */ volatile uint32_t comm_stat;
-  /* 0x0414 */          uint32_t blank[2]; 
+  /* 0x0414 */          uint32_t blank[2];
   /* 0x041C */ volatile uint32_t apv_reset;
 };
 
@@ -129,9 +129,12 @@ struct mpd_struct
   /* 0x00230 */          uint32_t blank3[(0x300-0x230)>>2];
   /* 0x00300 */ volatile uint32_t adc_config;
   /* 0x00304 */          uint32_t blank4[(0x380-0x304)>>2];
-  /* 0x00380 */ volatile uint32_t serial_memory_if[4];
-  /* 0x00390 */ volatile uint32_t remote_update[4];
-  /* 0x003A0 */          uint32_t blank5[(0x400-0x3A0)>>2];
+
+
+  /* 0x00380 */ volatile uint32_t serial_memory_if[8];
+  /* 0x003A0 */ volatile uint32_t remote_update[4];
+  /* 0x003B0 */          uint32_t blank5[(0x400-0x3B0)>>2];
+
   /* 0x00400 */ struct mpd_i2c_control_struct i2c;
   /* 0x00420 */          uint32_t blank6[(0x1000-0x420)>>2];
 
@@ -191,7 +194,7 @@ typedef struct apvparm_struct // actually a structure
   uint8_t i2cAddr;
 
   short enabled; // if 0 card is disabled
-  
+
   // config settings
   short i2c;
   short adc;
@@ -220,8 +223,8 @@ typedef struct apvparm_struct // actually a structure
    * 7       Not Used
    * 6       Not Used
    * 5       Preamp Pol.     Non-Inverting   Inverting
-   * 4       Read-out Freq.  20MHz           40MHz 
-   * 3       Read-out Mode   Deconvolution   Peak  
+   * 4       Read-out Freq.  20MHz           40MHz
+   * 3       Read-out Mode   Deconvolution   Peak
    * 2       Calibr. Inhibit OFF             ON
    * 1       Trigger Mode    3-sample        1-sample
    * 0       Analogue Bias   OFF             ON
@@ -372,7 +375,7 @@ int  mpdLM95235_Read(int id, double *core_t, double *air_t);
 
 /* service methods */
 int mpdGetNumberAPV(int id); // get number of apv in config file
-void mpdSetNumberAPV(int id, uint16_t v); // set number of apv in config file 
+void mpdSetNumberAPV(int id, uint16_t v); // set number of apv in config file
 int mpdGetNumberConfiguredAPV(int id); // return number of apv properly configured by the hardware
 
 /* I2C methods */
@@ -383,11 +386,11 @@ int  mpdGetI2CMaxRetry(int id);
 
 int  mpdI2C_ApvReset(int id);
 int  mpdI2C_Init(int id);
-int  mpdI2C_ByteWrite(int id, uint8_t dev_addr, uint8_t int_addr, 
+int  mpdI2C_ByteWrite(int id, uint8_t dev_addr, uint8_t int_addr,
 		 int ndata, uint8_t *data);
-int  mpdI2C_ByteRead(int id, uint8_t dev_addr, uint8_t int_addr, 
+int  mpdI2C_ByteRead(int id, uint8_t dev_addr, uint8_t int_addr,
 		int ndata, uint8_t *data);
-int  mpdI2C_ByteWriteRead(int id, uint8_t dev_addr, uint8_t int_addr, 
+int  mpdI2C_ByteWriteRead(int id, uint8_t dev_addr, uint8_t int_addr,
 			  int ndata, uint8_t *data);
 int  mpdI2C_ByteRead1(int id, uint8_t dev_addr, uint8_t *data);
 
@@ -463,8 +466,8 @@ int  mpdADS5281_Normal(int id, int adc);
 int  mpdADS5281_Sync(int id, int adc);
 int  mpdADS5281_Deskew(int id, int adc);
 int  mpdADS5281_Ramp(int id, int adc);
-int  mpdADS5281_SetGain(int id, int adc, 
-			int gain0, int gain1, int gain2, int gain3, 
+int  mpdADS5281_SetGain(int id, int adc,
+			int gain0, int gain1, int gain2, int gain3,
 			int gain4, int gain5, int gain6, int gain7);
 
 int mpdFIR_Config(int id);
@@ -485,8 +488,8 @@ int mpdSDRAM_GetParam(int id, int *init, int *overrun, int *rdaddr, int *wraddr,
 
 int  mpdFIFO_ReadSingle(int id, int channel, uint32_t *dbuf, int *wrec, int max_retry);
 int  mpdFIFO_ReadSingle0(int id, int channel, int blen, uint32_t *event, int *nread);
-int  mpdFIFO_Samples(int id, 
-		     int channel, 
+int  mpdFIFO_Samples(int id,
+		     int channel,
 		     uint32_t *event, int *nread, int max_samples, int *err);
 int  mpdFIFO_IsSynced(int id, int channel, int *synced);
 int  mpdFIFO_AllSynced(int id, int *synced);
@@ -528,7 +531,7 @@ void mpdSetPedThrCommon(int id, int p, int t);
 int  mpdGetPedCommon(int id);
 int  mpdGetThrCommon(int id);
 
-int mpdGetNumberMPD(); 
+int mpdGetNumberMPD();
 
 void mpdSetFIRenable(int id, int flag);
 int mpdGetFIRenable(int id);
@@ -543,6 +546,7 @@ int  mpdReadPedThr(int id, std::string pname);
 int  mpdGetEBWordCount(int id);
 int  mpdGetEventCount(int id);
 int  mpdGetBlockCount(int id);
+int  mpdOBUF_GetBlockCount(int id);
 int  mpdGetTriggerCount(int id);
 int  mpdGetTriggerReceivedCount(int id);
 int  mpdSetFiberTestMode(int id, int enable, int period);
@@ -555,4 +559,17 @@ int  mpdSetTriggerDelay(int id, int delay);
 int  mpdFiberStatus(int id);
 int  mpdFiberEnable(int id);
 int  mpdFiberDisable(int id);
+/* ASMI Commands  - write the flash memory */
+void mpdASMI_reset(int id);
+int mpdASMI_rdid(int id);
+int mpdASMI_rdstatus(int id);
+void mpdASMI_sec_erase(int id, uint32_t addr);      /* addr must be in the sector to erase */
+int mpdASMI_rd(int id, uint32_t addr);
+void mpdASMI_wr(int id, uint32_t addr, uint32_t data);
+
+/* Remote Update commands - reboot factory or user FPGA image */
+int mpdRUPD_reconfigure(int id, int pgm);
+void mpdRUPD_setup(int id, int pgm);
+void mpdRUPD_wr_param(int id, int par, int val);
+int mpdRUPD_rd_param(int id, int par);
 #endif /* __MPDLIB__ */
