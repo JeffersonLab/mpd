@@ -3,7 +3,7 @@
 #    Makefile
 #
 # Description:
-#    Makefile for the coda primary and secondary readout lists 
+#    Makefile for the coda primary and secondary readout lists
 #    running on an Intel-based controller running Linux
 #
 #
@@ -15,10 +15,10 @@ DEBUG=1
 #
 
 # Plug in your primary readout lists here..
-VMEROL			= mpd_list.so mpd_ssp_list.so mpd_ssp_fadc_tdc_list.so mpd_ssp_fadc_list.so fadc_list.so fadc_list_withTimer.so
+VMEROL			= mpd_list.so mpd_ssp_list.so mpd_obuf_list.so
 # Add shared library dependencies here.  (jvme, ti, are already included)
-#ROLLIBS			= 
-ROLLIBS			=  -lc775 -lfadc -lsd -lts -lremex -lmpd -lssp -lconfig #-lremex
+#ROLLIBS			=
+ROLLIBS			=  -lmpd -lssp -lconfig #-lremex
 
 ifndef LINUXVME_LIB
 	LINUXVME_LIB	= $CODA/extensions/linuxvme/libs
@@ -38,14 +38,14 @@ CFLAGS			= -O3
 endif
 CFLAGS			+= -w -I${LINUXVME_INC} -I. -I/usr/include -I${CODA}/common/include\
 			  -L${LINUXVME_LIB} -L. -DJLAB
-CFLAGS			+= -lrt -lpthread -ljvme -lti -lremex -lfadc $(ROLLIBS)
+CFLAGS			+= -lrt -lpthread -ljvme -lti -lremex $(ROLLIBS)
 CFLAGS			+= -DLINUX -DDAYTIME=\""`date`"\"
 
 # DEFs for compiling CODA readout lists
 CCRL			= ${CODA_BIN}/ccrl
 CODA_INCS		= -I.  -I${LINUXVME_INC} -I${CODA}/common/include
 CODA_LIBDIRS            = -L. -L${LINUXVME_LIB}
-CODA_LIBS		= -ljvme -lti 
+CODA_LIBS		= -ljvme -lti
 CODA_DEFS		= -DLINUX -DDAYTIME=\""`date`"\"
 CODA_CFLAGS		= -O -w -fpic -shared ${CODA_INCS} ${CODA_LIBDIRS} \
 			  ${CODA_LIBS} ${CODA_DEFS}
@@ -57,7 +57,7 @@ CFILES			= $(CRLFILES:.crl=.c)
 SOBJS			= $(CRLFILES:.crl=.so)
 
 
-all: $(VMEROL) $(SOBJS) 
+all: $(VMEROL) $(SOBJS)
 
 event_list.c: event_list.crl Makefile
 	@echo
@@ -77,6 +77,6 @@ event_list.so: event_list.c
 	$(CC) -fpic -shared  $(CFLAGS) -DINIT_NAME=$(@:.so=__init) -o $@ $<
 
 clean distclean:
-	@rm -f  $(VMEROL) $(SOBJS) $(CFILES) *~ 
+	@rm -f  $(VMEROL) $(SOBJS) $(CFILES) *~
 
 .PHONY: all

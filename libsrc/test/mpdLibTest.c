@@ -114,7 +114,7 @@ main(int argc, char *argv[])
    * Read config file and fill internal variables
    *
    */
-  mpdConfigInit("/home/daq/ben/mpd/libsrc/rol/cfg/config_apv_vme.txt");
+  mpdConfigInit("cfg/config_apv.txt");
   mpdConfigLoad();
 
   printf(" CO)NFIGURATIN DFO\n");
@@ -277,7 +277,7 @@ main(int argc, char *argv[])
 
     for (k=0;k<fnMPD;k++) { // only active mpd set
       i = mpdSlot(k);
-      if(i!=9&&i!=10) continue;
+
       mpdSetAcqMode(i, "histo");
       hgain = 5; // this will be read from config file
 
