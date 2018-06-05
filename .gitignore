@@ -1,0 +1,15 @@
+# Extensionless files (next 3 lines)
+*
+!/**/
+!*.*
+# Temporary/backup files
+*~
+\#*
+# Dep/Binaries
+*.d
+*.o
+*.a
+*.so
+# Built documentation
+doc/doxygen/C/*
+*.log
