@@ -46,7 +46,7 @@
 
 #define MPD_MSG(format, ...) {printf("%s: ",__FUNCTION__); printf(format, ## __VA_ARGS__);}
 #define MPD_DUM(format, ...) {printf("%s: ",__FUNCTION__); printf(format, ## __VA_ARGS__);}
-#define MPD_DBG(format, ...) {printf("%s: DEBUG: ",__FUNCTION__); printf(format, ## __VA_ARGS__);}
+#define MPD_DBG(format, ...) {if(mpdPrintDebug) {printf("%s: DEBUG: ",__FUNCTION__); printf(format, ## __VA_ARGS__);} }
 #define MPD_ERR(format, ...) {fprintf(stderr,"%s: ERROR: ",__FUNCTION__); fprintf(stderr,format, ## __VA_ARGS__);}
 
 struct output_buffer_struct
@@ -327,6 +327,7 @@ typedef struct mpd_priv_struct
 STATUS mpdInit (UINT32 addr, UINT32 addr_inc, int nadc, int iFlag);
 int  mpdCheckAddresses(int id);
 int  mpdSlot(uint32_t i);
+int mpdSetPrintDebug(int debug);
 
 void mpdSetZeroLevel(int id, uint16_t level);
 int  mpdGetZeroLevel(int id);

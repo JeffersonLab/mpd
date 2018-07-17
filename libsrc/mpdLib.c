@@ -109,6 +109,7 @@ extern GEF_VME_BUS_HDL vmeHdl;
 static int mpdSSPMode=0;
 static uint32_t mpdSSPFiberMask[(MPD_SSP_MAX_BOARDS)+1]; /* index = ssp#, value = fiber port mask of MPDs */
 static int mpdSSPFiberMaskUsed = 0;
+static int mpdPrintDebug = 0;
 
 /* */
 #define MPD_VERSION_MASK 0xf00f
@@ -224,8 +225,8 @@ mpdSetSSPFiberMap_preInit(int ssp, int mpdmask)
 
   if(ssp <= MPD_SSP_MAX_BOARDS)
     {
-      printf("%s: ERROR: ssp (%d) out of range\n",
-	     __func__, ssp);
+      MPD_MSG("ERROR: ssp (%d) out of range\n",
+	      ssp);
       return ERROR;
     }
 
@@ -278,7 +279,8 @@ mpdSetSSPFiberMap_preInit(int ssp, int mpdmask)
  * </pre>
  *
  *
- * @return OK, or ERROR if the address is invalid or a board is not present.
+ * @return Number of MPDs initialized, or ERROR if the address is
+ * invalid or a board is not present.
  */
 
 STATUS
@@ -320,15 +322,13 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
     { // SSP Mode
       if(nSSP == 0)
 	{
-	  printf("%s: ERROR: Must initialize SSPs first\n",
-		 __func__);
+	  MPD_MSG("ERROR: Must initialize SSPs first\n");
 	  return ERROR;
 	}
 
       if(mpdSSPFiberMaskUsed > 0)
 	{
-	  printf("%s: WARNING: May Overwrite previously stored SSP Fiber Masks\n",
-		 __func__);
+	  MPD_MSG("WARNING: May Overwrite previously stored SSP Fiber Masks\n");
 	}
       else
 	{
@@ -386,7 +386,8 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
 
 	  mpdA24Offset = laddr - addr;
 	}
-      printf("%s: A24 mapping: VME addr=0x%x -> Local 0x%x\n", __FUNCTION__, addr, laddr);
+      MPD_MSG("A24 mapping: VME addr=0x%x -> Local 0x%x\n",
+	      addr, laddr);
     }
 
   impd = 0;
@@ -465,9 +466,9 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
       if(res < 0)
 	{
 #ifdef VXWORKS
-	  printf("mpdInit: WARN: No addressable board at addr=0x%x\n",(UINT32) mpd);
+	  MPD_MSG("WARN: No addressable board at addr=0x%x\n",(UINT32) mpd);
 #else
-	  printf("mpdInit: WARN: No addressable board at VME addr=0x%x (local 0x%x)\n",
+	  MPD_MSG("WARN: No addressable board at VME addr=0x%x (local 0x%x)\n",
 		 (UINT32) addr+ii*addr_inc, (UINT32) mpd);
 #endif
 	  errFlag = 1;
@@ -476,8 +477,7 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
 
       if (rdata != magic_const)
 	{
-	  printf("%s: WARN: for board at 0x%x, invalid data code 0x%x (expected 0x%x)\n",
-		 __FUNCTION__,
+	  MPD_MSG("WARN: for board at 0x%x, invalid data code 0x%x (expected 0x%x)\n",
 		 (UINT32) mpd - mpdA24Offset, rdata, magic_const);
 	  errFlag = 2;
 	  continue;
@@ -523,8 +523,8 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
 	  // Check FPGA firmware version
 	  if( (rdata&MPD_VERSION_MASK) < MPD_SUPPORTED_CTRL_FIRMWARE )
 	    {
-	      printf("%s: WARN: Slot %2d: Control FPGA Firmware (0x%02x) not supported by this driver (ignored).\n",
-		     __FUNCTION__,boardID, rdata & MPD_VERSION_MASK);
+	      MPD_MSG("WARN: Slot %2d: Control FPGA Firmware (0x%02x) not supported by this driver (ignored).\n",
+		     boardID, rdata & MPD_VERSION_MASK);
 	    }
 	}
 
@@ -588,23 +588,21 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
     mpdInited = nmpd;
 
   if(nmpd > 0) {
-    printf("%s: %d MPD(s) initialized, %d discovered\n",__FUNCTION__,nmpd,impd_disc);
+    MPD_MSG("%d MPD(s) initialized, %d discovered\n",nmpd,impd_disc);
   }
 
   if(errFlag > 0)
     {
-      printf("mpdInit: WARN: Unable to initialize all requested MPD Modules (%d found)\n",
+      MPD_MSG("WARN: Unable to initialize all requested MPD Modules (%d found)\n",
 	     nmpd);
       return(ERROR);
     }
-  else
-    {
-      return(OK);
-    }
+
+  return(nmpd);
 }
 
 int mpdGetNumberMPD() { return mpdInited; };
-
+int mpdSetPrintDebug(int debug) { mpdPrintDebug = (debug) ? 1 : 0; return mpdPrintDebug;}
 
 int mpdGetNumberAPV(int id) { return (uint16_t) fMpd[id].nAPV; };
 void mpdSetNumberAPV(int id, uint16_t v) { fMpd[id].nAPV = v; };
@@ -617,7 +615,7 @@ mpdCheckAddresses(int id)
   uint32_t offset=0, expected=0, base=0;
   int rval=OK;
 
-  printf("%s:\n\t ---------- Checking mpd address space ---------- \n",__FUNCTION__);
+  MPD_MSG("\n\t ---------- Checking mpd address space ---------- \n");
 
   base = (uint32_t) &MPDp[id]->magic_value;
 
@@ -801,8 +799,8 @@ void mpdSetTriggerMode(int id, int lat, int tlat, int num)
   mpdSetTriggerNumber(id, num);
   mpdSetCalibLatency(id, lat);
   mpdSetTriggerLatency(id, tlat);
-  printf("%s: Calib / Trigger Latency = %d %d, Trigger Mode = 0x%x\n",
-	 __FUNCTION__, lat, tlat, fMpd[id].fTriggerMode);
+  MPD_MSG("Calib / Trigger Latency = %d %d, Trigger Mode = 0x%x\n",
+	  lat, tlat, fMpd[id].fTriggerMode);
 };
 
 int mpdGetTriggerMode(int id) { return fMpd[id].fTriggerMode; };
@@ -817,8 +815,7 @@ void mpdSetAcqMode(int id, char *name)
   if(strcmp(name,"sample")==0) fMpd[id].fAcqMode = MPD_DAQ_SAMPLE;
   if(strcmp(name,"sync")==0) fMpd[id].fAcqMode = MPD_DAQ_SYNC;
 
-  printf("%s: Acquisition Mode = 0x%x (%s)\n",
-	 __FUNCTION__,fMpd[id].fAcqMode, name);
+  MPD_MSG("Acquisition Mode = 0x%x (%s)\n", fMpd[id].fAcqMode, name);
 };
 int mpdGetAcqMode(int id) { return fMpd[id].fAcqMode; };
 
@@ -854,8 +851,7 @@ short mpdGetOutputLevel(int id, int conn) { return fMpd[id].fOutLevelTTL[conn];}
 uint32_t mpdGetFpgaRevision(int id)
 {
   if (fMpd[id].FpgaRevision == 99999) {
-    printf("%s: Fpga revision not set yet, something wrong! exit(%d)",
-	   __FUNCTION__,0);
+    MPD_MSG("Fpga revision not set yet, something wrong! exit(%d)", 0);
 /*     exit(0); */
   }
   return fMpd[id].FpgaRevision;
@@ -962,7 +958,7 @@ mpdI2C_Init(int id)
 {
   uint32_t data, rdata;
   int success = OK;
-  double core_t, air_t;
+  /* double core_t, air_t; */
 
   //  if(id==0) id=mpdID[0];
   if(((int32_t)MPDp[id]==-1) || (id<0) || (id>21))
@@ -987,18 +983,18 @@ mpdI2C_Init(int id)
 
   rdata = mpdRead32(&MPDp[id]->i2c.clock_prescaler_low);
 
-  printf("%s: i2c low prescaler register set/read : %d / %d\n",
-	 __FUNCTION__,data,rdata);
+  MPD_MSG("i2c low prescaler register set/read : %d / %d\n",
+	  data,rdata);
 
   data = (ispeed>>8) & 0xff;
   mpdWrite32(&MPDp[id]->i2c.clock_prescaler_high, data);
   rdata = mpdRead32(&MPDp[id]->i2c.clock_prescaler_high);
 
-  printf("%s: i2c high prescaler register set/read : %d / %d\n",
-	 __FUNCTION__,data,rdata);
+  MPD_MSG("i2c high prescaler register set/read : %d / %d\n",
+	  data,rdata);
 
-  printf("%s: i2c speed prescale = %d, (period = %f us, frequency = %f kHz)\n",
-	 __FUNCTION__,ispeed, ispeed/10., 10000./ispeed);
+  MPD_MSG("i2c speed prescale = %d, (period = %f us, frequency = %f kHz)\n",
+	 ispeed, ispeed/10., 10000./ispeed);
 
   mpdWrite32(&MPDp[id]->i2c.control, MPD_I2C_CONTROL_ENABLE_CORE);
 
@@ -1301,8 +1297,8 @@ int  mpdGetAdcClockPhase(int id, int adc) {
       break;
     default:
       clock_phase = MPD_APV_CLOCK_PHASE_0;
-      printf("%s: Warning: apv_clock phase %d out of range for Fpga rev. %d",
-	     __FUNCTION__, clock_phase, mpdGetFpgaRevision(id));
+      MPD_MSG("Warning: apv_clock phase %d out of range for Fpga rev. %d",
+	      clock_phase, mpdGetFpgaRevision(id));
     }
   }
   return clock_phase;
@@ -1418,7 +1414,7 @@ mpdAPV_Try(int id, uint8_t apv_addr) // i2c addr
 
   int timeout;
   uint8_t x = apv_addr+32; //96
-  uint8_t y;
+  /* uint8_t y; */
   int ret;
 
   //  if(id==0) id=mpdID[0];
@@ -1436,7 +1432,8 @@ mpdAPV_Try(int id, uint8_t apv_addr) // i2c addr
     timeout++;
   } while (((ret == -20) || (ret == -19) || (ret == -18)) && (timeout<20));
 
-  if (ret<0) printf("%s : MPD %d i2c %d w %d tout %d ret %d\n",__FUNCTION__, id, apv_addr, x, timeout, ret);
+  if (ret<0)
+    MPD_MSG("MPD %d i2c %d w %d tout %d ret %d\n", id, apv_addr, x, timeout, ret);
 
   // mpdAPV_Read(id, apv_addr, latency_addr, &y);
   // printf("%s: latency read: %0x %0x\n",__FUNCTION__,x,y);
@@ -1479,15 +1476,15 @@ mpdAPV_Scan(int id)
     }
 
   // print information (debug only, should be done in verbose mode only)
-  printf("%s: MPD %d Blind scan on %d apvs: \n",__FUNCTION__,id, MPD_MAX_APV); // in principle can be more
+  MPD_MSG("MPD %d Blind scan on %d apvs: \n", id, MPD_MAX_APV); // in principle can be more
 
   for(iapv=0;iapv<MPD_MAX_APV;iapv++)
     {
       //      printf("%s MPD %d I2C addr %d:\n",__FUNCTION__,id,iapv);
       if ( mpdAPV_Try(id, iapv)>-1 )
 	{
-	  printf("%s: MPD %d found candidate card at i2c addr %2d\n",
-		 __FUNCTION__, id, iapv);
+	  MPD_MSG("MPD %d found candidate card at i2c addr %2d\n",
+		 id, iapv);
 	}
     }
   MPD_MSG("MPD %d Blind scan done\n",id);
@@ -1497,12 +1494,12 @@ mpdAPV_Scan(int id)
   nApv[id]=0;
   for(iapv=0; iapv<fMpd[id].nAPV; iapv++)
     {
-      printf("%s: Try i2c=%2d adc=%2d : ", __FUNCTION__, fApv[id][iapv].i2c, fApv[id][iapv].adc);
+      MPD_MSG("Try i2c=%2d adc=%2d : ", fApv[id][iapv].i2c, fApv[id][iapv].adc);
 
       if ( mpdAPV_Try(id, fApv[id][iapv].i2c)>-1 && fApv[id][iapv].adc>-1 )
 	{
-	  printf("%s: %d matched in MPD in slot %d\n",
-		 __FUNCTION__, fApv[id][iapv].i2c, id);
+	  MPD_MSG("%d matched in MPD in slot %d\n",
+		  fApv[id][iapv].i2c, id);
 
 	  mpdSetApvEnableMask(id, (1 << fApv[id][iapv].adc));
 	  //printf("%s: APV enable mask 0x%04x\n", __FUNCTION__,mpdGetApvEnableMask(id));
@@ -1511,15 +1508,14 @@ mpdAPV_Scan(int id)
 	}
       else
 	{
-	  printf("%s: MPD %d APV i2c = %d does not respond.  It is disabld\n",
-		 __FUNCTION__,id, fApv[id][iapv].i2c);
+	  MPD_MSG("MPD %d APV i2c = %d does not respond.  It is disabled\n", id, fApv[id][iapv].i2c);
 	  fApvEnableMask[id] &= ~(1 << fApv[id][iapv].adc);
 	  fApv[id][iapv].enabled=0;
 	}
     }
 
-  printf("%s: %d APV found matching settings\n",
-  	 __FUNCTION__,nApv[id]);
+  MPD_MSG("%d APV found matching settings\n",
+	  nApv[id]);
 
   return nApv[id];
 }
@@ -1563,7 +1559,7 @@ mpdAPV_Read(int id, uint8_t apv_addr, uint8_t reg_addr, uint8_t *val)
   usleep(500);
   success = mpdI2C_ByteRead(id, (uint8_t)((0x20 | apv_addr)<<1), reg_addr, 1, val);
 
-  printf("%s: Get / Return = 0x%x 0x%x\n", __FUNCTION__,*val,rval);
+  MPD_MSG("Get / Return = 0x%x 0x%x\n", *val,rval);
 
   return success;
 }
@@ -1737,8 +1733,7 @@ mpdAddApv(int id, ApvParameters v)
   memcpy((void *)&fApv[id][nApv[id]], &v, sizeof(ApvParameters));
   fApv[id][nApv[id]].fBuffer = 0;
 
-  printf("%s: APV %d added to list of FECs\n",
-	 __FUNCTION__,
+  MPD_MSG("APV %d added to list of FECs\n",
 	 nApv[id]);
   nApv[id]++;
 }
@@ -2115,7 +2110,8 @@ mpdDELAY25_Set(int id, int apv1_delay, int apv2_delay)
       return ERROR;
     }
 
-  printf("%s: start (%d: %d %d)\n",__FUNCTION__,id, apv1_delay, apv2_delay);
+  MPD_DBG("start (%d: %d %d)\n",
+	 id, apv1_delay, apv2_delay);
 
   //      mpdI2C_ByteWrite(0xF0 , (apv2_delay & 0x3F) | 0x40, 0, &val);      // CR0: APV2 out
   mpdI2C_ByteWrite(id, 0xF0 , 0x40, 0, &val);    // CR0: APV2 out not delayed
@@ -2140,7 +2136,7 @@ mpdDELAY25_Set(int id, int apv1_delay, int apv2_delay)
   mpdI2C_ByteWrite(id, 0xFA , 0x00, 0, &val);
   usleep(10000);
 
-  printf("%s: end\n",__FUNCTION__);
+  MPD_DBG("end\n");
 
   return 0;
 }
@@ -2150,16 +2146,14 @@ mpdDELAY25_Set(int id, int apv1_delay, int apv2_delay)
 
 int mpdFIR_Config(int id) {
 
-  uint32_t addr;
   uint32_t data, rdata;
-  int success;
   int i;
   int coeff0, coeff1;
 
   int npar = 16;
 
   // set coeff
-  printf("%s: FIR coefficients (FIRenable=%d):\n", __FUNCTION__,mpdGetFIRenable(id));
+  MPD_DBG("FIR coefficients (FIRenable=%d):\n", mpdGetFIRenable(id));
   for (i=0;i<npar/2;i++) {
     coeff0 = mpdGetFIRcoeff(id, i*2);
     coeff1 = mpdGetFIRcoeff(id, i*2+1);
@@ -2292,8 +2286,8 @@ mpdADS5281_InvertChannels(int id, int adc)	/* adc == 0, 1 */
       return ERROR;
     }
 
-  printf("%s: Board= %d ADC= %d Inverted Polarity\n",
-	 __FUNCTION__,fMpd[id].fSlot, adc);
+  MPD_DBG("Board= %d ADC= %d Inverted Polarity\n",
+	 fMpd[id].fSlot, adc);
   return mpdADS5281_Set(id, adc, 0x2400FF);
 }
 
@@ -2308,8 +2302,8 @@ mpdADS5281_NonInvertChannels(int id, int adc)	/* adc == 0, 1 */
       return ERROR;
     }
 
-  printf("%s: Board= %d ADC= %d Direct Polarity\n",
-	 __FUNCTION__, fMpd[id].fSlot, adc);
+  MPD_MSG("Board= %d ADC= %d Direct Polarity\n",
+	  fMpd[id].fSlot, adc);
   return mpdADS5281_Set(id, adc, 0x240000);
 
 }
@@ -2807,7 +2801,8 @@ mpdFIFO_ReadSingle(int id,
   //printf("\n\n%s: number of words to be read %d\n %d",__FUNCTION__,nwords,max_retry);
   size = (nwords < wmax) ? nwords : wmax;
 
-  printf("\n\n%s: mpdFIFO_GetNwords:number of words to be read %d size: %d\n",__FUNCTION__,nwords,size);
+  MPD_MSG("\n\nmpdFIFO_GetNwords:number of words to be read %d size: %d\n",
+	  nwords,size);
 
   //MPD_DBG("fifo ch = %d, words in fifo= %d, retries= %d (max %d)\n",channel, nwords,i, max_retry);
   MPD_DBG("  id=%d  channel=%d  physMemBase = 0x%08x   dbuf = 0x%08x\n\n",
@@ -3439,14 +3434,6 @@ mpdFIFO_ReadAllNew(int id, int *timeout, int *global_fifo_error)
       if (fApv[id][k].enabled == 0) { continune; }
       if (mpdApvReadDone(id,k) == 0) { // APV FIFO has data to be read
 
-	//      sample_left += ApvGetSampleLeft(k);
-
-        //      ii0=fApv[k].fBi0;
-        //      ii1=fApv[k].fBi1;
-        //      idx = SearchEndMarker(ApvGetBufferPointer(k),ii0,ii1);
-        //      fApv[k].fBi0 = ii1;
-        //      cout << __FUNCTION__ << dec << " " << j << " " << k;
-
 	uint32_t *bptr = mpdApvGetBufferPointer(id,k,ii1);
 
 	int bsiz = fApv[k].fBufSize - ii1; // space left in buffer
@@ -3477,10 +3464,6 @@ mpdFIFO_ReadAllNew(int id, int *timeout, int *global_fifo_error)
 
 	if( n > 1 ) multiple_events++; // not used
 
-      } else { // ...
-#ifdef DEBUG_DUMP
-	cout << __FUNCTION__ << ": xxxx " << endl;
-#endif
       }
 
       sample_left += mpdApvGetSampleLeft(id,k);
@@ -3564,13 +3547,13 @@ mpdDAQ_Config(int id)
       MPDLOCK;
       mpdWrite32(&MPDp[id]->sample_per_event, data);
       MPDUNLOCK;
-      printf("%s : Sample_per_event = 0x%x\n",__FUNCTION__,data);
+      MPD_MSG("Sample_per_event = 0x%x\n",data);
       data = mpdGetEventPerBlock(id) &0xff;
       if (data == 0) data = 1;
       MPDLOCK;
       mpdWrite32(&MPDp[id]->event_per_block, data);
       MPDUNLOCK;
-      printf("%s : Event_per_block = 0x%x\n",__FUNCTION__,data);
+      MPD_MSG("Event_per_block = 0x%x\n",data);
     }
 
   data = (mpdGetAcqMode(id) & 0x07) | // ((test & 0x01) << 15) |
@@ -3583,7 +3566,7 @@ mpdDAQ_Config(int id)
   MPDLOCK;
   mpdWrite32(&MPDp[id]->readout_config, data);
   MPDUNLOCK;
-  printf("%s : ReadoutConfig = 0x%x\n",__FUNCTION__,data);
+  MPD_MSG("ReadoutConfig = 0x%x\n",data);
 
    data =
      (( mpdGetInputLevel(id,0) & 0x1) << 0) | // NIM=1/TTL=0 Level LEMO IN0
@@ -3593,7 +3576,7 @@ mpdDAQ_Config(int id)
   MPDLOCK;
   mpdWrite32(&MPDp[id]->io_config, data);
   MPDUNLOCK;
-  printf("%s : IOConfig = 0x%x\n",__FUNCTION__,data);
+  MPD_MSG("IOConfig = 0x%x\n",data);
 
   if ( UseSdram ) {
     data = ( mpdOutputBufferBaseAddr + mpdOutputBufferSpace * id ) >> 2;
@@ -3603,13 +3586,13 @@ mpdDAQ_Config(int id)
   MPDLOCK;
   mpdWrite32(&MPDp[id]->obuf_base_addr, data);
   MPDUNLOCK;
-  printf("%s : Output buffer base address = 0x%x (0=no SDRAM)\n",__FUNCTION__,data);
+  MPD_MSG("Output buffer base address = 0x%x (0=no SDRAM)\n",data);
 
   data = mpdSdramBaseAddr;
   MPDLOCK;
   mpdWrite32(&MPDp[id]->sdram_base_addr, data);
   MPDUNLOCK;
-  printf("%s : Sdram base address = 0x%x (test only)\n",__FUNCTION__,data);
+  MPD_MSG("Sdram base address = 0x%x (test only)\n",data);
 
   for (i=0;i<fMpd[id].nAPV;i++) {
     fApv[id][i].fBi0 = 0;
