@@ -475,6 +475,7 @@ int mpdFIR_Config(int id);
 
 // histogramming methods
 
+int  mpdHISTO_MemTest(int id);
 int  mpdHISTO_Clear(int id, int ch, int val);
 int  mpdHISTO_Start(int id, int ch);
 int  mpdHISTO_Stop(int id, int ch);

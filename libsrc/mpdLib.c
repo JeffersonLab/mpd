@@ -2443,13 +2443,60 @@ mpdADS5281_SetGain(int id, int adc,
 // histogramming methods
 
 int
+mpdHISTO_MemTest(int id)
+{
+  uint32_t *hdata;
+  const int MAX_HDATA = 4096;
+  int idata = 0, error_count = 0;
+
+  if(CHECKMPD(id))
+    {
+      MPD_ERR("MPD in slot %d is not initialized.\n",
+	     id);
+      return ERROR;
+    }
+
+  hdata = (uint32_t *)malloc(MAX_HDATA*sizeof(uint32_t));
+
+  if(!hdata)
+    {
+      MPD_ERR("Unable to allocate memory for histogram memory write/read\n");
+      return ERROR;
+    }
+
+  memset((void *)&hdata, 0, MAX_HDATA*sizeof(uint32_t));
+
+  mpdHISTO_Clear(id, 0, -1);
+  mpdHISTO_Read(id, 0, hdata);
+  error_count = 0;
+
+  for (idata = 0; idata < MAX_HDATA; idata++)
+    {
+      if (hdata[idata] != idata)
+	{
+	  error_count++;
+	}
+    }
+  if (error_count)
+    {
+      MPD_ERR("HISTO Test fail %d time / %d attempts\n",
+	     error_count, MAX_HDATA);
+    }
+  else
+    {
+      MPD_MSG("HISTO Read/Write test SUCCESS on MPD slot %d\n", id);
+    }
+
+  return OK;
+}
+
+int
 mpdHISTO_Clear(int id, int ch, int val)	/* ch == 0, 15 */
 {
   uint32_t data[4096];
   int success=OK, i, j;
   int block=0;
 
-  //  if(id==0) id=mpdID[0];
   if(CHECKMPD(id))
     {
       MPD_ERR("MPD in slot %d is not initialized.\n",
