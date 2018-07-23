@@ -2664,141 +2664,130 @@ mpdOBUF_GetFlags(int id, int *empty, int *full, int *nwords)
 }
 
 int
-mpdOBUF_Read(int id, int size, int *wrec)
+mpdOBUF_Read(int id, volatile uint32_t * data, int size, int *wrec)
 {
 
-  uint32_t data;
   uint32_t vmeAdrs;
-  int retVal=0;
-  int i;
+  int retVal = 0;
+  int dummy;
+  volatile uint32_t *laddr;
 
-#define BLOCK_TRANSFER3
-#ifdef BLOCK_TRANSFER3
+  MPDLOCK;
+  if ((unsigned long) (data) & 0x7)
+    {
+      dummy = 1;
+      *data = 0;		/* Data word added for byte alignment */
+      laddr = (data + 1);
+    }
+  else
+    {
+      dummy = 0;
+      laddr = data;
+    }
 
-  switch (mpdGetFastReadout(id)) {
-  case 0:
-    vmeDmaConfig(2,2,0); // A32 BLT
-    break;
-  case 1:
-    vmeDmaConfig(2,3,0); // MBLT
-    break;
-  case 2:
-    vmeDmaConfig(2,4,0); // 2eVME
-    break;
-  case 3:
-    vmeDmaConfig(2,5,0); printf("2esst160");// 2esst160
-    break;
-  case 4:
-    vmeDmaConfig(2,5,1); // 2esst266
-    break;
-  case 5:
-    vmeDmaConfig(2,5,2); // 2esst320
-    break;
-  default:
-    vmeDmaConfig(2,2,0); // A32 BLT
-    break;
-  }
+  switch (mpdGetFastReadout(id))
+    {
+    case 0:
+      vmeDmaConfig(2, 2, 0);	// A32 BLT
+      break;
+    case 1:
+      vmeDmaConfig(2, 3, 0);	// MBLT
+      break;
+    case 2:
+      vmeDmaConfig(2, 4, 0);	// 2eVME
+      break;
+    case 3:
+      vmeDmaConfig(2, 5, 0);
+      break;
+    case 4:
+      vmeDmaConfig(2, 5, 1);	// 2esst266
+      break;
+    case 5:
+      vmeDmaConfig(2, 5, 2);	// 2esst320
+      break;
+    default:
+      vmeDmaConfig(2, 2, 0);	// A32 BLT
+      break;
+    }
 
   MPDLOCK;
 
   vmeAdrs = (uint32_t) mpdOutputBufferBaseAddr + mpdOutputBufferSpace * id;
-  retVal = vmeDmaSendPhys(fApv[id][0].physMemBase,vmeAdrs,(size<<2));
 
-  if(retVal != 0)
+  retVal = vmeDmaSend((unsigned long) laddr, vmeAdrs, (size << 2));
+
+  if (retVal != 0)
     {
-      MPD_ERR("ERROR in DMA transfer Initialization (returned 0x%x)\n",retVal);
-      MPD_ERR("  id=%d apv physMemBase = 0x%08x\n",
-	      id,(uint32_t)fApv[id][0].physMemBase);
-      *wrec=0;
+      MPD_ERR("ERROR in DMA transfer start (returned 0x%x)\n", retVal);
+      MPD_ERR("  id=%d apv laddr = 0x%08x  vmeAdrs = 0x%08x  size = %d\n",
+	      id, (uint32_t) laddr, vmeAdrs, size);
+      *wrec = 0;
       MPDUNLOCK;
-      return(retVal);
+      return (retVal);
     }
 
   /* Wait until Done or Error */
   retVal = vmeDmaDone();
   MPDUNLOCK;
-  if(retVal==0)
+  if (retVal == 0)
     {
-      *wrec=0;
+      *wrec = 0;
       MPD_ERR("vmeDmaDone returned zero word count\n");
 
       return ERROR;
     }
-  else if(retVal==ERROR)
-      {
-	*wrec=0;
-	MPD_ERR("vmeDmaDone returned ERROR\n");
+  else if (retVal == ERROR)
+    {
+      *wrec = 0;
+      MPD_ERR("vmeDmaDone returned ERROR\n");
 
-	return ERROR;
-      }
+      return ERROR;
+    }
   else
     {
-      *wrec   = (retVal>>2);
+      *wrec = (retVal >> 2) + dummy;
       MPD_DBG("vmeDmaDone returned 0x%x (%d)  wrec = %d\n",
 	      retVal, retVal, *wrec);
-      int iword=0;
-      for(iword =0; iword<*wrec; iword++)
-	{
-#ifdef DEBUG_BLOCKREAD
-	  if((iword%4)==0)
-	    printf("\n%4d:  ",iword);
 
-	  printf("0x%08x   ",LSWAP(fApv[id][0].fBuffer[iword]));
-#endif
-	  /* Byte swap necessary for block transfers */
-	  fApv[id][0].fBuffer[iword] = LSWAP(fApv[id][0].fBuffer[iword]);
-	}
 #ifdef DEBUG_BLOCKREAD
+      int iword = 0;
+      for (iword = 0; iword < *wrec; iword++)
+	{
+	  if ((iword % 4) == 0)
+	    printf("\n%4d:  ", iword);
+
+	  printf("0x%08x   ", LSWAP(fApv[id][0].fBuffer[iword]));
+	}
       printf("\n");
 #endif
     }
 
-#else
-
-  // Single Transfer D32 A32
-
-  vmeAdrs = (uint32_t) mpdOutputBufferBaseAddr + mpdOutputBufferSpace * id;
-  MPDLOCK;
-  for (i=0;i<size;i++) {
-    data = vmeBusRead32(0x09, vmeAdrs);
-    //    vmeAdrs+=4;
-    fApv[id][0].fBuffer[i] = data;
-    usleep(1);
-  }
-  MPDUNLOCK;
-  *wrec=size;
-
-#endif
-
-  if( *wrec != size ) {
-    MPD_DBG("Count Mismatch: %d expected %d\n", *wrec, size);
-    return ERROR;
-  }
-
   return OK;
-
 }
 
-int mpdSDRAM_GetParam(int id, int *init, int *overrun, int *rdaddr, int *wraddr, int *nwords) {
+int
+mpdSDRAM_GetParam(int id, int *init, int *overrun, int *rdaddr, int *wraddr,
+		  int *nwords)
+{
 
 
   uint32_t data;
 
-  if(CHECKMPD(id))
+  if (CHECKMPD(id))
     {
-      MPD_ERR("MPD in slot %d is not initialized.\n",
-	     id);
+      MPD_ERR("MPD in slot %d is not initialized.\n", id);
       return ERROR;
     }
 
   MPDLOCK;
-  *wraddr = (int) mpdRead32(&MPDp[id]->ob_status.sdram_fifo_wr_addr) & 0xffffff;
+  *wraddr =
+    (int) mpdRead32(&MPDp[id]->ob_status.sdram_fifo_wr_addr) & 0xffffff;
   data = mpdRead32(&MPDp[id]->ob_status.sdram_fifo_rd_addr);
   *rdaddr = (int) data & 0xffffff;
-  *init = (int) (data >>31) &0x1;
+  *init = (int) (data >> 31) & 0x1;
   data = mpdRead32(&MPDp[id]->ob_status.sdram_flag_wc);
   *nwords = (int) data & 0xffffff;
-  *overrun = (int) (data >> 31) &0x1;
+  *overrun = (int) (data >> 31) & 0x1;
   MPDUNLOCK;
 
   return OK;

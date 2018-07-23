@@ -484,7 +484,7 @@ int  mpdHISTO_Read(int id, int ch, uint32_t *histogram);
 
 // Daq-Readout methods
 int mpdOBUF_GetFlags(int id, int *empty, int *full, int *nwords);
-int mpdOBUF_Read(int id, int size, int *wrec);
+int mpdOBUF_Read(int id, volatile uint32_t *data, int size, int *wrec);
 
 int mpdSDRAM_GetParam(int id, int *init, int *overrun, int *rdaddr, int *wraddr, int *nwords);
 
