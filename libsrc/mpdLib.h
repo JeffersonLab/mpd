@@ -14,6 +14,7 @@
  */
 
 #include "stdio.h"
+#include "stdint.h"
 #define MPD_MAGIC_VALUE       0x43524F4D
 #define MPD_MAX_BOARDS             21
 #define MPD_SSP_MAX_BOARDS         21
@@ -45,8 +46,9 @@
 #define DAQ_FIFO_SIZE	1024
 
 #define MPD_MSG(format, ...) {printf("%s: ",__FUNCTION__); printf(format, ## __VA_ARGS__);}
-#define MPD_DUM(format, ...) {printf("%s: ",__FUNCTION__); printf(format, ## __VA_ARGS__);}
-#define MPD_DBG(format, ...) {if(mpdPrintDebug) {printf("%s: DEBUG: ",__FUNCTION__); printf(format, ## __VA_ARGS__);} }
+#define MPD_DUMP(format, ...) {if(mpdPrintDebug&2) {printf("%s: ",__FUNCTION__); printf(format, ## __VA_ARGS__);} }
+#define MPD_DBG(format, ...) {if(mpdPrintDebug&1) {printf("%s: DEBUG: ",__FUNCTION__); printf(format, ## __VA_ARGS__);} }
+#define MPD_DBGN(x,format, ...) {if(mpdPrintDebug&x) {printf("%s: DEBUG%d: ",__FUNCTION__, x); printf(format, ## __VA_ARGS__);} }
 #define MPD_ERR(format, ...) {fprintf(stderr,"%s: ERROR: ",__FUNCTION__); fprintf(stderr,format, ## __VA_ARGS__);}
 
 struct output_buffer_struct
@@ -158,6 +160,15 @@ struct mpd_struct
 #define MPD_I2C_COMMSTAT_STOP        0x40
 #define MPD_I2C_COMMSTAT_NACK_RECV   0x80
 #define MPD_I2C_COMMSTAT_START_WRITE 0x90
+
+#define MPD_I2C_COMMSTAT_STA  (1<<7)
+#define MPD_I2C_COMMSTAT_STO  (1<<6)
+#define MPD_I2C_COMMSTAT_RD   (1<<5)
+#define MPD_I2C_COMMSTAT_WR   (1<<4)
+#define MPD_I2C_COMMSTAT_ACK  (1<<3)
+#define MPD_I2C_COMMSTAT_IACK (1<<0)
+
+
 
 #define MPD_I2C_APVRESET_ASYNC_SET   0x00
 #define MPD_I2C_APVRESET_ASYNC_CLEAR 0x01
