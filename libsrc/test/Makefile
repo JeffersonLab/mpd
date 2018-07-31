@@ -26,8 +26,8 @@ CROSS_COMPILE		=
 CC			= $(CROSS_COMPILE)gcc
 AR                      = ar
 RANLIB                  = ranlib
-CFLAGS			= -I${LINUXVME_INC} -I. -I/usr/include -I../libconfig -I../\
-			  -L${LINUXVME_LIB} -L. -L../libconfig
+CFLAGS			= -I. -I${LINUXVME_INC} -I../libconfig -I../\
+			  -L. -L${LINUXVME_LIB} -L../libconfig
 ifdef DEBUG
 CFLAGS			+= -Wall -g
 endif

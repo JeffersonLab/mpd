@@ -590,4 +590,7 @@ int mpdRUPD_reconfigure(int id, int pgm);
 void mpdRUPD_setup(int id, int pgm);
 void mpdRUPD_wr_param(int id, int par, int val);
 int mpdRUPD_rd_param(int id, int par);
+
+int mpdGStatus(int sflag);
+int mpdApvStatus(int id, uint16_t apv_mask);
 #endif /* __MPDLIB__ */

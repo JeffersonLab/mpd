@@ -5048,3 +5048,297 @@ mpdRUPD_rd_param(int id, int par)
   MPDUNLOCK;
   return x & 0x3FF;
 }
+
+int
+mpdGStatus(int sflag)
+{
+  int impd, id;
+  struct mpd_struct st[MPD_MAX_BOARDS + 1];
+  unsigned int a24addr[MPD_MAX_BOARDS + 1];
+
+  MPDLOCK;
+  for (impd = 0; impd < nmpd; impd++)
+    {
+      id = mpdSlot(impd);
+      if (mpdSSPMode)
+	a24addr[id] =
+	  ((unsigned int) ((unsigned long) MPDp[id] & 0xFF000000)) >> 24;
+      else
+	a24addr[id] =
+	  (unsigned int) ((unsigned long) MPDp[id] - mpdA24Offset);
+
+      st[id].revision_id = mpdRead32(&MPDp[id]->revision_id);
+      st[id].io_config = mpdRead32(&MPDp[id]->io_config);
+      st[id].sample_per_event = mpdRead32(&MPDp[id]->sample_per_event);
+      st[id].event_per_block = mpdRead32(&MPDp[id]->event_per_block);
+      st[id].busy_thr = mpdRead32(&MPDp[id]->busy_thr);
+      st[id].busy_thr_local = mpdRead32(&MPDp[id]->busy_thr_local);
+      st[id].readout_config = mpdRead32(&MPDp[id]->readout_config);
+      st[id].trigger_config = mpdRead32(&MPDp[id]->trigger_config);
+      st[id].trigger_delay = mpdRead32(&MPDp[id]->trigger_delay);
+      st[id].sync_period = mpdRead32(&MPDp[id]->sync_period);
+      st[id].marker_channel = mpdRead32(&MPDp[id]->marker_channel);
+      st[id].channel_enable = mpdRead32(&MPDp[id]->channel_enable);
+      st[id].zero_threshold = mpdRead32(&MPDp[id]->zero_threshold);
+      st[id].one_threshold = mpdRead32(&MPDp[id]->one_threshold);
+
+      st[id].fiber_status_ctrl = mpdRead32(&MPDp[id]->fiber_status_ctrl);
+      st[id].obuf_base_addr = mpdRead32(&MPDp[id]->obuf_base_addr);
+      st[id].sdram_base_addr = mpdRead32(&MPDp[id]->sdram_base_addr);
+
+      st[id].ob_status.evb_fifo_word_count
+	= mpdRead32(&MPDp[id]->ob_status.evb_fifo_word_count);
+      st[id].ob_status.event_count
+	= mpdRead32(&MPDp[id]->ob_status.event_count);
+      st[id].ob_status.block_count
+	= mpdRead32(&MPDp[id]->ob_status.block_count);
+      st[id].ob_status.trigger_count
+	= mpdRead32(&MPDp[id]->ob_status.trigger_count);
+      st[id].ob_status.missed_trigger
+	= mpdRead32(&MPDp[id]->ob_status.missed_trigger);
+      st[id].ob_status.incoming_trigger
+	= mpdRead32(&MPDp[id]->ob_status.incoming_trigger);
+
+      st[id].adc_config = mpdRead32(&MPDp[id]->adc_config);
+
+      st[id].i2c.clock_prescaler_low =
+	mpdRead32(&MPDp[id]->i2c.clock_prescaler_low);
+      st[id].i2c.clock_prescaler_high =
+	mpdRead32(&MPDp[id]->i2c.clock_prescaler_high);
+      st[id].i2c.control = mpdRead32(&MPDp[id]->i2c.control);
+      st[id].i2c.comm_stat = mpdRead32(&MPDp[id]->i2c.comm_stat);
+
+      st[id].ch_flags.fifo_status =
+	mpdRead32(&MPDp[id]->ch_flags.fifo_status);
+      st[id].ch_flags.sync_status =
+	mpdRead32(&MPDp[id]->ch_flags.sync_status);
+    }
+  MPDUNLOCK;
+
+  printf("\n");
+
+  printf("                      MPD Configuration Summary\n\n");
+  printf("                ............Addresses.............    .... I/O Levels ....\n");
+  printf("Slot   Rev ID        A24     A32: OBUF  A32: SDRAM    IN1  IN2   OUT1 OUT2\n");
+  printf("--------------------------------------------------------------------------------\n");
+
+  for(impd=0; impd<nmpd; impd++)
+    {
+      id = mpdSlot(impd);
+      printf("  %2d   ", id);
+
+      printf("%3d.%-3d   ",
+	     (st[id].revision_id & 0xFF0000) >> 16,
+	     st[id].revision_id & 0xFF);
+
+      printf("0x%06x   ",
+	     a24addr[id] & 0xFFFFFF);
+
+      printf("0x%08x  0x%08x    ",
+	     st[id].obuf_base_addr, st[id].sdram_base_addr);
+
+      printf("%s  %s    ",
+	     (st[id].io_config & 0x1) ? "TTL" : "NIM",
+	     (st[id].io_config & 0x2) ? "TTL" : "NIM");
+
+      printf("%s  %s   ",
+	     (st[id].io_config & 0x4) ? "TTL" : "NIM",
+	     (st[id].io_config & 0x8) ? "TTL" : "NIM");
+
+      printf("\n");
+    }
+  printf("--------------------------------------------------------------------------------\n");
+
+  printf("\n");
+  printf("        APV    Block   Trigger Thr   Trigger    Sync     Channel  Digital Thr\n");
+  printf("Slot  Samples  Level   BUSY   STOP    Delay    Period    En Mask  ZERO    ONE\n");
+  printf("--------------------------------------------------------------------------------\n");
+
+  for(impd=0; impd<nmpd; impd++)
+    {
+      id = mpdSlot(impd);
+      printf("  %2d      ",id);
+
+      printf("%2d     ",st[id].sample_per_event & 0xF);
+
+      printf("%3d  ",st[id].event_per_block & 0xFF);
+
+      printf("%5d  ",st[id].busy_thr & 0xFFFF);
+
+      printf("%5d       ",st[id].busy_thr_local & 0xFFFF);
+
+      printf("%2d       ", st[id].trigger_delay & 0x3F);
+      printf("%2d  ", st[id].sync_period & 0x3F);
+      printf("0x%08x  ", st[id].channel_enable);
+      printf("%4d   ", st[id].zero_threshold & 0xFFF);
+      printf("%4d ", st[id].one_threshold & 0xFFF);
+      printf("\n");
+    }
+  printf("--------------------------------------------------------------------------------\n");
+
+  printf("\n");
+  printf("                              READOUT CONFIG\n");
+  printf("\n");
+  printf("             EB   SDRAM FIFO  SDRAM FIFO   Common  Baseline   Event\n");
+  printf("Slot  Mode  Pack  to DataOut   to EB Out   Offset  Subtract   Build\n");
+  printf("--------------------------------------------------------------------------------\n");
+
+  for(impd=0; impd<nmpd; impd++)
+    {
+      id = mpdSlot(impd);
+      printf("  %2d     ",id);
+
+      printf("%1d   ",st[id].readout_config & 0x7);
+
+      printf("%s         ",
+	     st[id].readout_config & (1<<13) ? " ON" : "OFF");
+
+      printf("%s         ",
+	     st[id].readout_config & (1<<14) ? " ON" : "OFF");
+
+      printf("%s    ",
+	     st[id].readout_config & (1<<15) ? " ON" : "OFF");
+
+      printf("%4d        ",
+	     (st[id].readout_config & 0x0FFF0000) >> 16);
+
+      printf("%s     ",
+	     st[id].readout_config & (1<<28) ? " ON" : "OFF");
+
+      printf("%s",
+	     st[id].readout_config & (1<<30) ? " ON" : "OFF");
+
+      printf("\n");
+    }
+  printf("--------------------------------------------------------------------------------\n");
+
+  printf("\n");
+  printf("                              TRIGGER CONFIG\n");
+  printf("\n");
+  printf("             Reset      Max     SYNC      SOFT    Trig     P0     FP    Calib\n");
+  printf("Slot  Mode  Latency  Trig Out  P0  FP  Trig Clear  Rez   T1  T2  Trig  Latency\n");
+  printf("--------------------------------------------------------------------------------\n");
+
+  for(impd=0; impd<nmpd; impd++)
+    {
+      id = mpdSlot(impd);
+      printf("  %2d     ",id);
+
+      printf("%1d    ", (st[id].trigger_config & 0x7000) >> 12);
+
+      printf("%3d       ", (st[id].trigger_config & 0xFF));
+
+      printf("%2d    ",
+	     (st[id].trigger_config & 0xF00) >> 8);
+
+
+      printf("%s %s   ",
+	     st[id].trigger_config & (1<<16) ? " ON" : "OFF",
+	     st[id].trigger_config & (1<<17) ? " ON" : "OFF");
+
+
+      printf("%s   %s  ",
+	     st[id].trigger_config & (1<<18) ? " ON" : "OFF",
+	     st[id].trigger_config & (1<<19) ? " ON" : "OFF");
+
+
+      printf("%s  ",
+	     st[id].trigger_config & (1<<20) ? " HI" : "LOW");
+
+
+      printf("%s %s   ",
+	     st[id].trigger_config & (1<<21) ? " ON" : "OFF",
+	     st[id].trigger_config & (1<<22) ? " ON" : "OFF");
+
+      printf("%s    ",
+	     st[id].trigger_config & (1<<23) ? " ON" : "OFF");
+
+      printf("%3d", (st[id].trigger_config & 0xFF000000) >> 24);
+
+
+      printf("\n");
+    }
+  printf("--------------------------------------------------------------------------------\n");
+
+  printf("\n");
+  printf("\n");
+
+  return OK;
+}
+
+int
+mpdApvStatus(int id, uint16_t apv_mask)
+{
+  int iapv, ireg, itable, stat = OK;
+  uint8_t err[32][18], rval[32][18], APVreg[18] =
+    {
+      ipre_addr, ipcasc_addr, ipsf_addr, isha_addr, issf_addr,
+      ipsp_addr, imuxin_addr, ispare_addr, ical_addr, vfp_addr,
+      vfs_addr, vpsp_addr, cdrv_addr, csel_addr, mode_addr,
+      latency_addr, muxgain_addr, error_addr
+    };
+
+  const char regname[18][18] =
+    {
+      "IPRE", "IPCASC", "IPSF", "ISHA", "ISSF",
+      "IPSP", "IMUXIN", "ISPARE", "ICAL", "VFP",
+      "VFS", "VPSP", "CDRV", "CSEL", "MODE",
+      "LATENCY", "MUXGAIN", "ERROR"
+    };
+
+  if (CHECKMPD(id))
+    {
+      MPD_ERR("MPD in slot %d is not initialized.\n", id);
+      return ERROR;
+    }
+
+  memset(rval, 0, sizeof(rval));
+  memset(err, 0, sizeof(err));
+
+  for(iapv = 0; iapv < 32; iapv++)
+    {
+      if( apv_mask & (1 << iapv))
+	{
+	  for(ireg = 0; ireg < 18; ireg++)
+	    {
+	      err[iapv][ireg] = mpdAPV_Read(id, iapv, APVreg[ireg], &rval[iapv][ireg]);
+	    }
+	}
+    }
+
+  for(itable = 0; itable < 3; itable++)
+    {
+
+      printf("\n");
+      printf("APV  ");
+      for(ireg = itable*6; ireg < (itable+1)*6; ireg++)
+	{
+	  printf("%8s  ", regname[ireg]);
+	}
+      printf("\n");
+      printf("--------------------------------------------------------------------------------\n");
+      for(iapv = 0; iapv < 32; iapv++)
+	{
+	  if( apv_mask & (1 << iapv))
+	    {
+	      printf(" %2x  ", iapv);
+	      for(ireg = itable*6; ireg < (itable+1)*6; ireg++)
+		{
+		  if(err[iapv][ireg] == OK)
+		    {
+		      printf("    0x%02x  ",
+			     rval[iapv][ireg]);
+		    }
+		  else
+		    {
+		      printf("   ERROR  ");
+		    }
+		}
+	      printf("\n");
+	    }
+	}
+      printf("\n");
+    }
+
+  return OK;
+}
