@@ -1209,11 +1209,9 @@ int
 mpdI2C_Init(int id)
 {
   uint32_t data, rdata;
-  int success = OK;
-  /* double core_t, air_t; */
+  int ispeed, success = OK;
 
-
-  if (((int32_t) MPDp[id] == -1) || (id < 0) || (id > 21))
+  if (CHECKMPD(id))
     {
       MPD_ERR("MPD in slot %d is not initialized.\n", id);
       return ERROR;
@@ -1227,23 +1225,26 @@ mpdI2C_Init(int id)
   MPDLOCK;
   mpdWrite32(&MPDp[id]->i2c.control, 0);	/* Disable I2C Core and interrupts */
 
-  int ispeed = mpdGetI2CSpeed(id);
+  ispeed = mpdGetI2CSpeed(id);
 
   data = (ispeed & 0xFF);
-  mpdWrite32(&MPDp[id]->i2c.clock_prescaler_low, data);
 
+  mpdWrite32(&MPDp[id]->i2c.clock_prescaler_low, data);
   rdata = mpdRead32(&MPDp[id]->i2c.clock_prescaler_low);
 
-
-  MPD_DUMP("i2c low prescaler register set/read : %d / %d\n", data, rdata);
+  MPD_DBGN(MPD_DEBUG_I2C,
+	   "i2c low prescaler register set/read : %d / %d\n", data, rdata);
 
   data = (ispeed >> 8) & 0xff;
   mpdWrite32(&MPDp[id]->i2c.clock_prescaler_high, data);
   rdata = mpdRead32(&MPDp[id]->i2c.clock_prescaler_high);
-  MPD_DUMP("i2c high prescaler register set/read : %d / %d\n", data, rdata);
 
-  MPD_DUMP("i2c speed prescale = %d, (period = %f us, frequency = %f kHz)\n",
-	  ispeed, ispeed / 10., 10000. / ispeed);
+  MPD_DBGN(MPD_DEBUG_I2C,
+	   "i2c high prescaler register set/read : %d / %d\n", data, rdata);
+
+  MPD_DBGN(MPD_DEBUG_I2C,
+	   "i2c speed prescale = %d, (period = %f us, frequency = %f kHz)\n",
+	   ispeed, ispeed / 10., 10000. / ispeed);
 
   mpdWrite32(&MPDp[id]->i2c.control, MPD_I2C_CONTROL_ENABLE_CORE);
 
@@ -1463,62 +1464,6 @@ I2C_SendByte(int id, uint8_t byteval, int start)
 }
 
 /*static*/ int
-I2C_ReceiveByte2(int id, uint8_t * byteval, int start)
-{
-  int retry_count;
-  int rval = 0;
-  uint32_t data = 0;
-
-  if (CHECKMPD(id))
-    {
-      MPD_ERR("MPD in slot %d is not initialized.\n", id);
-      return ERROR;
-    }
-
-  MPDLOCK;
-
-  mpdWrite32(&MPDp[id]->i2c.comm_stat,
-	     MPD_I2C_COMMSTAT_RD | start);
-
-
-  retry_count = 0;
-  data = 0x00000002;
-  while ((data & 0x00000002) != 0 && retry_count < mpdGetI2CMaxRetry(id))
-    {
-      usleep(100);
-      data = mpdRead32(&MPDp[id]->i2c.comm_stat);
-      if (retry_count > 0)
-	printf("mpdRead commstat:%08x %d (%d)\n", data, retry_count,
-	       mpdGetI2CMaxRetry(id));
-      retry_count++;
-    }
-
-  if (retry_count >= mpdGetI2CMaxRetry(id))
-    rval = -10;
-
-  if (data & MPD_I2C_COMMSTAT_NACK_RECV)	/* NACK received */
-    rval = -20;
-
-  mpdWrite32(&MPDp[id]->i2c.comm_stat,
-	     MPD_I2C_COMMSTAT_IACK);
-
-  data = mpdRead32(&MPDp[id]->i2c.tx_rx);
-
-  *byteval = data;
-
-
-
-  MPDUNLOCK;
-
-  MPD_DBG("id = %d  *byteval = 0x%x  rval = %d\n",
-	  id, *byteval, rval);
-
-
-  return rval;
-
-}
-
-/*static*/ int
 I2C_ReceiveByte(int id, uint8_t * byteval)
 {
   int retry_count;
@@ -1567,7 +1512,6 @@ I2C_ReceiveByte(int id, uint8_t * byteval)
 I2C_SendStop(int id)
 {
   int retry_count=0;
-  int rval = 0;
   uint32_t data = 0;
 
   if (CHECKMPD(id))
@@ -1914,10 +1858,9 @@ mpdAPV_Try(int id, uint8_t apv_addr)	// i2c addr
 {
 
   int timeout;
-  /* uint8_t x = apv_addr + 32;	//96 */
-  uint8_t x = 0x33;
+  uint8_t x = apv_addr + 32;	//96
   uint8_t y;
-  int ret_w, ret_r;
+  int ret = 1;
 
 
   if (CHECKMPD(id))
@@ -1928,49 +1871,41 @@ mpdAPV_Try(int id, uint8_t apv_addr)	// i2c addr
 
   timeout = -1;
 
-  do
+  while ((ret != OK) && (timeout < 20))
     {
-      ret_w = mpdAPV_Write(id, apv_addr, latency_addr, x);
+      ret = mpdAPV_Write(id, apv_addr, latency_addr, x);
       timeout++;
     }
-  while (((ret_w == -20) || (ret_w == -19) || (ret_w == -18)) && (timeout < 20));
 
-  if (ret_w < 0)
-    {
-      MPD_DBG("BAD: MPD %d i2c %d w %d tout %d ret %d\n", id, apv_addr, x, timeout,
-	      ret_w);
-    }
-  else
-    {
-      MPD_DBG("GOOD: MPD %d i2c %d w %d tout %d ret %d\n", id, apv_addr, x, timeout,
-	      ret_w);
-    }
+  MPD_DBG("Slot %d   i2c %d  W  %d   tout %d   ret %d\n", id, apv_addr, x, timeout,
+	  ret);
 
+  if (ret < 0)
+    return ret;
 
-  timeout = 0;
-  do
+  ret = 1;
+  timeout = -1;
+
+  while ((ret != OK) && (timeout < 20))
     {
-      ret_r = mpdAPV_Read(id, apv_addr, latency_addr, &y);
+      ret = mpdAPV_Read(id, apv_addr, latency_addr, &y);
       timeout++;
     }
-  while (((ret_r == -20) || (ret_r == -19) || (ret_r == -18)) && (timeout < 20));
 
-  if (ret_r < 0)
+  MPD_DBG("Slot %2d   i2c %2d  R  %3d   tout %2d   ret %d\n", id, apv_addr, y, timeout,
+	  ret);
+
+  if (ret < 0)
+    return ret;
+
+  if(y != x)
     {
-      MPD_DBG("BAD: MPD %d i2c %d r %d tout %d ret %d\n", id, apv_addr, y, timeout,
-	      ret_r);
-    }
-  else
-    {
-      MPD_DBG("GOOD: MPD %d i2c %d r %d tout %d ret %d\n", id, apv_addr, y, timeout,
-	      ret_r);
+      MPD_DBG("Slot %2d   i2c %2d  W != R (%3d != %3d)\n", id, apv_addr, x, y);
+      return ERROR;
     }
 
-  /* MPD_DBG("latency read: %0x %0x\n",x,y); */
 
-  //  return APV_Write(apv_addr, mode_addr, def_Mode);
-
-  return ret_w;
+  return OK;
 
 }
 
@@ -2005,45 +1940,50 @@ mpdAPV_Scan(int id)
     }
 
   // print information (debug only, should be done in verbose mode only)
-  MPD_MSG("MPD %d Blind scan on %d apvs: \n", id, MPD_MAX_APV);	// in principle can be more
+  MPD_DBGN(MPD_DEBUG_APVINIT,
+	   "MPD %d Blind scan on %d apvs: \n", id, MPD_MAX_APV);
 
   for (iapv = 0; iapv < MPD_MAX_APV; iapv++)
     {
-      //      printf("%s MPD %d I2C addr %d:\n",__FUNCTION__,id,iapv);
       if (mpdAPV_Try(id, iapv) > -1)
 	{
-	  MPD_MSG("MPD %d found candidate card at i2c addr %2d\n", id, iapv);
+	  MPD_DBGN(MPD_DEBUG_APVINIT,
+		   "MPD %d found candidate card at i2c addr %2d\n", id, iapv);
 	}
     }
-  MPD_MSG("MPD %d Blind scan done\n", id);
+  MPD_DBGN(MPD_DEBUG_APVINIT,
+	   "MPD %d Blind scan done\n", id);
 
   mpdResetApvEnableMask(id);
 
   nApv[id] = 0;
   for (iapv = 0; iapv < fMpd[id].nAPV; iapv++)
     {
-      MPD_MSG("Try i2c=%2d adc=%2d : \n", fApv[id][iapv].i2c,
-	      fApv[id][iapv].adc);
+      MPD_DBGN(MPD_DEBUG_APVINIT,
+	       "Try i2c=%2d adc=%2d : \n", fApv[id][iapv].i2c,
+	       fApv[id][iapv].adc);
 
       if (mpdAPV_Try(id, fApv[id][iapv].i2c) > -1 && fApv[id][iapv].adc > -1)
 	{
-	  MPD_MSG("%d matched in MPD in slot %d\n", fApv[id][iapv].i2c, id);
+	  MPD_DBGN(MPD_DEBUG_APVINIT,
+		   "%d matched in MPD in slot %d\n", fApv[id][iapv].i2c, id);
 
 	  mpdSetApvEnableMask(id, (1 << fApv[id][iapv].adc));
-	  //printf("%s: APV enable mask 0x%04x\n", __FUNCTION__,mpdGetApvEnableMask(id));
+
 	  fApv[id][iapv].enabled = 1;
 	  nApv[id]++;
 	}
       else
 	{
-	  MPD_MSG("MPD %d APV i2c = %d does not respond.  It is disabled\n",
+	  MPD_DBGN(MPD_DEBUG_APVINIT,
+		   "MPD %d APV i2c = %d does not respond.  It is disabled\n",
 		  id, fApv[id][iapv].i2c);
 	  fApvEnableMask[id] &= ~(1 << fApv[id][iapv].adc);
 	  fApv[id][iapv].enabled = 0;
 	}
     }
 
-  MPD_MSG("%d APV found matching settings\n", nApv[id]);
+  MPD_MSG("MPD %2d: %2d APV found matching settings\n", id, nApv[id]);
 
   return nApv[id];
 }
@@ -2052,7 +1992,7 @@ mpdAPV_Scan(int id)
 int
 mpdAPV_Write(int id, uint8_t apv_addr, uint8_t reg_addr, uint8_t val)
 {
-  int rval = 0;
+  int success;
 
   if (CHECKMPD(id))
     {
@@ -2060,22 +2000,18 @@ mpdAPV_Write(int id, uint8_t apv_addr, uint8_t reg_addr, uint8_t val)
       return ERROR;
     }
 
-  MPD_DBG("Slot %d  apv_addr = %d  reg_addr = %d  val = 0x%x \n",
-	  id, apv_addr, reg_addr, val);
+  success = mpdI2C_ByteWrite(id, apv_addr, reg_addr, 1, &val);
 
-  /* mpdWrite32(&MPDp[id]->i2c.control, MPD_I2C_CONTROL_ENABLE_CORE); */
+  MPD_DBG("Slot %d  apv_addr = %d  reg_addr = %d  val = 0x%x success = %d\n",
+	  id, apv_addr, reg_addr, val, success);
 
-  rval = mpdI2C_ByteWrite(id, apv_addr, reg_addr, 1, &val);
-  /* mpdWrite32(&MPDp[id]->i2c.control, 0); */
-
-  return rval;
+  return success;
 }
 
 int
 mpdAPV_Read(int id, uint8_t apv_addr, uint8_t reg_addr, uint8_t * val)
 {
   int success;
-  uint8_t rval = 0;
 
   if (CHECKMPD(id))
     {
@@ -2085,16 +2021,11 @@ mpdAPV_Read(int id, uint8_t apv_addr, uint8_t reg_addr, uint8_t * val)
 
   usleep(500);
 
-  /* mpdWrite32(&MPDp[id]->i2c.control, MPD_I2C_CONTROL_ENABLE_CORE); */
-
   success =
     mpdI2C_ByteRead(id, (uint8_t) (apv_addr), reg_addr, 1, val);
 
-  /* mpdWrite32(&MPDp[id]->i2c.control, 0); */
-
-
-  MPD_DBG("Slot %d  apv_addr = %d  reg_addr = %d  val = 0x%x\n",
-	  id, apv_addr, reg_addr, *val);
+  MPD_DBG("Slot %d  apv_addr = %d  reg_addr = %d  val = 0x%x  success = %d\n",
+	  id, apv_addr, reg_addr, *val, success);
 
   return success;
 }
@@ -2320,58 +2251,25 @@ mpdApvGetMaxLatency(int id)
 void
 mpdApvBufferAlloc(int id, int ia)
 {
-  GEF_STATUS status;
-  GEF_MAP_PTR mapPtr;
-  GEF_VME_DMA_HDL dma_hdl;
 
-  fApv[id][ia].fBufSize = 15 * fApv[id][ia].fNumberSample * (EVENT_SIZE + 2);	// at least 6 times larger @@@ increased to 15 -- need improvement
+  // at least 6 times larger @@@ increased to 15 -- need improvement
+  fApv[id][ia].fBufSize = 15 * fApv[id][ia].fNumberSample * (EVENT_SIZE + 2);
 
-#define PHYSMEM
-#ifdef PHYSMEM
-  status = gefVmeAllocDmaBuf(vmeHdl, fApv[id][ia].fBufSize,
-			     &dma_hdl, &mapPtr);
-  if (status != GEF_STATUS_SUCCESS)
-    {
-      MPD_ERR("id=%d, ia=%d\n\tgefVmeAllocDmaBuf returned 0x%x\n", id, ia,
-	      status);
-    }
-  fApv[id][ia].fBuffer = (uint32_t *) mapPtr;
-  fApv[id][ia].physMemBase = dmaHdl_to_PhysAddr(dma_hdl);
-  fApv[id][ia].dmaHdl = dma_hdl;
-  // fApv[id][ia].fBuffer = (uint32_t *) malloc(fApv[id][ia].fBufSize*sizeof(uint32_t));
-  fApv[id][ia].fBi1 = 0;
-  printf
-    ("Fifo %d, buffer allocated with word size %d\n\t id=%d  ia=%d  dmaHdl = 0x%08x  physMemBase = 0x%08x  fBuffer = 0x%08x\n",
-     fApv[id][ia].adc, fApv[id][ia].fBufSize, id, ia,
-     (uint32_t) fApv[id][ia].dmaHdl, (uint32_t) fApv[id][ia].physMemBase,
-     (uint32_t) fApv[id][ia].fBuffer);
-#else
   fApv[id][ia].fBuffer =
     (uint32_t *) malloc(fApv[id][ia].fBufSize * sizeof(uint32_t));
   fApv[id][ia].fBi1 = 0;
+
   MPD_DBG("id=%d  ia=%d  Fifo %d, buffer allocated with word size %d\n", id,
 	  ia, fApv[id][ia].adc, fApv[id][ia].fBufSize);
-#endif
+
 }
 
 void
 mpdApvBufferFree(int id, int ia)
 {
-#ifdef PHYSMEM
-  GEF_STATUS status;
-#endif
   if (fApv[id][ia].fBuffer != 0)
     {
-#ifdef PHYSMEM
-      status = gefVmeFreeDmaBuf(fApv[id][ia].dmaHdl);
-      if (status != GEF_STATUS_SUCCESS)
-	{
-	  MPD_ERR("id=%d, ia=%d\n\tgefVmeFreeDmaBuf returned 0x%x\n", id, ia,
-		  status);
-	}
-#else
       free(fApv[id][ia].fBuffer);
-#endif
       MPD_DBG("Fifo %d, buffer released\n", fApv[id][ia].adc);
     }
 }
@@ -3003,9 +2901,9 @@ mpdADS5281_SetGain(int id, int adc,
 int
 mpdHISTO_MemTest(int id)
 {
-  uint32_t *hdata;
+  uint32_t *hdata = NULL;
   const int MAX_HDATA = 4096;
-  int idata = 0, error_count = 0;
+  int idata = 0, error_count = 0, rval = OK;
 
   if (CHECKMPD(id))
     {
@@ -3015,9 +2913,10 @@ mpdHISTO_MemTest(int id)
 
   hdata = (uint32_t *) malloc(MAX_HDATA * sizeof(uint32_t));
 
-  if (!hdata)
+  if(hdata == NULL)
     {
-      MPD_ERR("Unable to allocate memory for histogram memory write/read\n");
+      perror("malloc");
+      MPD_ERR("Cannot allocate memory for memory test\n");
       return ERROR;
     }
 
@@ -3036,15 +2935,19 @@ mpdHISTO_MemTest(int id)
     }
   if (error_count)
     {
-      MPD_ERR("HISTO Test fail %d time / %d attempts\n",
+      MPD_ERR("MPD %2d: FAIL  %d times / %d attempts\n",
+	      id,
 	      error_count, MAX_HDATA);
+      rval = ERROR;
     }
   else
     {
-      MPD_MSG("HISTO Read/Write test SUCCESS on MPD slot %d\n", id);
+      MPD_MSG("MPD %2d: SUCCESS\n", id);
     }
 
-  return OK;
+  free(hdata);
+
+  return rval;
 }
 
 int
@@ -3284,6 +3187,10 @@ mpdOBUF_Read(int id, volatile uint32_t * data, int size, int *wrec)
 
   vmeAdrs = (uint32_t) mpdOutputBufferBaseAddr + mpdOutputBufferSpace * id;
 
+  MPD_DBGN(MPD_DEBUG_DMA,
+	   "vmeDmaSend: laddr = 0x%lx, vmeAdrs = 0x%08x  dummy = %d  size = %d\n",
+	   (unsigned long)laddr, vmeAdrs, dummy, size);
+
   retVal = vmeDmaSend((unsigned long) laddr, vmeAdrs, (size << 2));
 
   if (retVal != 0)
@@ -3316,20 +3223,23 @@ mpdOBUF_Read(int id, volatile uint32_t * data, int size, int *wrec)
   else
     {
       *wrec = (retVal >> 2) + dummy;
-      MPD_DBG("vmeDmaDone returned 0x%x (%d)  wrec = %d\n",
-	      retVal, retVal, *wrec);
 
-#ifdef DEBUG_BLOCKREAD
-      int iword = 0;
-      for (iword = 0; iword < *wrec; iword++)
+      if(mpdPrintDebug & MPD_DEBUG_DMA)
 	{
-	  if ((iword % 4) == 0)
-	    printf("\n%4d:  ", iword);
+	  MPD_DBGN(MPD_DEBUG_DMA,
+		   "vmeDmaDone returned 0x%x (%d)  wrec = %d\n",
+		  retVal, retVal, *wrec);
 
-	  printf("0x%08x   ", LSWAP(fApv[id][0].fBuffer[iword]));
+	  int iword = 0;
+	  for (iword = 0; iword < *wrec; iword++)
+	    {
+	      if ((iword % 4) == 0)
+		printf("\n%4d:  ", iword);
+
+	      printf("0x%08x   ", LSWAP(fApv[id][0].fBuffer[iword]));
+	    }
+	  printf("\n");
 	}
-      printf("\n");
-#endif
     }
 
   return OK;
@@ -3371,18 +3281,17 @@ mpdSDRAM_GetParam(int id, int *init, int *overrun, int *rdaddr, int *wraddr,
  */
 int
 mpdFIFO_ReadSingle(int id, int channel,	// apv channel (FIFO)
-		   uint32_t * dbuf,	// data buffer
+		   volatile uint32_t * dbuf,	// data buffer
 		   int *wrec,	// max number of words to get / return words received
 		   int max_retry)	// max number of retry for timeout
-//                         int &err)        // return error code
-//                         int &n_events)   // number of events
 {
 
   int success = OK, i, size;
   int nwords;			// words available in fifo
   int wmax;			// maximum word acceptable
   uint32_t vmeAdrs = 0;		// Vme address of channel data
-  int retVal = 0;
+  int dummy = 0, retVal = 0;
+  volatile uint32_t *laddr;
 
   if (CHECKMPD(id))
     {
@@ -3405,16 +3314,7 @@ mpdFIFO_ReadSingle(int id, int channel,	// apv channel (FIFO)
 	return success;
     }
 
-  //printf("\n\n%s: number of words to be read %d\n %d",__FUNCTION__,nwords,max_retry);
   size = (nwords < wmax) ? nwords : wmax;
-
-  MPD_MSG("\n\nmpdFIFO_GetNwords:number of words to be read %d size: %d\n",
-	  nwords, size);
-
-  //MPD_DBG("fifo ch = %d, words in fifo= %d, retries= %d (max %d)\n",channel, nwords,i, max_retry);
-  MPD_DBG("  id=%d  channel=%d  physMemBase = 0x%08x   dbuf = 0x%08x\n\n",
-	  id, channel, (uint32_t) fApv[id][channel].physMemBase,
-	  (uint32_t) & dbuf[0]);
 
   if (i > max_retry)
     {
@@ -3423,30 +3323,37 @@ mpdFIFO_ReadSingle(int id, int channel,	// apv channel (FIFO)
     }
 
   MPDLOCK;
-#define BLOCK_TRANSFER1
-#ifdef BLOCK_TRANSFER1
-  /*   unsigned long offset = ((unsigned long)&dbuf - (unsigned long)&fApv[id][0].fBuffer); */
-  unsigned long offset = 0;
 
+  if ((unsigned long) (dbuf) & 0x7)
+    {
+      dummy = 1;
+      *dbuf = 0;		/* Data word added for byte alignment */
+      laddr = (dbuf + 1);
+    }
+  else
+    {
+      dummy = 0;
+      laddr = dbuf;
+    }
   vmeDmaConfig(1, 2, 0);	//A24 BLT32
 
   vmeAdrs =
     (uint32_t) & MPDp[id]->data_ch[fApv[id][channel].adc][0] - mpdA24Offset;
 
-  MPD_DBG
-    ("dbuf addr = 0x%lx  fBuffer = 0x%lx  offset = 0x%lx  vmeAdrs = 0x%08x\n",
-     (unsigned long) dbuf, (unsigned long) fApv[id][channel].fBuffer,
-     (unsigned long) offset, vmeAdrs);
+  MPD_DBGN(MPD_DEBUG_DMA,
+	   "dbuf addr = 0x%lx  vmeAdrs = 0x%08x   size = %d\n",
+	   (unsigned long) dbuf, vmeAdrs, size);
 
   retVal =
-    vmeDmaSendPhys(fApv[id][channel].physMemBase, vmeAdrs, (size << 2));
+    vmeDmaSend((unsigned long) laddr, vmeAdrs, (size << 2));
 
   if (retVal != 0)
     {
       MPD_ERR("ERROR in DMA transfer Initialization (returned 0x%x)\n",
 	      retVal);
-      MPD_ERR("  id=%d  channel=%d  physMemBase = 0x%08x\n", id, channel,
-	      (uint32_t) fApv[id][channel].physMemBase);
+      MPD_ERR("  id=%d  channel=%d  laddr = 0x%lx  vmeAdrs = 0x%08x  size = %d\n",
+	      id, channel,
+	      (unsigned long) dbuf, vmeAdrs, size);
       *wrec = 0;
       MPDUNLOCK;
       return (retVal);
@@ -3472,36 +3379,26 @@ mpdFIFO_ReadSingle(int id, int channel,	// apv channel (FIFO)
     }
   else
     {
-      *wrec = (retVal >> 2);
-      MPD_DBG("vmeDmaDone returned 0x%x (%d)  wrec = %d\n",
-	      retVal, retVal, *wrec);
-      int iword = 0;
-      for (iword = 0; iword < *wrec; iword++)
+      *wrec = (retVal >> 2) + dummy;
+
+      if(mpdPrintDebug & MPD_DEBUG_DMA)
 	{
-#define DEBUG_BLOCKREAD
-#ifdef DEBUG_BLOCKREAD
-	  if ((iword % 4) == 0)
-	    printf("\n%4d:  ", iword);
+	  MPD_DBGN(MPD_DEBUG_DMA,
+		   "vmeDmaDone returned 0x%x (%d)  wrec = %d\n",
+		  retVal, retVal, *wrec);
 
-	  printf("0x%08x   ", LSWAP(fApv[id][channel].fBuffer[iword]));
-#endif
-	  /* Byte swap necessary for block transfers */
-	  fApv[id][channel].fBuffer[iword] =
-	    LSWAP(fApv[id][channel].fBuffer[iword]);
+	  int iword = 0;
+	  for (iword = 0; iword < *wrec; iword++)
+	    {
+	      if ((iword % 4) == 0)
+		printf("\n%4d:  ", iword);
+
+	      printf("0x%08x   ", LSWAP(fApv[id][0].fBuffer[iword]));
+	    }
+	  printf("\n");
 	}
-#ifdef DEBUG_BLOCKREAD
-      printf("\n");
-#endif
     }
 
-#else
-  for (i = 0; i < size; i++)
-    {
-      dbuf[i] = mpdRead32(&MPDp[id]->data_ch[channel][i]);	//changed from [channel][i*4] to [channel][i]--Danning_Sep_30_2015
-      *wrec += 1;
-    }
-  //MPD_DBG("Read apv = %d, wrec = %d, success = %d\n", channel, *wrec, success);
-#endif
   MPDUNLOCK;
 
   if (*wrec != size)
@@ -3898,7 +3795,7 @@ mpdFIFO_WaitNotEmpty(int id, int channel, int max_retry)
  *
  * return true if all cards have been read
  */
-
+// FIXME: This routine was broken when I removed the DMA memory allocation.
 int
 mpdFIFO_ReadAll(int id, int *timeout, int *global_fifo_error)
 {

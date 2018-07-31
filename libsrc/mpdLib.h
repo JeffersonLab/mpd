@@ -45,6 +45,11 @@
 
 #define DAQ_FIFO_SIZE	1024
 
+#define MPD_DEBUG_GEN     (1<<0)
+#define MPD_DEBUG_DMA     (1<<2)
+#define MPD_DEBUG_APVINIT (1<<3)
+#define MPD_DEBUG_I2C     (1<<4)
+
 #define MPD_MSG(format, ...) {printf("%s: ",__FUNCTION__); printf(format, ## __VA_ARGS__);}
 #define MPD_DUMP(format, ...) {if(mpdPrintDebug&2) {printf("%s: ",__FUNCTION__); printf(format, ## __VA_ARGS__);} }
 #define MPD_DBG(format, ...) {if(mpdPrintDebug&1) {printf("%s: DEBUG: ",__FUNCTION__); printf(format, ## __VA_ARGS__);} }
@@ -499,7 +504,7 @@ int mpdOBUF_Read(int id, volatile uint32_t *data, int size, int *wrec);
 
 int mpdSDRAM_GetParam(int id, int *init, int *overrun, int *rdaddr, int *wraddr, int *nwords);
 
-int  mpdFIFO_ReadSingle(int id, int channel, uint32_t *dbuf, int *wrec, int max_retry);
+int  mpdFIFO_ReadSingle(int id, int channel, volatile uint32_t *dbuf, int *wrec, int max_retry);
 int  mpdFIFO_ReadSingle0(int id, int channel, int blen, uint32_t *event, int *nread);
 int  mpdFIFO_Samples(int id,
 		     int channel,
