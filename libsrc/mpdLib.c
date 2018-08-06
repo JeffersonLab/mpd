@@ -24,12 +24,7 @@
 
 #ifdef VXWORKS
 #include <vxWorks.h>
-#else
-#include <stddef.h>
-#include <pthread.h>
-#endif
-#include <string.h>
-#ifdef VXWORKS
+#include <sysLib.h>
 #include <logLib.h>
 #include <taskLib.h>
 #include <intLib.h>
@@ -37,9 +32,12 @@
 #include <semLib.h>
 #include <vxLib.h>
 #else
+#include <stddef.h>
+#include <pthread.h>
 #include <unistd.h>
 #include <stdlib.h>
 #endif
+#include <string.h>
 #include "jvme.h"
 
 /* Include MPD definitions */
@@ -57,16 +55,13 @@ pthread_mutex_t mpdMutex = PTHREAD_MUTEX_INITIALIZER;
 
 /* Define external Functions */
 #ifdef VXWORKS
-IMPORT STATUS sysBusToLocalAdrs(int, char *, char **);
 IMPORT STATUS intDisconnect(int);
-IMPORT STATUS sysIntEnable(int);
-IMPORT STATUS sysIntDisable(int);
 IMPORT STATUS sysVmeDmaDone(int, int);
 IMPORT STATUS sysVmeDmaSend(UINT32, UINT32, int, BOOL);
 
 #define EIEIO    __asm__ volatile ("eieio")
 #define SYNC     __asm__ volatile ("sync")
-#endif
+#endif /* VXWORKS */
 
 /* Define Interrupts variables */
 BOOL mpdIntRunning = FALSE;	/* running flag */
@@ -95,7 +90,7 @@ int mpdSource = 0;		/* Signal source for MPD system control */
 int mpdBlockLevel = 0;		/* Block Level for ADCs */
 int mpdIntCount = 0;		/* Count of interrupts from MPD */
 int mpdBlockError = 0;		/* Whether (>0) or not (0) Block Transfer had an error */
-int mpdOutputBufferBaseAddr = 0x00880000;	/* output buffer base address */
+int mpdOutputBufferBaseAddr = 0x08800000;	/* output buffer base address */
 int mpdOutputBufferSpace = 0x800000;	/* output buffer space (8 Mbyte) */
 int mpdSdramBaseAddr = 0x0;	/* sdram base address (test only, 0=disabled) */
 ApvParameters fApv[(MPD_MAX_BOARDS) + 1][MPD_MAX_APV];
@@ -253,7 +248,7 @@ mpdSetSSPFiberMap_preInit(int ssp, int mpdmask)
  *  - If using SSP mode, this will represent the mask of SSP fiber connections to use.
  * @param addr_inc
  *  - Amount to increment addr to find the next MPD
- * @param nmpd
+ * @param ninc
  *  - Number of times to increment
  *
  *  @param iFlag 18 bit integer
@@ -278,7 +273,7 @@ mpdSetSSPFiberMap_preInit(int ssp, int mpdmask)
  */
 
 STATUS
-mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
+mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
 {
 
   int ii, issp, ibit, impd, impd_disc, res, errFlag = 0;
@@ -362,8 +357,8 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
 	}
       else
 	{			/* A24 Addressing */
-	  if (((addr_inc == 0) || (nmpd == 0)) && (useList == 0))
-	    nmpd = 1;		/* assume only one MPD to initialize */
+	  if (((addr_inc == 0) || (ninc == 0)) && (useList == 0))
+	    ninc = 1;		/* assume only one MPD to initialize */
 
 	  /* get the MPD address */
 #ifdef VXWORKS
@@ -395,9 +390,8 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
     {
       printf("****************************************\n");
       /* Make a quick and dirty array to use in the next iteration
-         over mpds up to nmpd */
-      mpdssp_list = (int *) malloc(nmpd * sizeof(int));
-
+         over mpds up to ninc */
+      mpdssp_list = (int *) malloc(ninc * sizeof(int));
       for (issp = 0; issp < nSSP; issp++)
 	{
 	  value = issp << 28;
@@ -413,7 +407,7 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
     }
 
 
-  for (ii = 0; ii < nmpd; ii++)
+  for (ii = 0; ii < ninc; ii++)
     {
 
       errFlag = 0;
@@ -590,7 +584,7 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
     }
 
 
-  rval = impd;
+  rval = nmpd = impd;
   mpdBlockLevel = 1;
 
   if (!noBoardInit)
@@ -1269,6 +1263,50 @@ mpdI2C_ByteWrite(int id, uint8_t dev_addr, uint8_t int_addr,
       return ERROR;
     }
 
+  /* FIXME: OLDWAY */
+  if( (success = I2C_SendByte(id,(uint8_t)(dev_addr & 0xFE), 1)) != OK )
+    {
+      //      if (success < 0) printf("SendByte DEVadd ret %d\n",success);
+      if( success <= -10 )
+	{
+	  I2C_SendStop(id);
+	  return success;
+	}
+      else
+	return I2C_SendStop(id);
+    }
+  // usleep(300);
+
+  if( (success = I2C_SendByte(id, int_addr, 0)) != OK )
+    {
+      //      if (success < 0) printf("SendByte INTadd ret %d\n",success);
+      if( success <= -10 )
+	{
+	  I2C_SendStop(id);
+	  return (success | 1);
+	}
+      else
+	return I2C_SendStop(id);
+    }
+  // usleep(300);
+  for(i=0; i<ndata; i++)
+    if( (success = I2C_SendByte(id, data[i], 0)) != OK )
+      {
+	//      if (success < 0) printf("SendByte data ret %d\n",success);
+	if( success <= -10 )
+	  {
+	    I2C_SendStop(id);
+	    return (success | 2);
+	  }
+	else
+	  return I2C_SendStop(id);
+      }
+
+  success = I2C_SendStop(id);
+
+  return success;
+
+
   start = MPD_I2C_COMMSTAT_STA | MPD_I2C_COMMSTAT_WR;
   success = I2C_SendByte(id, (dev_addr << 1), start);
   if (success != OK)
@@ -1426,6 +1464,42 @@ I2C_SendByte(int id, uint8_t byteval, int start)
       MPD_ERR("MPD in slot %d is not initialized.\n", id);
       return ERROR;
     }
+
+  /* FIXME: Oldway*/
+
+  MPDLOCK;
+  //  printf(" MPD addr I2C.txrx : 0x%x\n", &MPDp[id]->i2c.tx_rx - &MPDp[id]->magic_value);
+  mpdWrite32(&MPDp[id]->i2c.tx_rx, byteval);
+  //  printf("mpdWrite TxRx:%d %d %08x \n",byteval,mpdRead32(&MPDp[id]->i2c.tx_rx),mpdRead32(&MPDp[id]->i2c.tx_rx));
+
+  if( start )
+    mpdWrite32(&MPDp[id]->i2c.comm_stat, MPD_I2C_COMMSTAT_START_WRITE);
+  else
+    mpdWrite32(&MPDp[id]->i2c.comm_stat, MPD_I2C_COMMSTAT_WRITE);
+
+  //  usleep(500);
+  retry_count = 0;
+  data = 0x00000002;
+  // printf("mpdWrite TxRx:%d",mpdRead32(&MPDp[id]->i2c.tx_rx));
+
+  while( (data & 0x00000002) != 0 && retry_count < mpdGetI2CMaxRetry(id) )
+    {
+      usleep(10);
+      data = mpdRead32(&MPDp[id]->i2c.comm_stat);
+      if (retry_count>0) printf("mpdRead commstat:%08x %d (%d)\n",data, retry_count, mpdGetI2CMaxRetry(id) );
+      retry_count++;
+    }
+
+  if( retry_count >= mpdGetI2CMaxRetry(id) )
+    rval = -10;
+
+  if( data & MPD_I2C_COMMSTAT_NACK_RECV )	/* NACK received */
+    rval = -20;
+
+  MPDUNLOCK;
+
+  return rval;
+
 
   MPDLOCK;
 
@@ -1877,6 +1951,9 @@ mpdAPV_Try(int id, uint8_t apv_addr)	// i2c addr
   MPD_DBG("Slot %d   i2c %d  W  %d   tout %d   ret %d\n", id, apv_addr, x, timeout,
 	  ret);
 
+  /* FIXME: Oldway just returns */
+  return ret;
+
   if (ret < 0)
     return ret;
 
@@ -1997,7 +2074,9 @@ mpdAPV_Write(int id, uint8_t apv_addr, uint8_t reg_addr, uint8_t val)
       return ERROR;
     }
 
-  success = mpdI2C_ByteWrite(id, apv_addr, reg_addr, 1, &val);
+  /* FIXME: Oldway */
+  success = mpdI2C_ByteWrite(id, (uint8_t)((0x20 | apv_addr)<<1), reg_addr, 1, &val);
+/*   success = mpdI2C_ByteWrite(id, apv_addr, reg_addr, 1, &val); */
 
   MPD_DBG("Slot %d  apv_addr = %d  reg_addr = %d  val = 0x%x success = %d\n",
 	  id, apv_addr, reg_addr, val, success);
@@ -2898,7 +2977,7 @@ mpdADS5281_SetGain(int id, int adc,
 int
 mpdHISTO_MemTest(int id)
 {
-  uint32_t *hdata = NULL;
+  uint32_t hdata[4096];
   const int MAX_HDATA = 4096;
   int idata = 0, error_count = 0, rval = OK;
 
@@ -2908,19 +2987,10 @@ mpdHISTO_MemTest(int id)
       return ERROR;
     }
 
-  hdata = (uint32_t *) malloc(MAX_HDATA * sizeof(uint32_t));
-
-  if(hdata == NULL)
-    {
-      perror("malloc");
-      MPD_ERR("Cannot allocate memory for memory test\n");
-      return ERROR;
-    }
-
   memset((void *) &hdata, 0, MAX_HDATA * sizeof(uint32_t));
 
   mpdHISTO_Clear(id, 0, -1);
-  mpdHISTO_Read(id, 0, hdata);
+  mpdHISTO_Read(id, 0, (uint32_t *)&hdata);
   error_count = 0;
 
   for (idata = 0; idata < MAX_HDATA; idata++)
@@ -2941,8 +3011,6 @@ mpdHISTO_MemTest(int id)
     {
       MPD_MSG("MPD %2d: SUCCESS\n", id);
     }
-
-  free(hdata);
 
   return rval;
 }
@@ -3143,7 +3211,6 @@ mpdOBUF_Read(int id, volatile uint32_t * data, int size, int *wrec)
   volatile uint32_t *laddr;
   int iword = 0;
 
-  MPDLOCK;
   if ((unsigned long) (data) & 0x7)
     {
       dummy = 1;
@@ -5338,5 +5405,5 @@ mpdApvStatus(int id, uint16_t apv_mask)
       printf("\n");
     }
 
-  return OK;
+  return stat;
 }
