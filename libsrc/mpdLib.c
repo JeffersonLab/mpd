@@ -24,12 +24,10 @@
 
 #ifdef VXWORKS
 #include <vxWorks.h>
-#include "vxCompat.h"
 #else
 #include <stddef.h>
 #include <pthread.h>
 #endif
-#include <stdio.h>
 #include <string.h>
 #ifdef VXWORKS
 #include <logLib.h>
@@ -40,7 +38,6 @@
 #include <vxLib.h>
 #else
 #include <unistd.h>
-#include <stdint.h>
 #include <stdlib.h>
 #endif
 #include "jvme.h"
@@ -105,7 +102,6 @@ ApvParameters fApv[(MPD_MAX_BOARDS) + 1][MPD_MAX_APV];
 mpdParameters fMpd[(MPD_MAX_BOARDS) + 1];
 unsigned short fApvEnableMask[(MPD_MAX_BOARDS) + 1];
 int nApv[(MPD_MAX_BOARDS) + 1];
-extern GEF_VME_BUS_HDL vmeHdl;
 static int mpdSSPMode = 0;
 static uint32_t mpdSSPFiberMask[(MPD_SSP_MAX_BOARDS) + 1];	/* index = ssp#, value = fiber port mask of MPDs */
 static int mpdSSPFiberMaskUsed = 0;
@@ -298,6 +294,7 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
   int noConfigFileCheck = 0;
   int *mpdssp_list = NULL, nlist = 0;
   int rval = OK;
+  int value;
 
   /* Check if we are to exit when pointers are setup */
   noBoardInit = (iFlag & MPD_INIT_SKIP) ? 1 : 0;
@@ -400,7 +397,7 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int nmpd, int iFlag)
       /* Make a quick and dirty array to use in the next iteration
          over mpds up to nmpd */
       mpdssp_list = (int *) malloc(nmpd * sizeof(int));
-      int value;
+
       for (issp = 0; issp < nSSP; issp++)
 	{
 	  value = issp << 28;
@@ -2956,6 +2953,7 @@ mpdHISTO_Clear(int id, int ch, int val)	/* ch == 0, 15 */
   uint32_t data[4096];
   int success = OK, i, j;
   int block = 0;
+  int ntimes = 4096 / 64;
 
   if (CHECKMPD(id))
     {
@@ -2984,7 +2982,6 @@ mpdHISTO_Clear(int id, int ch, int val)	/* ch == 0, 15 */
     success = BUS_GENERIC_ERROR;
 #else
 
-  int ntimes = 4096 / 64;
   for (i = 0; i < ntimes; i++)
     {
       for (j = 0; j < 64; j++)
@@ -3075,7 +3072,7 @@ mpdHISTO_Read(int id, int ch, uint32_t * histogram)	/* ch == 0, 15; uint32_t his
 {
   int success = OK, i, j;
   int block = 0;
-
+  int ntimes = 4096 / 64;
 
   if (CHECKMPD(id))
     {
@@ -3094,7 +3091,7 @@ mpdHISTO_Read(int id, int ch, uint32_t * histogram)	/* ch == 0, 15; uint32_t his
       success = BUS_GENERIC_ERROR;
     }
 #else
-  int ntimes = 4096 / 64;
+
   for (i = 0; i < ntimes; i++)
     {
       for (j = 0; j < 64; j++)
@@ -3144,6 +3141,7 @@ mpdOBUF_Read(int id, volatile uint32_t * data, int size, int *wrec)
   int retVal = 0;
   int dummy;
   volatile uint32_t *laddr;
+  int iword = 0;
 
   MPDLOCK;
   if ((unsigned long) (data) & 0x7)
@@ -3230,7 +3228,7 @@ mpdOBUF_Read(int id, volatile uint32_t * data, int size, int *wrec)
 		   "vmeDmaDone returned 0x%x (%d)  wrec = %d\n",
 		  retVal, retVal, *wrec);
 
-	  int iword = 0;
+
 	  for (iword = 0; iword < *wrec; iword++)
 	    {
 	      if ((iword % 4) == 0)
@@ -3292,6 +3290,7 @@ mpdFIFO_ReadSingle(int id, int channel,	// apv channel (FIFO)
   uint32_t vmeAdrs = 0;		// Vme address of channel data
   int dummy = 0, retVal = 0;
   volatile uint32_t *laddr;
+  int iword = 0;
 
   if (CHECKMPD(id))
     {
@@ -3387,7 +3386,7 @@ mpdFIFO_ReadSingle(int id, int channel,	// apv channel (FIFO)
 		   "vmeDmaDone returned 0x%x (%d)  wrec = %d\n",
 		  retVal, retVal, *wrec);
 
-	  int iword = 0;
+
 	  for (iword = 0; iword < *wrec; iword++)
 	    {
 	      if ((iword % 4) == 0)
@@ -3801,8 +3800,7 @@ mpdFIFO_ReadAll(int id, int *timeout, int *global_fifo_error)
 {
 
   unsigned int k;
-  int sample_left;
-
+  int sample_left, n;
   int nread, err = OK;
 
 
@@ -3849,7 +3847,7 @@ mpdFIFO_ReadAll(int id, int *timeout, int *global_fifo_error)
 	      if ((err == ERROR) || (nread == 0))
 		*timeout = *timeout + 1;	// timeout
 
-	      int n = mpdApvGetBufferSample(id, k);
+	      n = mpdApvGetBufferSample(id, k);
 
 	      MPD_DBG
 		("MPD: %d APV_idx= %d, ADC_FIFO= %d, word read= %d, event/sample read= %d, error=%d\n",
@@ -3911,7 +3909,7 @@ mpdApvShiftDataBuffer(int id, int k, int i0)
 {
 
   uint32_t *b;
-
+  int delta;
 
   if (CHECKMPD(id))
     {
@@ -3920,7 +3918,7 @@ mpdApvShiftDataBuffer(int id, int k, int i0)
     }
 
   b = mpdApvGetBufferPointer(id, k, 0);
-  int delta = fApv[id][k].fBi1 - i0;
+  delta = fApv[id][k].fBi1 - i0;
 
   //MPD_DBG("Move block of %d words from %d to 0\n",delta,i0);
 

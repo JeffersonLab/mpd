@@ -14,7 +14,9 @@
  */
 
 #include "stdio.h"
+#ifndef VXWORKS
 #include "stdint.h"
+#endif
 #define MPD_MAGIC_VALUE       0x43524F4D
 #define MPD_MAX_BOARDS             21
 #define MPD_SSP_MAX_BOARDS         21
@@ -252,8 +254,6 @@ typedef struct apvparm_struct // actually a structure
   // runtime variables
   int fReadCount;
   uint32_t *fBuffer; // data buffer
-  GEF_VME_DMA_HDL dmaHdl;
-  unsigned long physMemBase;
   int fBufSize;
   int fBi0, fBi1, fBs;
 
