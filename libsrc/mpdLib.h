@@ -58,7 +58,7 @@
 #define MPD_DBGN(x,format, ...) {if(mpdPrintDebug&x) {printf("%s: DEBUG%d: ",__FUNCTION__, x); printf(format, ## __VA_ARGS__);} }
 #define MPD_ERR(format, ...) {fprintf(stderr,"%s: ERROR: ",__FUNCTION__); fprintf(stderr,format, ## __VA_ARGS__);}
 
-struct output_buffer_struct
+struct output_buffer_struct /* .ob_status */
 {
   /* 0x0200 */  volatile uint32_t evb_fifo_word_count;
   /* 0x0204 */  volatile uint32_t event_count;
@@ -74,7 +74,7 @@ struct output_buffer_struct
   /* 0x022C */  volatile uint32_t output_buffer_wr_addr;
 };
 
-struct mpd_i2c_control_struct
+struct mpd_i2c_control_struct /* .i2c */
 {
   /* 0x0400 */ volatile uint32_t clock_prescaler_low;
   /* 0x0404 */ volatile uint32_t clock_prescaler_high;
@@ -85,14 +85,14 @@ struct mpd_i2c_control_struct
   /* 0x041C */ volatile uint32_t apv_reset;
 };
 
-struct mpd_channel_flags_struct
+struct mpd_channel_flags_struct /* .ch_flags; */
 {
   /* 0x30000 */ volatile uint32_t used_word_ch_pair[16];
   /* 0x30040 */ volatile uint32_t fifo_status;
   /* 0x30044 */ volatile uint32_t sync_status;
 };
 
-struct mpd_histogrammer_struct
+struct mpd_histogrammer_struct /* .histo[2]; */
 {
   /* 0x01000 */ volatile uint32_t csr;
   /* 0x01004 */ volatile uint32_t count;
@@ -280,6 +280,8 @@ typedef struct mpd_priv_struct
 
   uint16_t fApv_enable_mask;
   uint16_t nAPV; // number of apv in mpd config file (EC)
+  uint64_t CtrlHdmiMask[2]; // APVaddr = bit, HDMI output 0 = lower, 1 = upper
+  uint64_t CtrlHdmiInitMask; // Bits indicate which APV addresses have had CtrlHdmiMask[2] checked.
 
   // config settings
   int   fCalibLatency;
