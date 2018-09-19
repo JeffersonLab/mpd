@@ -128,10 +128,13 @@ static const uint8_t error_addr = 0x00;
 
 /* Static methods */
 /* I2C */
-/*static*/ int I2C_SendByte(int id, uint8_t byteval, int start);
-/*static*/ int I2C_ReceiveByte(int id, uint8_t * byteval);
-/*static*/ int I2C_SendStop(int id);
-/*static*/ int I2C_SendNack(int id);
+int I2C_SendByte(int id, uint8_t byteval, uint8_t command);
+int I2C_ReceiveByte(int id, uint8_t *byteval, uint8_t command);
+int I2C_SendAck(int id);
+int I2C_SendStop(int id);
+int I2C_SendNack(int id);
+int I2C_CtrlHdmiEnable(int id, int upper);
+int I2C_CtrlHdmiDisable(int id);
 
 extern int sspID[MPD_SSP_MAX_BOARDS + 1];
 extern int nSSP;
@@ -536,8 +539,9 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
       rdata = mpdRead32(&mpd->compile_time);
 
       fMpd[boardID].FpgaCompileTime = rdata;
-      printf("               - Firmware Revision Time: %s",
-	     ctime((const time_t *) &fMpd[boardID].FpgaCompileTime));
+      printf("               - Firmware Revision Time: %s %x",
+	     ctime((const time_t *) &fMpd[boardID].FpgaCompileTime),
+	     fMpd[boardID].FpgaCompileTime);
 
       if (!noConfigFileCheck)
 	{
@@ -578,6 +582,9 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
       if (!noBoardInit)
 	{
 	  /* Some more initialize here, if needed */
+	  fMpd[boardID].CtrlHdmiMask[0] = 0;
+	  fMpd[boardID].CtrlHdmiMask[1] = 0;
+	  fMpd[boardID].CtrlHdmiInitMask = 0;
 	}
 
       impd++;
@@ -1083,6 +1090,7 @@ mpdSetFpgaCompileTime(int id, uint32_t t)
   fMpd[id].FpgaCompileTime = t;
 }
 
+// FIXME: Re-write this one
 int
 mpdLM95235_Read(int id, double *core_t, double *air_t)
 {
@@ -1252,10 +1260,11 @@ mpdI2C_Init(int id)
 }
 
 int
-mpdI2C_ByteWrite(int id, uint8_t dev_addr, uint8_t int_addr,
+mpdI2C_ByteWrite(int id, uint8_t dev_addr, uint8_t reg_addr,
 		 int ndata, uint8_t * data)
 {
-  int success, i, start;
+  uint8_t command = 0;
+  int idata, rval = OK;
 
   if (CHECKMPD(id))
     {
@@ -1263,99 +1272,46 @@ mpdI2C_ByteWrite(int id, uint8_t dev_addr, uint8_t int_addr,
       return ERROR;
     }
 
-  /* FIXME: OLDWAY */
-  if( (success = I2C_SendByte(id,(uint8_t)(dev_addr & 0xFE), 1)) != OK )
+  command = MPD_I2C_COMMSTAT_STA | MPD_I2C_COMMSTAT_WR;
+  rval = I2C_SendByte(id, (dev_addr << 1), command);
+  if (rval != OK)
     {
-      //      if (success < 0) printf("SendByte DEVadd ret %d\n",success);
-      if( success <= -10 )
-	{
-	  I2C_SendStop(id);
-	  return success;
-	}
-      else
-	return I2C_SendStop(id);
+      I2C_SendAck(id);
+      return rval;
     }
-  // usleep(300);
 
-  if( (success = I2C_SendByte(id, int_addr, 0)) != OK )
+  command = MPD_I2C_COMMSTAT_WR;
+  rval = I2C_SendByte(id, reg_addr, command);
+  if (rval != OK)
     {
-      //      if (success < 0) printf("SendByte INTadd ret %d\n",success);
-      if( success <= -10 )
-	{
-	  I2C_SendStop(id);
-	  return (success | 1);
-	}
-      else
-	return I2C_SendStop(id);
+      I2C_SendAck(id);
+      return rval;
     }
-  // usleep(300);
-  for(i=0; i<ndata; i++)
-    if( (success = I2C_SendByte(id, data[i], 0)) != OK )
-      {
-	//      if (success < 0) printf("SendByte data ret %d\n",success);
-	if( success <= -10 )
-	  {
-	    I2C_SendStop(id);
-	    return (success | 2);
-	  }
-	else
-	  return I2C_SendStop(id);
-      }
 
-  success = I2C_SendStop(id);
+  command = MPD_I2C_COMMSTAT_WR;
 
-  return success;
-
-
-  start = MPD_I2C_COMMSTAT_STA | MPD_I2C_COMMSTAT_WR;
-  success = I2C_SendByte(id, (dev_addr << 1), start);
-  if (success != OK)
+  for(idata = 0; idata < ndata; idata++)
     {
-      if (success <= -10)
+      if((idata + 1) == ndata) /* Stop for last data in array */
+	command |= MPD_I2C_COMMSTAT_STO;
+
+      rval = I2C_SendByte(id, data[idata], command);
+      if (rval != OK)
 	{
-	  I2C_SendStop(id);
-	  return success;
+	  I2C_SendAck(id);
+	  return rval;
 	}
     }
 
-  start = MPD_I2C_COMMSTAT_WR;
-  success = I2C_SendByte(id, int_addr, start);
-  if (success != OK)
-    {
-      if (success <= -10)
-	{
-	  I2C_SendStop(id);
-	  return (success | 1);
-	}
-    }
-
-  for (i = 0; i < ndata; i++)
-    {
-      start = MPD_I2C_COMMSTAT_WR;
-
-      if( (i - 1) == ndata)
-	start |= MPD_I2C_COMMSTAT_STO;
-
-      success = I2C_SendByte(id, data[i], start);
-
-      if (success != OK)
-	{
-	  if (success <= -10)
-	    {
-	      I2C_SendStop(id);
-	      return (success | 2);
-	    }
-	}
-    }
-
-  return success;
+  return OK;
 }
 
 int
-mpdI2C_ByteRead(int id, uint8_t dev_addr, uint8_t int_addr,
+mpdI2C_ByteRead(int id, uint8_t dev_addr, uint8_t reg_addr,
 		int ndata, uint8_t * data)
 {
-  int success, i, start;
+  uint8_t command = 0, rdata = 0;
+  int idata, rval = OK;
 
   if (CHECKMPD(id))
     {
@@ -1363,47 +1319,52 @@ mpdI2C_ByteRead(int id, uint8_t dev_addr, uint8_t int_addr,
       return ERROR;
     }
 
-  /* start = MPD_I2C_COMMSTAT_STA | MPD_I2C_COMMSTAT_WR; */
-  start = 1;
-  success = I2C_SendByte(id, (dev_addr << 1), start);
-  if (success != OK)
+  command = MPD_I2C_COMMSTAT_STA | MPD_I2C_COMMSTAT_WR;
+  rval = I2C_SendByte(id, (dev_addr << 1), command);
+  if (rval != OK)
     {
-      I2C_SendStop(id);
-      return success | 1;
+      I2C_SendAck(id);
+      return ERROR;
     }
 
-  /* start = MPD_I2C_COMMSTAT_WR; */
-  /* start = 0; */
-  success = I2C_SendByte(id, int_addr, start);
-  if (success != OK)
+  command = MPD_I2C_COMMSTAT_STO | MPD_I2C_COMMSTAT_WR;
+
+  rval = I2C_SendByte(id, reg_addr, command);
+  if (rval != OK)
     {
-      I2C_SendStop(id);
-      return success | 2;
+      I2C_SendAck(id);
+      return ERROR;
     }
 
-  /* start = MPD_I2C_COMMSTAT_WR; */
-  /* start = 1; */
-  success = I2C_SendByte(id, (uint8_t) ((dev_addr<<1) | 0x01), start);
-  if (success != OK)
+  command = MPD_I2C_COMMSTAT_STA | MPD_I2C_COMMSTAT_WR;
+  rval = I2C_SendByte(id, (dev_addr << 1) | 1, command);
+  if (rval != OK)
     {
-      I2C_SendStop(id);
-      return success | 3;
+      I2C_SendAck(id);
+      return ERROR;
     }
 
-  for (i = 0; i < ndata; i++)
+  command = MPD_I2C_COMMSTAT_RD;
+
+  for (idata = 0; idata < ndata; idata++)
     {
-      usleep(10000);
-      success = I2C_ReceiveByte(id, data + i);
-      if (success != OK)
+      if((idata + 1) == ndata) /* Stop for last data in array */
+	command |=  MPD_I2C_COMMSTAT_ACK | MPD_I2C_COMMSTAT_STO;
+
+      rval = I2C_ReceiveByte(id, &rdata, command);
+      if (rval != OK)
 	{
-	  I2C_SendStop(id);
-	  return success | (4 + i);
+	  I2C_SendAck(id);
+	  return ERROR;
 	}
+
+      data[idata] = rdata;
     }
 
-  return success;
+  return OK;
 }
 
+#if 0
 int
 mpdI2C_ByteWriteRead(int id, uint8_t dev_addr, uint8_t int_addr,
 		     int ndata, uint8_t * data)
@@ -1452,12 +1413,12 @@ mpdI2C_ByteRead1(int id, uint8_t dev_addr, uint8_t * data)
 
   return I2C_SendStop(id);
 }
-
-/*static*/ int
-I2C_SendByte(int id, uint8_t byteval, int start)
+#endif
+int
+I2C_SendByte(int id, uint8_t byteval, uint8_t command)
 {
-  int rval = OK, retry_count = 0;
-  volatile uint32_t data = 0x2;
+  uint32_t rdata = 0;
+  int retry_count = 0, rval = OK;
 
   if (CHECKMPD(id))
     {
@@ -1465,81 +1426,37 @@ I2C_SendByte(int id, uint8_t byteval, int start)
       return ERROR;
     }
 
-  /* FIXME: Oldway*/
-
   MPDLOCK;
-  //  printf(" MPD addr I2C.txrx : 0x%x\n", &MPDp[id]->i2c.tx_rx - &MPDp[id]->magic_value);
-  mpdWrite32(&MPDp[id]->i2c.tx_rx, byteval);
-  //  printf("mpdWrite TxRx:%d %d %08x \n",byteval,mpdRead32(&MPDp[id]->i2c.tx_rx),mpdRead32(&MPDp[id]->i2c.tx_rx));
+  vmeWrite32(&MPDp[id]->i2c.tx_rx, byteval);
 
-  if( start )
-    mpdWrite32(&MPDp[id]->i2c.comm_stat, MPD_I2C_COMMSTAT_START_WRITE);
-  else
-    mpdWrite32(&MPDp[id]->i2c.comm_stat, MPD_I2C_COMMSTAT_WRITE);
-
-  //  usleep(500);
-  retry_count = 0;
-  data = 0x00000002;
-  // printf("mpdWrite TxRx:%d",mpdRead32(&MPDp[id]->i2c.tx_rx));
-
-  while( (data & 0x00000002) != 0 && retry_count < mpdGetI2CMaxRetry(id) )
+  vmeWrite32(&MPDp[id]->i2c.comm_stat, command);
+  rdata = vmeRead32(&MPDp[id]->i2c.comm_stat);
+  while( (rdata & 0x00000002) != 0 && retry_count < 10 )
     {
-      usleep(10);
-      data = mpdRead32(&MPDp[id]->i2c.comm_stat);
-      if (retry_count>0) printf("mpdRead commstat:%08x %d (%d)\n",data, retry_count, mpdGetI2CMaxRetry(id) );
+      usleep(1);
+      rdata = vmeRead32(&MPDp[id]->i2c.comm_stat);
+      if(retry_count > 0) MPD_DBG("%2d: 0x%08x\n", retry_count, rdata);
       retry_count++;
     }
 
-  if( retry_count >= mpdGetI2CMaxRetry(id) )
-    rval = -10;
+  if( retry_count >= 10 )
+    rval = ERROR;
 
-  if( data & MPD_I2C_COMMSTAT_NACK_RECV )	/* NACK received */
-    rval = -20;
-
-  MPDUNLOCK;
-
-  return rval;
-
-
-  MPDLOCK;
-
-  mpdWrite32(&MPDp[id]->i2c.tx_rx, byteval);
-
-  mpdWrite32(&MPDp[id]->i2c.comm_stat, start);
-
-  while ((data & 0x00000002) != 0 && retry_count < mpdGetI2CMaxRetry(id))
+  if( rdata & MPD_I2C_COMMSTAT_NACK_RECV )	/* NACK received */
     {
-      usleep(10);
-      data = mpdRead32(&MPDp[id]->i2c.comm_stat);
-      if (retry_count > 0)
-	printf("mpdRead commstat:%08x %d (%d)\n", data, retry_count,
-	       mpdGetI2CMaxRetry(id));
-      retry_count++;
+      MPD_DBGN(MPD_DEBUG_I2C, "NACK received 0x%x\n", rdata);
+      rval = ERROR;
     }
-
-  if (retry_count >= mpdGetI2CMaxRetry(id))
-    rval = -10;
-
-  if (data & MPD_I2C_COMMSTAT_NACK_RECV)	/* NACK received */
-    rval = -20;
-
-  mpdWrite32(&MPDp[id]->i2c.comm_stat,
-	     MPD_I2C_COMMSTAT_IACK);
-
   MPDUNLOCK;
-
-  MPD_DBG("id = %d  byteval = 0x%x  start = %x  rval = %d\n",
-	  id, byteval, start, rval);
 
   return rval;
 }
 
-/*static*/ int
-I2C_ReceiveByte(int id, uint8_t * byteval)
+int
+I2C_ReceiveByte(int id, uint8_t *byteval, uint8_t command)
 {
-  int retry_count;
-  int rval = 0;
-  uint32_t data = 0;
+  uint32_t rdata = 0;
+  int retry_count = 0, rval = OK;
 
   if (CHECKMPD(id))
     {
@@ -1548,35 +1465,30 @@ I2C_ReceiveByte(int id, uint8_t * byteval)
     }
 
   MPDLOCK;
+  vmeWrite32(&MPDp[id]->i2c.comm_stat, command);
 
-  retry_count = 0;
-  data = mpdRead32(&MPDp[id]->i2c.comm_stat);
-  while ((data & 0x00000002) != 0 && retry_count < mpdGetI2CMaxRetry(id))
+  rdata = vmeRead32(&MPDp[id]->i2c.comm_stat);
+  while( (rdata & 0x00000002) != 0 && retry_count < 10 )
     {
-      usleep(100);
-      data = mpdRead32(&MPDp[id]->i2c.comm_stat);
-      if (retry_count > 0)
-	printf("mpdRead commstat:%08x %d (%d)\n", data, retry_count,
-	       mpdGetI2CMaxRetry(id));
+      usleep(1);
+      rdata = vmeRead32(&MPDp[id]->i2c.comm_stat);
+      if(retry_count > 0) MPD_DBG("%2d: 0x%08x\n", retry_count, rdata);
       retry_count++;
     }
 
-  if (retry_count >= mpdGetI2CMaxRetry(id))
-    rval = -10;
+  if (retry_count >= 10)
+    rval = ERROR;
 
-  data = mpdRead32(&MPDp[id]->i2c.tx_rx);
-
-  *byteval = data;
-
-
-  MPDUNLOCK;
-
-  MPD_DBG("id = %d  *byteval = 0x%x  rval = %d\n",
-	  id, *byteval, rval);
-
+  *byteval = vmeRead32(&MPDp[id]->i2c.tx_rx);
+  MPDLOCK;
 
   return rval;
+}
 
+int
+I2C_SendAck(int id)
+{
+  return I2C_SendByte(id, 0, MPD_I2C_COMMSTAT_ACK);
 }
 
 /*static*/ int
@@ -1685,6 +1597,119 @@ I2C_IACK(int id)
 
   return OK;
 
+}
+
+int
+I2C_CtrlHdmiEnable(int id, int upper)
+{
+  uint32_t data;
+  int rval = OK;
+
+  if (CHECKMPD(id))
+    {
+      MPD_ERR("MPD in slot %d is not initialized.\n", id);
+      return ERROR;
+    }
+
+  MPDLOCK;
+  data = vmeRead32(&MPDp[id]->readout_config);
+
+  if( upper == 0 )
+    {
+      MPD_DBG("Enabling I2C on lower HDMI cable only\n");
+      data &= ~0x00000400;	// clear bit 10
+      data |= 0x00000200;		// set bit 9
+    }
+  else
+    {
+      MPD_DBG("Enabling I2C on upper HDMI cable only\n");
+      data &= ~0x00000200;	// clear bit 9
+      data |= 0x00000400;		// set bit 10
+    }
+
+  vmeWrite32(&MPDp[id]->readout_config, data);
+  MPDUNLOCK;
+
+  usleep(10);
+
+  return rval;
+}
+
+int
+I2C_CtrlHdmiDisable(int id)
+{
+  uint32_t data;
+  int rval = OK;
+
+  if (CHECKMPD(id))
+    {
+      MPD_ERR("MPD in slot %d is not initialized.\n", id);
+      return ERROR;
+    }
+
+  MPDLOCK;
+  data = vmeRead32(&MPDp[id]->readout_config);
+
+  MPD_DBG("Disabling I2C on BOTH HDMI cables\n");
+  data &= ~0x00000400;	// clear bit 10
+  data &= ~0x00000200;	// clear bit 9
+
+  vmeWrite32(&MPDp[id]->readout_config, data);
+  MPDUNLOCK;
+
+  usleep(10);
+
+  return rval;
+}
+
+int
+mpdAPV_SetCtrlHdmi(int id, uint8_t apv_addr)
+{
+  int rval = ERROR, success = OK, ihdmi;
+
+  if (CHECKMPD(id))
+    {
+      MPD_ERR("MPD in slot %d is not initialized.\n", id);
+      return ERROR;
+    }
+
+  /* Skip if not supported */
+  if(mpdGetFpgaCompileTime(id) < 0x59b7d9e6)
+    return OK;
+
+  /* Ignore addresses outside of APV address range */
+  if(apv_addr > 0x3F)
+    return OK;
+
+  /* Check if initialized */
+  if( ((fMpd[id].CtrlHdmiInitMask) & (1ULL << apv_addr)) == 0)
+    {
+      MPD_ERR("MPD %2d: Control HDMI not configured for APV addr = 0x%x\n",
+	      id, apv_addr);
+      return ERROR;
+    }
+
+  /* Check each mask to determine which input to use */
+  for(ihdmi = 0; ihdmi < 2; ihdmi++)
+    {
+      if( (fMpd[id].CtrlHdmiMask[ihdmi]) & (1ULL << apv_addr) )
+	{
+	  success = I2C_CtrlHdmiEnable(id, ihdmi);
+	  if(success == OK)
+	    {
+	      rval = OK;
+	      break;
+	    }
+	}
+    }
+
+  if(rval == ERROR)
+    {
+      MPD_ERR("MPD %2d: No APV found with addr = 0x%x for either Control HDMI\n",
+	      id, apv_addr);
+    }
+
+  return rval;
 }
 
 /* ADC set/get methods */
@@ -1983,6 +2008,69 @@ mpdAPV_Try(int id, uint8_t apv_addr)	// i2c addr
 
 }
 
+int
+mpdAPV_TryHdmi(int id, uint8_t apv_addr, int ihdmi)
+{
+
+  int timeout = 0;
+  uint8_t x = apv_addr + 32, y = 0;
+  int ret = ERROR;
+  uint8_t reg = latency_addr;
+
+  if (CHECKMPD(id))
+    {
+      MPD_ERR("MPD in slot %d is not initialized.\n", id);
+      return ERROR;
+    }
+
+
+  I2C_CtrlHdmiEnable(id, ihdmi);
+
+  while ((ret != OK) && (timeout < 10))
+    {
+      /* ret = myAPV_Write(id, apv_addr, reg, x); */
+      ret = mpdI2C_ByteWrite(id, apv_addr, reg, 1, &x);
+      timeout++;
+    }
+
+  MPD_DBGN(MPD_DEBUG_APVINIT,
+	   "WRITE  i2c_addr 0x%02x  dev_addr = 0x%02x  val = 0x%02x  to = %d  ret %d\n",
+	   apv_addr, reg, x, timeout, ret);
+
+   if(ret != OK)
+    return ret;
+
+  /* Unmodified MPDs will stop having reliable i2c if READ commands
+     are used to the APVs */
+  if(mpdGetFpgaCompileTime(id) < 0x59b7d9e6)
+    return ret;
+
+  timeout = -1; ret = ERROR;
+
+  while ((ret != OK) && (timeout < 10))
+    {
+      ret = mpdI2C_ByteRead(id, apv_addr, (reg + 1), 1, &y);
+      timeout++;
+    }
+
+
+  MPD_DBGN(MPD_DEBUG_APVINIT,
+	   "READ  i2c_addr 0x%02x  dev_addr = 0x%02x  val = 0x%02x  to = %d  ret %d\n",
+	   apv_addr, reg, y, timeout, ret);
+
+  if(ret != OK)
+    return ret;
+
+  if(x != y)
+    {
+      MPD_DBGN(MPD_DEBUG_APVINIT,
+	   "Slot %2d   i2c 0x%02x  W != R (0x%x != 0x%x)\n", id, apv_addr, x, y);
+      return ERROR;
+    }
+
+  return ret;
+}
+
 void
 mpdSetApvEnableMask(int id, uint16_t mask)
 {
@@ -2005,7 +2093,7 @@ mpdGetApvEnableMask(int id)
 int
 mpdAPV_Scan(int id)
 {
-  int iapv = 0;
+  int iapv = 0, ihdmi = 0;
 
   if (CHECKMPD(id))
     {
@@ -2019,10 +2107,23 @@ mpdAPV_Scan(int id)
 
   for (iapv = 0; iapv < MPD_MAX_APV; iapv++)
     {
-      if (mpdAPV_Try(id, iapv) > -1)
+      for (ihdmi = 0; ihdmi < 2; ihdmi++)
 	{
-	  MPD_DBGN(MPD_DEBUG_APVINIT,
-		   "MPD %d found candidate card at i2c addr %2d\n", id, iapv);
+	  if (mpdAPV_TryHdmi(id, iapv, ihdmi) == OK)
+	    {
+	      if(fMpd[id].CtrlHdmiInitMask & (1ULL<<iapv))
+		{
+		  MPD_ERR("MPD %d: Multiple APV cards with i2c addr 0x%02x (separate HDMI control)\n", id, iapv);
+		  break;
+		}
+
+	      MPD_DBGN(MPD_DEBUG_APVINIT,
+		       "MPD %d HDMI %d found candidate card at i2c addr 0x%02x 0x%04x\n",
+		       id, ihdmi, iapv, vmeRead32(&MPDp[id]->readout_config));
+	      fMpd[id].CtrlHdmiMask[ihdmi] |= (1ULL<<iapv) | (1ULL<<(iapv+1));
+	      fMpd[id].CtrlHdmiInitMask  |= (1ULL<<iapv) | (1ULL<<(iapv+1));
+	      break;
+	    }
 	}
     }
   MPD_DBGN(MPD_DEBUG_APVINIT,
@@ -2057,7 +2158,8 @@ mpdAPV_Scan(int id)
 	}
     }
 
-  MPD_MSG("MPD %2d: %2d APV found matching settings\n", id, nApv[id]);
+  MPD_MSG("MPD %2d: %2d APV found matching settings (mask = 0x%08x)\n",
+	  id, nApv[id], fApvEnableMask[id]);
 
   return nApv[id];
 }
@@ -2074,11 +2176,14 @@ mpdAPV_Write(int id, uint8_t apv_addr, uint8_t reg_addr, uint8_t val)
       return ERROR;
     }
 
-  /* FIXME: Oldway */
-  success = mpdI2C_ByteWrite(id, (uint8_t)((0x20 | apv_addr)<<1), reg_addr, 1, &val);
-/*   success = mpdI2C_ByteWrite(id, apv_addr, reg_addr, 1, &val); */
+  if(mpdAPV_SetCtrlHdmi(id, apv_addr) != OK)
+    {
+      return ERROR;
+    }
 
-  MPD_DBG("Slot %d  apv_addr = %d  reg_addr = %d  val = 0x%x success = %d\n",
+  success = mpdI2C_ByteWrite(id, apv_addr, reg_addr, 1, &val);
+
+  MPD_DBG("Slot %d  apv_addr = 0x%x  reg_addr = 0x%x  val = 0x%x success = %d\n",
 	  id, apv_addr, reg_addr, val, success);
 
   return success;
@@ -2095,12 +2200,15 @@ mpdAPV_Read(int id, uint8_t apv_addr, uint8_t reg_addr, uint8_t * val)
       return ERROR;
     }
 
-  usleep(500);
+  if(mpdAPV_SetCtrlHdmi(id, apv_addr) != OK)
+    {
+      return ERROR;
+    }
 
   success =
-    mpdI2C_ByteRead(id, (uint8_t) (apv_addr), reg_addr, 1, val);
+    mpdI2C_ByteRead(id, apv_addr, reg_addr, 1, val);
 
-  MPD_DBG("Slot %d  apv_addr = %d  reg_addr = %d  val = 0x%x  success = %d\n",
+  MPD_DBG("Slot %d  apv_addr = 0x%x  reg_addr = 0x%x  val = 0x%x  success = %d\n",
 	  id, apv_addr, reg_addr, *val, success);
 
   return success;

@@ -409,9 +409,12 @@ int  mpdI2C_ByteWrite(int id, uint8_t dev_addr, uint8_t int_addr,
 		 int ndata, uint8_t *data);
 int  mpdI2C_ByteRead(int id, uint8_t dev_addr, uint8_t int_addr,
 		int ndata, uint8_t *data);
+#if 0
 int  mpdI2C_ByteWriteRead(int id, uint8_t dev_addr, uint8_t int_addr,
 			  int ndata, uint8_t *data);
 int  mpdI2C_ByteRead1(int id, uint8_t dev_addr, uint8_t *data);
+#endif
+int mpdAPV_SetCtrlHdmi(int id, uint8_t apv_addr);
 
 /* ADC set/get methods */
 void mpdSetAdcClockPhase(int id, int adc, int phase);
@@ -437,6 +440,7 @@ int  mpdApvGetSampleIdx(int id, int ia);
 int  mpdAPV_Reset101(int id);
 int  mpdAPV_SoftTrigger(int id);
 int  mpdAPV_Try(int id, uint8_t apv_addr);
+int  mpdAPV_TryHdmi(int id, uint8_t apv_addr, int ihdmi);
 
 void mpdSetApvEnableMask(int id, uint16_t mask);
 void mpdResetApvEnableMask(int id);
