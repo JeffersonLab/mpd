@@ -1090,6 +1090,7 @@ mpdSetFpgaCompileTime(int id, uint32_t t)
   fMpd[id].FpgaCompileTime = t;
 }
 
+#if 0
 // FIXME: Re-write this one
 int
 mpdLM95235_Read(int id, double *core_t, double *air_t)
@@ -1154,7 +1155,7 @@ mpdLM95235_Read(int id, double *core_t, double *air_t)
   return success;
 
 }
-
+#endif
 
 /****************************
  * LOW LEVEL routines
@@ -1480,7 +1481,7 @@ I2C_ReceiveByte(int id, uint8_t *byteval, uint8_t command)
     rval = ERROR;
 
   *byteval = vmeRead32(&MPDp[id]->i2c.tx_rx);
-  MPDLOCK;
+  MPDUNLOCK;
 
   return rval;
 }
@@ -1682,7 +1683,7 @@ mpdAPV_SetCtrlHdmi(int id, uint8_t apv_addr)
     return OK;
 
   /* Check if initialized */
-  if( ((fMpd[id].CtrlHdmiInitMask) & (1ULL << apv_addr)) == 0)
+  if( ((fMpd[id].CtrlHdmiInitMask) & (1 << apv_addr)) == 0)
     {
       MPD_ERR("MPD %2d: Control HDMI not configured for APV addr = 0x%x\n",
 	      id, apv_addr);
@@ -1692,7 +1693,7 @@ mpdAPV_SetCtrlHdmi(int id, uint8_t apv_addr)
   /* Check each mask to determine which input to use */
   for(ihdmi = 0; ihdmi < 2; ihdmi++)
     {
-      if( (fMpd[id].CtrlHdmiMask[ihdmi]) & (1ULL << apv_addr) )
+      if( (fMpd[id].CtrlHdmiMask[ihdmi]) & (1 << apv_addr) )
 	{
 	  success = I2C_CtrlHdmiEnable(id, ihdmi);
 	  if(success == OK)
@@ -1976,10 +1977,12 @@ mpdAPV_Try(int id, uint8_t apv_addr)	// i2c addr
   MPD_DBG("Slot %d   i2c %d  W  %d   tout %d   ret %d\n", id, apv_addr, x, timeout,
 	  ret);
 
-  /* FIXME: Oldway just returns */
-  return ret;
+  if (ret != OK)
+    return ret;
 
-  if (ret < 0)
+  /* Unmodified MPDs will stop having reliable i2c if READ commands
+     are used to the APVs */
+  if(mpdGetFpgaCompileTime(id) < 0x5b84f50f)
     return ret;
 
   ret = 1;
@@ -1987,7 +1990,7 @@ mpdAPV_Try(int id, uint8_t apv_addr)	// i2c addr
 
   while ((ret != OK) && (timeout < 20))
     {
-      ret = mpdAPV_Read(id, apv_addr, latency_addr, &y);
+      ret = mpdAPV_Read(id, apv_addr, latency_addr + 1, &y);
       timeout++;
     }
 
@@ -2029,34 +2032,34 @@ mpdAPV_TryHdmi(int id, uint8_t apv_addr, int ihdmi)
   while ((ret != OK) && (timeout < 10))
     {
       /* ret = myAPV_Write(id, apv_addr, reg, x); */
-      ret = mpdI2C_ByteWrite(id, apv_addr, reg, 1, &x);
+      ret = mpdI2C_ByteWrite(id, 0x20 | apv_addr, reg, 1, &x);
       timeout++;
     }
 
   MPD_DBGN(MPD_DEBUG_APVINIT,
-	   "WRITE  i2c_addr 0x%02x  dev_addr = 0x%02x  val = 0x%02x  to = %d  ret %d\n",
-	   apv_addr, reg, x, timeout, ret);
+	   "WRITE hdmi %d i2c 0x%02x  dev 0x%02x  val = 0x%02x  to = %d  ret %d\n",
+	   ihdmi, apv_addr, reg, x, timeout, ret);
 
    if(ret != OK)
     return ret;
 
   /* Unmodified MPDs will stop having reliable i2c if READ commands
      are used to the APVs */
-  if(mpdGetFpgaCompileTime(id) < 0x59b7d9e6)
+  if(mpdGetFpgaCompileTime(id) < 0x5b84f50f)
     return ret;
 
   timeout = -1; ret = ERROR;
 
   while ((ret != OK) && (timeout < 10))
     {
-      ret = mpdI2C_ByteRead(id, apv_addr, (reg + 1), 1, &y);
+      ret = mpdI2C_ByteRead(id, 0x20 | apv_addr, (reg + 1), 1, &y);
       timeout++;
     }
 
 
   MPD_DBGN(MPD_DEBUG_APVINIT,
-	   "READ  i2c_addr 0x%02x  dev_addr = 0x%02x  val = 0x%02x  to = %d  ret %d\n",
-	   apv_addr, reg, y, timeout, ret);
+	   "READ  hdmi %d i2c 0x%02x  dev 0x%02x  val = 0x%02x  to = %d  ret %d\n",
+	   ihdmi, apv_addr, reg, y, timeout, ret);
 
   if(ret != OK)
     return ret;
@@ -2094,6 +2097,7 @@ int
 mpdAPV_Scan(int id)
 {
   int iapv = 0, ihdmi = 0;
+  int nFound = 0;
 
   if (CHECKMPD(id))
     {
@@ -2103,7 +2107,7 @@ mpdAPV_Scan(int id)
 
   // print information (debug only, should be done in verbose mode only)
   MPD_DBGN(MPD_DEBUG_APVINIT,
-	   "MPD %d Blind scan on %d apvs: \n", id, MPD_MAX_APV);
+	   "MPD %2d Blind scan on %d apvs: \n", id, MPD_MAX_APV);
 
   for (iapv = 0; iapv < MPD_MAX_APV; iapv++)
     {
@@ -2111,37 +2115,39 @@ mpdAPV_Scan(int id)
 	{
 	  if (mpdAPV_TryHdmi(id, iapv, ihdmi) == OK)
 	    {
-	      if(fMpd[id].CtrlHdmiInitMask & (1ULL<<iapv))
+	      if(fMpd[id].CtrlHdmiInitMask & (1 << iapv))
 		{
-		  MPD_ERR("MPD %d: Multiple APV cards with i2c addr 0x%02x (separate HDMI control)\n", id, iapv);
+		  MPD_ERR("MPD %2d: Multiple APV cards with i2c addr 0x%02x (separate HDMI control)\n", id, iapv);
 		  break;
 		}
 
 	      MPD_DBGN(MPD_DEBUG_APVINIT,
-		       "MPD %d HDMI %d found candidate card at i2c addr 0x%02x 0x%04x\n",
+		       "MPD %2d HDMI %d found candidate card at i2c addr 0x%02x 0x%04x\n",
 		       id, ihdmi, iapv, vmeRead32(&MPDp[id]->readout_config));
-	      fMpd[id].CtrlHdmiMask[ihdmi] |= (1ULL<<iapv) | (1ULL<<(iapv+1));
-	      fMpd[id].CtrlHdmiInitMask  |= (1ULL<<iapv) | (1ULL<<(iapv+1));
+	      fMpd[id].CtrlHdmiMask[ihdmi] |= (1 << iapv);
+	      fMpd[id].CtrlHdmiInitMask  |= (1 << iapv);
+	      nFound++;
 	      break;
 	    }
 	}
     }
-  MPD_DBGN(MPD_DEBUG_APVINIT,
-	   "MPD %d Blind scan done\n", id);
+  MPD_MSG("MPD %2d: %2d APV found in blind scan (i2c adr mask = 0x%08x)\n",
+	  id, nFound, (uint32_t)(fMpd[id].CtrlHdmiInitMask));
 
   mpdResetApvEnableMask(id);
 
   nApv[id] = 0;
+
   for (iapv = 0; iapv < fMpd[id].nAPV; iapv++)
     {
       MPD_DBGN(MPD_DEBUG_APVINIT,
-	       "Try i2c=%2d adc=%2d : \n", fApv[id][iapv].i2c,
+	       "Try i2c=0x%2x adc=%2d : \n", fApv[id][iapv].i2c,
 	       fApv[id][iapv].adc);
 
       if (mpdAPV_Try(id, fApv[id][iapv].i2c) > -1 && fApv[id][iapv].adc > -1)
 	{
 	  MPD_DBGN(MPD_DEBUG_APVINIT,
-		   "%d matched in MPD in slot %d\n", fApv[id][iapv].i2c, id);
+		   "0x%02x matched in MPD in slot %d\n", fApv[id][iapv].i2c, id);
 
 	  mpdSetApvEnableMask(id, (1 << fApv[id][iapv].adc));
 
@@ -2151,14 +2157,14 @@ mpdAPV_Scan(int id)
       else
 	{
 	  MPD_DBGN(MPD_DEBUG_APVINIT,
-		   "MPD %d APV i2c = %d does not respond.  It is disabled\n",
+		   "MPD %2d APV i2c = 0x%02x does not respond.  It is disabled\n",
 		  id, fApv[id][iapv].i2c);
 	  fApvEnableMask[id] &= ~(1 << fApv[id][iapv].adc);
 	  fApv[id][iapv].enabled = 0;
 	}
     }
 
-  MPD_MSG("MPD %2d: %2d APV found matching settings (mask = 0x%08x)\n",
+  MPD_MSG("MPD %2d: %2d APV found matching settings (adc mask = 0x%08x)\n",
 	  id, nApv[id], fApvEnableMask[id]);
 
   return nApv[id];
@@ -2181,7 +2187,7 @@ mpdAPV_Write(int id, uint8_t apv_addr, uint8_t reg_addr, uint8_t val)
       return ERROR;
     }
 
-  success = mpdI2C_ByteWrite(id, apv_addr, reg_addr, 1, &val);
+  success = mpdI2C_ByteWrite(id, 0x20 | apv_addr, reg_addr, 1, &val);
 
   MPD_DBG("Slot %d  apv_addr = 0x%x  reg_addr = 0x%x  val = 0x%x success = %d\n",
 	  id, apv_addr, reg_addr, val, success);
@@ -2206,7 +2212,7 @@ mpdAPV_Read(int id, uint8_t apv_addr, uint8_t reg_addr, uint8_t * val)
     }
 
   success =
-    mpdI2C_ByteRead(id, apv_addr, reg_addr, 1, val);
+    mpdI2C_ByteRead(id, 0x20 | apv_addr, reg_addr, 1, val);
 
   MPD_DBG("Slot %d  apv_addr = 0x%x  reg_addr = 0x%x  val = 0x%x  success = %d\n",
 	  id, apv_addr, reg_addr, *val, success);

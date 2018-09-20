@@ -280,8 +280,8 @@ typedef struct mpd_priv_struct
 
   uint16_t fApv_enable_mask;
   uint16_t nAPV; // number of apv in mpd config file (EC)
-  uint64_t CtrlHdmiMask[2]; // APVaddr = bit, HDMI output 0 = lower, 1 = upper
-  uint64_t CtrlHdmiInitMask; // Bits indicate which APV addresses have had CtrlHdmiMask[2] checked.
+  uint32_t CtrlHdmiMask[2]; // APVaddr = bit, HDMI output 0 = lower, 1 = upper
+  uint32_t CtrlHdmiInitMask; // Bits indicate which APV addresses have had CtrlHdmiMask[2] checked.
 
   // config settings
   int   fCalibLatency;
