@@ -1612,6 +1612,10 @@ I2C_CtrlHdmiEnable(int id, int upper)
       return ERROR;
     }
 
+  /* Skip if not supported */
+  if(mpdGetFpgaCompileTime(id) < MPD_HDMI_SUPPORTED_FIRMWARE_TIME)
+    return OK;
+
   MPDLOCK;
   data = vmeRead32(&MPDp[id]->readout_config);
 
@@ -1648,6 +1652,10 @@ I2C_CtrlHdmiDisable(int id)
       return ERROR;
     }
 
+  /* Skip if not supported */
+  if(mpdGetFpgaCompileTime(id) < MPD_HDMI_SUPPORTED_FIRMWARE_TIME)
+    return OK;
+
   MPDLOCK;
   data = vmeRead32(&MPDp[id]->readout_config);
 
@@ -1675,7 +1683,7 @@ mpdAPV_SetCtrlHdmi(int id, uint8_t apv_addr)
     }
 
   /* Skip if not supported */
-  if(mpdGetFpgaCompileTime(id) < 0x59b7d9e6)
+  if(mpdGetFpgaCompileTime(id) < MPD_HDMI_SUPPORTED_FIRMWARE_TIME)
     return OK;
 
   /* Ignore addresses outside of APV address range */
@@ -1982,7 +1990,7 @@ mpdAPV_Try(int id, uint8_t apv_addr)	// i2c addr
 
   /* Unmodified MPDs will stop having reliable i2c if READ commands
      are used to the APVs */
-  if(mpdGetFpgaCompileTime(id) < 0x5b84f50f)
+  if(mpdGetFpgaCompileTime(id) < MPD_HDMI_SUPPORTED_FIRMWARE_TIME)
     return ret;
 
   ret = 1;
@@ -2045,7 +2053,7 @@ mpdAPV_TryHdmi(int id, uint8_t apv_addr, int ihdmi)
 
   /* Unmodified MPDs will stop having reliable i2c if READ commands
      are used to the APVs */
-  if(mpdGetFpgaCompileTime(id) < 0x5b84f50f)
+  if(mpdGetFpgaCompileTime(id) < MPD_HDMI_SUPPORTED_FIRMWARE_TIME)
     return ret;
 
   timeout = -1; ret = ERROR;
@@ -5306,8 +5314,10 @@ mpdGStatus(int sflag)
       id = mpdSlot(impd);
       printf("  %2d   ", id);
 
-      printf("%3d.%-3d   ",
+      printf("%X.%X.%X.%X   ",
+	     (st[id].revision_id & 0xFF000000) >> 24,
 	     (st[id].revision_id & 0xFF0000) >> 16,
+	     (st[id].revision_id & 0xFF00) >> 8,
 	     st[id].revision_id & 0xFF);
 
       printf("0x%06x   ",
