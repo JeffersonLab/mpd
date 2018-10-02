@@ -53,7 +53,7 @@ main(int argc, char *argv[])
   mpdConfigInit("config_apv.txt");
   mpdConfigLoad();
 
-  if(mpdInit((slot << 19), 0, 1, MPD_INIT_NO_CONFIG_FILE_CHECK) <= 0)
+  if(mpdInit((slot << 19), 0, 1, 0) <= 0)
     {
       printf("%s: Init error \n",
 	     __func__);
@@ -62,7 +62,8 @@ main(int argc, char *argv[])
 
   slot = mpdSlot(0);
 
-  mpdSetI2CSpeed(slot, 250);
+  printf("i2c speed = %d\n", mpdGetI2CSpeed(slot));
+  usleep(300);
 
   mpdI2C_Init(slot);
 
@@ -72,13 +73,16 @@ main(int argc, char *argv[])
   mpdAPV_Scan(slot);
   mpdSetPrintDebug(0);
 
+#if 1
   /* apv reset */
   printf("Do APV reset on MPD slot %d\n", slot);
   if (mpdI2C_ApvReset(slot) != OK)
     {
       printf("ERR: apv reset failed on mpd %d\n",slot);
     }
+#endif
 
+#if 1
   /* // apv configuration */
   printf("Configure single APV on MPD slot %d\n",slot);
   int iapv;
@@ -90,7 +94,7 @@ main(int argc, char *argv[])
   	  printf("ERR: config apv card %d failed in mpd %d\n", iapv, slot);
   	}
     }
-
+#endif
   mpdApvStatus(slot, 0x0a000000);
   MPDtemp(slot);
 
