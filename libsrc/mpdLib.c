@@ -1091,8 +1091,6 @@ mpdSetFpgaCompileTime(int id, uint32_t t)
   fMpd[id].FpgaCompileTime = t;
 }
 
-#if 0
-// FIXME: Re-write this one
 int
 mpdLM95235_Read(int id, double *core_t, double *air_t)
 {
@@ -1105,58 +1103,72 @@ mpdLM95235_Read(int id, double *core_t, double *air_t)
   const uint8_t OneShot_addr = 0x0F;	// Write only
   const uint8_t Status1_addr = 0x02;	// Read only
 
-  uint8_t val, val2;
-  int success, retry_count;
-  // if(id==0) id=mpdID[0];
+  uint8_t val, val_msb, val_lsb;
+  int success, retry_count=0;
+
   if (CHECKMPD(id))
     {
       MPD_ERR("MPD in slot %d is not initialized.\n", id);
       return ERROR;
     }
 
-  val = 0x40;			// standby
-  success =
-    mpdI2C_ByteWrite(id, (uint8_t) (LM95235_i2c_addr << 1), ConfigReg1_addr,
-		     1, &val);
-  success =
-    mpdI2C_ByteWrite(id, (uint8_t) (LM95235_i2c_addr << 1), OneShot_addr, 0,
-		     &val);
-  success =
-    mpdI2C_ByteWrite(id, (uint8_t) (LM95235_i2c_addr << 1), Status1_addr, 0,
-		     &val);
-  val = 0x80;
-  retry_count = 0;
-  //  while( (val & 0x80) && (retry_count++ < 1) )
-  success = mpdI2C_ByteRead1(id, (uint8_t) (LM95235_i2c_addr << 1), &val);
 
-  success =
-    mpdI2C_ByteWrite(id, (uint8_t) (LM95235_i2c_addr << 1),
-		     Remote_TempU_MSB_addr, 0, &val);
-  success = mpdI2C_ByteRead1(id, (uint8_t) (LM95235_i2c_addr << 1), &val);
-  success =
-    mpdI2C_ByteWrite(id, (uint8_t) (LM95235_i2c_addr << 1),
-		     Remote_TempU_LSB_addr, 0, &val2);
-  success = mpdI2C_ByteRead1(id, (uint8_t) (LM95235_i2c_addr << 1), &val2);
-  *core_t = (double) val + (double) val2 / 256.;
+  val = 0x40;
+  /* Standby */
+  success = mpdI2C_ByteWrite(id, LM95235_i2c_addr,
+			     ConfigReg1_addr,
+			     1, &val);
+  /* Trigger Conversion */
+  success = mpdI2C_ByteWrite(id, LM95235_i2c_addr,
+			     OneShot_addr,
+			     1, &val);
+
+  /* Read Status ... read until (val & 0x80) = 0 */
+  while(((val & 0x80)==0) && (retry_count++ < 10))
+    {
+      success = mpdI2C_ByteRead(id, LM95235_i2c_addr,
+				Status1_addr,
+				1, &val);
+      MPD_DBG("Slot %d: Read Status = 0x%x\n",
+	      id, val);
+    }
 
 
-  success =
-    mpdI2C_ByteWrite(id, (uint8_t) (LM95235_i2c_addr << 1),
-		     Local_TempS_MSB_addr, 0, &val);
-  success = mpdI2C_ByteRead1(id, (uint8_t) (LM95235_i2c_addr << 1), &val);
-  success =
-    mpdI2C_ByteWrite(id, (uint8_t) (LM95235_i2c_addr << 1),
-		     Local_TempS_LSB_addr, 0, &val2);
-  success = mpdI2C_ByteRead1(id, (uint8_t) (LM95235_i2c_addr << 1), &val2);
-  *air_t = (double) val + (double) val2 / 256.;
-  val = 0x0;			//normal operation
-  success =
-    mpdI2C_ByteWrite(id, (uint8_t) (LM95235_i2c_addr << 1), ConfigReg1_addr,
-		     1, &val);
+  /* Read MSB */
+  success = mpdI2C_ByteRead(id, LM95235_i2c_addr,
+			     Remote_TempU_MSB_addr,
+			     1, &val_msb);
+  MPD_DBG("Slot %d: Read Remote MSB = 0x%x\n",
+	  id, val_msb);
+
+  /* Read LSB */
+  success = mpdI2C_ByteRead(id, LM95235_i2c_addr,
+			     Remote_TempU_LSB_addr,
+			     1, &val_lsb);
+ MPD_DBG("Slot %d: Read Remote LSB = 0x%x\n",
+	  id, val_lsb);
+
+  *core_t = (double) val_msb + (double) val_lsb / 256.;
+
+  /* Read MSB */
+  success = mpdI2C_ByteRead(id, LM95235_i2c_addr,
+			     Local_TempS_MSB_addr,
+			     1, &val_msb);
+  MPD_DBG("Slot %d: Read Local MSB = 0x%x\n",
+	  id, val_msb);
+
+  /* Read LSB */
+  success = mpdI2C_ByteRead(id, LM95235_i2c_addr,
+			    Local_TempS_LSB_addr,
+			    1, &val_lsb);
+  MPD_DBG("Slot %d: Read Local LSB = 0x%x\n",
+	  id, val_lsb);
+
+  *air_t = (double) val_msb + (double) val_lsb / 256.;
+
+
   return success;
-
 }
-#endif
 
 /****************************
  * LOW LEVEL routines
@@ -1211,6 +1223,7 @@ mpdI2C_Init(int id)
 {
   uint32_t data, rdata;
   int ispeed, success = OK;
+  double core_t, air_t;
 
   if (CHECKMPD(id))
     {
@@ -1257,9 +1270,10 @@ mpdI2C_Init(int id)
      interpreted as a i2c transaction */
   I2C_SendStop(id);
 
-  //  mpdLM95235_Read(id, &core_t, &air_t);
+   mpdLM95235_Read(id, &core_t, &air_t);
 
-  //  printf("%s: Board temperatures: core=%.2f air=%.2f (dec celsius)\n",__FUNCTION__,core_t,air_t);
+   MPD_MSG("Slot %2d: Board temperatures: core: %.2f degC air: %.2f degC\n",
+	   id, core_t, air_t);
 
   return success;
 
