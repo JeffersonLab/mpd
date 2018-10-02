@@ -140,9 +140,11 @@ mpdConfigLoad()
       			mpdReadSettingInt(mpdset, "trigger_latency", 0),
       			mpdReadSettingInt(mpdset, "trigger_number", 0));
 
-
-      mpdSetAcqMode(slot,
-		    (char *)mpdReadSettingString(run_set,"mode",0));
+      if(run_set[1])
+	{
+	  mpdSetAcqMode(slot,
+			(char *)mpdReadSettingString(run_set,"mode",0));
+	}
 
       mpdSetEventBuilding(slot,
 			  mpdReadSettingInt(mpdset, "event_building",0));
