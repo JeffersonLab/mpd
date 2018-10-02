@@ -599,5 +599,5 @@ void mpdRUPD_wr_param(int id, int par, int val);
 int mpdRUPD_rd_param(int id, int par);
 
 int mpdGStatus(int sflag);
-int mpdApvStatus(int id, uint16_t apv_mask);
+int mpdApvStatus(int id, uint32_t apv_mask);
 #endif /* __MPDLIB__ */
