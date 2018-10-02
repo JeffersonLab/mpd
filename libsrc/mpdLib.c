@@ -478,8 +478,8 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
       if (rdata != magic_const)
 	{
 	  MPD_MSG
-	    ("Invalid data code 0x%x (expected 0x%x)\n",
-	     rdata, magic_const);
+	    ("VME address = 0x%x: Invalid data code 0x%x (expected 0x%x)\n",
+	     (UINT32) addr + ii * addr_inc, rdata, magic_const);
 	  printf("\n");
 	  errFlag = 2;
 	  continue;
@@ -585,6 +585,7 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
 	  fMpd[boardID].CtrlHdmiMask[0] = 0;
 	  fMpd[boardID].CtrlHdmiMask[1] = 0;
 	  fMpd[boardID].CtrlHdmiInitMask = 0;
+
 	}
 
       impd++;
@@ -1252,6 +1253,10 @@ mpdI2C_Init(int id)
 
   usleep(500);
 
+  /* Send a STOP, this should clear up any noise that may be
+     interpreted as a i2c transaction */
+  I2C_SendStop(id);
+
   //  mpdLM95235_Read(id, &core_t, &air_t);
 
   //  printf("%s: Board temperatures: core=%.2f air=%.2f (dec celsius)\n",__FUNCTION__,core_t,air_t);
@@ -1688,13 +1693,14 @@ mpdAPV_SetCtrlHdmi(int id, uint8_t apv_addr)
 
   /* Ignore addresses outside of APV address range */
   if(apv_addr > 0x3F)
-    return OK;
+    return ERROR;
 
   /* Check if initialized */
   if( ((fMpd[id].CtrlHdmiInitMask) & (1 << apv_addr)) == 0)
     {
-      MPD_ERR("MPD %2d: Control HDMI not configured for APV addr = 0x%x\n",
-	      id, apv_addr);
+      MPD_DBGN(MPD_DEBUG_I2C,
+	       "MPD %2d: Control HDMI not configured for APV addr = 0x%x\n",
+	       id, apv_addr);
       return ERROR;
     }
 
@@ -2010,7 +2016,7 @@ mpdAPV_Try(int id, uint8_t apv_addr)	// i2c addr
 
   if(y != x)
     {
-      MPD_DBG("Slot %2d   i2c %2d  W != R (%3d != %3d)\n", id, apv_addr, x, y);
+      MPD_ERR("Slot %2d   i2c %2d  W != R (%3d != %3d)\n", id, apv_addr, x, y);
       return ERROR;
     }
 
@@ -2104,7 +2110,7 @@ mpdGetApvEnableMask(int id)
 int
 mpdAPV_Scan(int id)
 {
-  int iapv = 0, ihdmi = 0;
+  int iapv = 0, ihdmi = 0, nhdmi = 2;
   int nFound = 0;
 
   if (CHECKMPD(id))
@@ -2113,13 +2119,18 @@ mpdAPV_Scan(int id)
       return ERROR;
     }
 
-  // print information (debug only, should be done in verbose mode only)
+  if(mpdGetFpgaCompileTime(id) < MPD_HDMI_SUPPORTED_FIRMWARE_TIME)
+    {
+      nhdmi = 1;
+    }
+
+  // !!! Blindscan used to determine which HDMI output to use
   MPD_DBGN(MPD_DEBUG_APVINIT,
 	   "MPD %2d Blind scan on %d apvs: \n", id, MPD_MAX_APV);
 
   for (iapv = 0; iapv < MPD_MAX_APV; iapv++)
     {
-      for (ihdmi = 0; ihdmi < 2; ihdmi++)
+      for (ihdmi = 0; ihdmi < nhdmi; ihdmi++)
 	{
 	  if (mpdAPV_TryHdmi(id, iapv, ihdmi) == OK)
 	    {
@@ -2149,10 +2160,23 @@ mpdAPV_Scan(int id)
   for (iapv = 0; iapv < fMpd[id].nAPV; iapv++)
     {
       MPD_DBGN(MPD_DEBUG_APVINIT,
-	       "Try i2c=0x%2x adc=%2d : \n", fApv[id][iapv].i2c,
+	       "Try i2c=0x%02x adc=%2d : \n", fApv[id][iapv].i2c,
 	       fApv[id][iapv].adc);
 
-      if (mpdAPV_Try(id, fApv[id][iapv].i2c) > -1 && fApv[id][iapv].adc > -1)
+      if ((fMpd[id].CtrlHdmiInitMask & (1 << fApv[id][iapv].i2c)) == 0)
+	{
+	  MPD_DBGN(MPD_DEBUG_APVINIT,
+		   "Slot %d: I2C 0x%02x  ADC %d  Not found in blindscan.  Skipping\n",
+		   id, fApv[id][iapv].i2c, fApv[id][iapv].adc);
+	  fApvEnableMask[id] &= ~(1 << fApv[id][iapv].adc);
+	  fApv[id][iapv].enabled = 0;
+	  continue;
+	}
+
+      if (
+	   (mpdAPV_Try(id, fApv[id][iapv].i2c) == OK) &&
+	   (fApv[id][iapv].adc > -1)
+	  )
 	{
 	  MPD_DBGN(MPD_DEBUG_APVINIT,
 		   "0x%02x matched in MPD in slot %d\n", fApv[id][iapv].i2c, id);
@@ -2165,8 +2189,8 @@ mpdAPV_Scan(int id)
       else
 	{
 	  MPD_DBGN(MPD_DEBUG_APVINIT,
-		   "MPD %2d APV i2c = 0x%02x does not respond.  It is disabled\n",
-		  id, fApv[id][iapv].i2c);
+		   "MPD %2d APV i2c = 0x%02x (adc %d) does not respond.  It is disabled\n",
+		   id, fApv[id][iapv].i2c, fApv[id][iapv].adc);
 	  fApvEnableMask[id] &= ~(1 << fApv[id][iapv].adc);
 	  fApv[id][iapv].enabled = 0;
 	}
@@ -2242,9 +2266,6 @@ mpdAPV_Config(int id, int apv_index)
     }
 
   apv_addr = fApv[id][apv_index].i2c;
-
-  MPD_DBG("APV card i2c=%d to ADC (fifo)=%d (from config file)\n",
-	  (int) apv_addr, fApv[id][apv_index].adc);
 
   for (i = 0; i < 18; i++)
     {
@@ -2329,11 +2350,15 @@ mpdAPV_Config(int id, int apv_index)
 	}
 
       usleep(300);
+
+      MPD_DBG("Slot %d: I2C 0x%02x Write to 0x%02x (from config file) val = 0x%02x\n",
+	      id, (int) apv_addr, fApv[id][apv_index].adc, val);
+
       success = mpdAPV_Write(id, apv_addr, reg_addr, val);
 
       if (success != OK)
 	{
-	  MPD_ERR("I2C Bus Error: i/addr/reg/val/err %d/ %d 0x%x 0x%x 0x%x",
+	  MPD_ERR("I2C Bus Error: i/addr/reg/val/err %d/ %d 0x%x 0x%x 0x%x\n",
 		  i, apv_addr, reg_addr, val, success);
 	  return success;
 	}
@@ -2814,7 +2839,7 @@ mpdADS5281_Config(int id)
     {
       if (mpdADS5281_SetParameters(id, j) != OK)
 	{
-	  printf("ERR: adc %d set parameter failed on mpd %d\n", j, id);
+	  MPD_ERR("adc %d set parameter failed on mpd %d\n", j, id);
 	};
       switch (mpdGetAdcPattern(id, j))
 	{
@@ -5456,7 +5481,7 @@ mpdGStatus(int sflag)
 }
 
 int
-mpdApvStatus(int id, uint16_t apv_mask)
+mpdApvStatus(int id, uint32_t apv_mask)
 {
   int iapv, ireg, itable, stat = OK;
   uint8_t err[32][18], rval[32][18], APVreg[18] =
@@ -5481,6 +5506,13 @@ mpdApvStatus(int id, uint16_t apv_mask)
       return ERROR;
     }
 
+  /* Skip if not supported */
+  if(mpdGetFpgaCompileTime(id) < MPD_HDMI_SUPPORTED_FIRMWARE_TIME)
+    {
+      MPD_ERR("Not supported with this firmware\n");
+      return ERROR;
+    }
+
   memset(rval, 0, sizeof(rval));
   memset(err, 0, sizeof(err));
 
@@ -5490,7 +5522,7 @@ mpdApvStatus(int id, uint16_t apv_mask)
 	{
 	  for(ireg = 0; ireg < 18; ireg++)
 	    {
-	      err[iapv][ireg] = mpdAPV_Read(id, iapv, APVreg[ireg], &rval[iapv][ireg]);
+	      err[iapv][ireg] = mpdAPV_Read(id, iapv, APVreg[ireg]+1, &rval[iapv][ireg]);
 	    }
 	}
     }
@@ -5530,4 +5562,24 @@ mpdApvStatus(int id, uint16_t apv_mask)
     }
 
   return stat;
+}
+
+int
+mpdReset(int id, int pflag)
+{
+  if (CHECKMPD(id))
+    {
+      MPD_ERR("MPD in slot %d is not initialized.\n", id);
+      return ERROR;
+    }
+
+  MPDLOCK;
+  mpdWrite32(&MPDp[id]->reset_reg, 1);
+  MPDUNLOCK;
+
+  if(pflag)
+    MPD_MSG("Slot %d: Complete reset \n",
+	    id);
+
+  return OK;
 }
