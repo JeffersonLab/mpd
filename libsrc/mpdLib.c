@@ -478,8 +478,8 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
       if (rdata != magic_const)
 	{
 	  MPD_MSG
-	    ("Invalid data code 0x%x (expected 0x%x)\n",
-	     rdata, magic_const);
+	    ("VME address = 0x%x: Invalid data code 0x%x (expected 0x%x)\n",
+	     (UINT32) addr + ii * addr_inc, rdata, magic_const);
 	  printf("\n");
 	  errFlag = 2;
 	  continue;
@@ -585,6 +585,7 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
 	  fMpd[boardID].CtrlHdmiMask[0] = 0;
 	  fMpd[boardID].CtrlHdmiMask[1] = 0;
 	  fMpd[boardID].CtrlHdmiInitMask = 0;
+
 	}
 
       impd++;
@@ -1251,6 +1252,10 @@ mpdI2C_Init(int id)
   MPDUNLOCK;
 
   usleep(500);
+
+  /* Send a STOP, this should clear up any noise that may be
+     interpreted as a i2c transaction */
+  I2C_SendStop(id);
 
   //  mpdLM95235_Read(id, &core_t, &air_t);
 
@@ -5557,4 +5562,24 @@ mpdApvStatus(int id, uint32_t apv_mask)
     }
 
   return stat;
+}
+
+int
+mpdReset(int id, int pflag)
+{
+  if (CHECKMPD(id))
+    {
+      MPD_ERR("MPD in slot %d is not initialized.\n", id);
+      return ERROR;
+    }
+
+  MPDLOCK;
+  mpdWrite32(&MPDp[id]->reset_reg, 1);
+  MPDUNLOCK;
+
+  if(pflag)
+    MPD_MSG("Slot %d: Complete reset \n",
+	    id);
+
+  return OK;
 }
