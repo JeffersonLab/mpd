@@ -207,6 +207,15 @@ struct mpd_struct
 #define MPD_ADS5281_PAT_DESKEW  2
 #define MPD_ADS5281_PAT_RAMP    3
 
+#define MPD_DELAY25_CHANNEL_ENABLED    (1<<6)
+#define MPD_DELAY25_CHANNEL_DELAY_MASK   0x3F
+#define MPD_DELAY25_GCR_RESET_DLL      (1<<6)
+#define MPD_DELAY25_GCR_CLOCK_MASK       0x03
+#define MPD_DELAY25_GCR_40MHZ               0
+#define MPD_DELAY25_GCR_80MHZ               1
+#define MPD_DELAY25_GCR_32MHZ               2
+#define MPD_DELAY25_GCR_64MHZ               3
+
 typedef struct apvparm_struct // actually a structure
 {
   uint8_t i2cAddrScan; // i2c address from card discovery (scan)
@@ -479,6 +488,7 @@ int  mpdTRIG_PauseEnable(int id, int time);
 int  mpdTRIG_Disable(int id);
 int  mpdTRIG_GetMissed(int id, uint32_t *missed);
 int  mpdDELAY25_Set(int id, int apv1_delay, int apv2_delay);
+int  mpdDELAY25_GStatus();
 
 // adc methods
 int  mpdADS5281_Config(int id); // (EC)

@@ -1300,12 +1300,15 @@ mpdI2C_ByteWrite(int id, uint8_t dev_addr, uint8_t reg_addr,
       return rval;
     }
 
-  command = MPD_I2C_COMMSTAT_WR;
-  rval = I2C_SendByte(id, reg_addr, command);
-  if (rval != OK)
+  if(dev_addr < 0x78) /* DELAY25 chip doesn't use internal regs */
     {
-      I2C_SendAck(id);
-      return rval;
+      command = MPD_I2C_COMMSTAT_WR;
+      rval = I2C_SendByte(id, reg_addr, command);
+      if (rval != OK)
+	{
+	  I2C_SendAck(id);
+	  return rval;
+	}
     }
 
   command = MPD_I2C_COMMSTAT_WR;
@@ -1339,21 +1342,24 @@ mpdI2C_ByteRead(int id, uint8_t dev_addr, uint8_t reg_addr,
       return ERROR;
     }
 
-  command = MPD_I2C_COMMSTAT_STA | MPD_I2C_COMMSTAT_WR;
-  rval = I2C_SendByte(id, (dev_addr << 1), command);
-  if (rval != OK)
+  if(dev_addr < 0x78) /* DELAY25 chip doesn't use internal regs */
     {
-      I2C_SendAck(id);
-      return ERROR;
-    }
+      command = MPD_I2C_COMMSTAT_STA | MPD_I2C_COMMSTAT_WR;
+      rval = I2C_SendByte(id, (dev_addr << 1), command);
+      if (rval != OK)
+	{
+	  I2C_SendAck(id);
+	  return ERROR;
+	}
 
-  command = MPD_I2C_COMMSTAT_STO | MPD_I2C_COMMSTAT_WR;
+      command = MPD_I2C_COMMSTAT_STO | MPD_I2C_COMMSTAT_WR;
 
-  rval = I2C_SendByte(id, reg_addr, command);
-  if (rval != OK)
-    {
-      I2C_SendAck(id);
-      return ERROR;
+      rval = I2C_SendByte(id, reg_addr, command);
+      if (rval != OK)
+	{
+	  I2C_SendAck(id);
+	  return ERROR;
+	}
     }
 
   command = MPD_I2C_COMMSTAT_STA | MPD_I2C_COMMSTAT_WR;
@@ -2764,6 +2770,12 @@ mpdTRIG_GetMissed(int id, uint32_t * missed)
 int
 mpdDELAY25_Set(int id, int apv1_delay, int apv2_delay)
 {
+  const uint8_t Delay25_CR0_addr = 0x78;
+  const uint8_t Delay25_CR1_addr = 0x79;
+  const uint8_t Delay25_CR2_addr = 0x7A;
+  const uint8_t Delay25_CR3_addr = 0x7B;
+  const uint8_t Delay25_CR4_addr = 0x7C;
+  const uint8_t Delay25_GCR_addr = 0x7D;
   uint8_t val;
 
   if (CHECKMPD(id))
@@ -2774,32 +2786,147 @@ mpdDELAY25_Set(int id, int apv1_delay, int apv2_delay)
 
   MPD_DBG("start (%d: %d %d)\n", id, apv1_delay, apv2_delay);
 
-  //      mpdI2C_ByteWrite(0xF0 , (apv2_delay & 0x3F) | 0x40, 0, &val);      // CR0: APV2 out
-  mpdI2C_ByteWrite(id, 0xF0, 0x40, 0, &val);	// CR0: APV2 out not delayed
-  usleep(10000);
-  //      mpdI2C_ByteWrite(0xF2 , 0x40, 0, &val);    // CR1: ADC1 out not delayed
-  mpdI2C_ByteWrite(id, 0xF2, (apv1_delay & 0x3F) | 0x40, 0, &val);	// CR1: ADC1 clock delayed
-  usleep(10000);
-  //      mpdI2C_ByteWrite(0xF4 , 0x40, 0, &val);    // CR2: ADC2 out not delayed
-  mpdI2C_ByteWrite(id, 0xF4, (apv2_delay & 0x3F) | 0x40, 0, &val);	// CR2: ADC2 clock delayed
-  usleep(10000);
-  mpdI2C_ByteWrite(id, 0xF6, 0x00, 0, &val);	// CR3: Not used output
-  usleep(10000);
-  //      mpdI2C_ByteWrite(0xF8 , (apv1_delay & 0x3F) | 0x40, 0, &val);      // CR4: APV1 out
-  mpdI2C_ByteWrite(id, 0xF8, 0x40, 0, &val);	// CR4: APV1 out not delayed
-  usleep(10000);
-  mpdI2C_ByteWrite(id, 0xFA, 0x00, 0, &val);	// GCR (40 MHz)
+  // CR0: APV2 enabled, not delayed
+  val = 0x40;
+  if(mpdI2C_ByteWrite(id, Delay25_CR0_addr, 0x0, 1, &val) != OK)
+    {
+      MPD_ERR("Slot %2d: Error writing to CR0\n", id);
+      return ERROR;
+    }
+
   usleep(10000);
 
-  mpdI2C_ByteWrite(id, 0xFA, 0x40, 0, &val);	// resync DDL
+  // CR1: ADC1 clock delayed
+  val = apv1_delay | 0x40;
+  if(mpdI2C_ByteWrite(id, Delay25_CR1_addr, 0x0, 1, &val) != OK)
+    {
+      MPD_ERR("Slot %2d: Error writing to CR1\n", id);
+      return ERROR;
+    }
   usleep(10000);
 
-  mpdI2C_ByteWrite(id, 0xFA, 0x00, 0, &val);
+  // CR2: ADC2 clock delayed
+  val = apv2_delay | 0x40;
+  if(mpdI2C_ByteWrite(id, Delay25_CR2_addr, 0x0, 1, &val) != OK)
+    {
+      MPD_ERR("Slot %2d: Error writing to CR2\n", id);
+      return ERROR;
+    }
+  usleep(10000);
+
+  // CR3: Disabled
+  val = 0;
+  if(mpdI2C_ByteWrite(id, Delay25_CR3_addr, 0x0, 1, &val) != OK)
+    {
+      MPD_ERR("Slot %2d: Error writing to CR3\n", id);
+      return ERROR;
+    }
+  usleep(10000);
+
+  // CR4: APV1 enabled, not delayed
+  val = 0x40;
+  if(mpdI2C_ByteWrite(id, Delay25_CR4_addr, 0x0, 1, &val) != OK)
+    {
+      MPD_ERR("Slot %2d: Error writing to CR4\n", id);
+      return ERROR;
+    }
+  usleep(10000);
+
+  // GCR (40 MHz)
+  val = 0;
+  if(mpdI2C_ByteWrite(id, Delay25_GCR_addr, 0x0, 1, &val) != OK)
+    {
+      MPD_ERR("Slot %2d: Error writing to GCR\n", id);
+      return ERROR;
+    }
+  usleep(10000);
+
+  // resync DDL
+  val = 0x40;
+  if(mpdI2C_ByteWrite(id, Delay25_GCR_addr, 0x0, 1, &val) != OK)
+    {
+      MPD_ERR("Slot %2d: Error writing to GCR\n", id);
+      return ERROR;
+    }
+  usleep(10000);
+
+  // GCR (40 MHz)
+  val = 0;
+  if(mpdI2C_ByteWrite(id, Delay25_GCR_addr, 0x0, 1, &val) != OK)
+    {
+      MPD_ERR("Slot %2d: Error writing to GCR\n", id);
+      return ERROR;
+    }
   usleep(10000);
 
   MPD_DBG("end\n");
 
-  return 0;
+  return OK;
+}
+
+int
+mpdDELAY25_GStatus()
+{
+  uint8_t delay25[MPD_MAX_BOARDS+1][6];
+  int id, impd, iaddr, success;
+  const uint8_t delay25_base = 0x78;
+
+  for(impd = 0; impd < nmpd; impd++)
+    {
+      id = mpdSlot(impd);
+      for(iaddr = 0; iaddr < 6; iaddr++)
+	{
+	  delay25[id][iaddr] = 0;
+	  success = mpdI2C_ByteRead(id,
+				    delay25_base + iaddr, 0,
+				    1, &delay25[id][iaddr]);
+
+	  if(success != OK)
+	    {
+	      MPD_ERR("Slot %2d: Error reading @ 0x%02x\n",
+		      id, iaddr);
+	      break;
+	    }
+
+	  usleep(10000);
+	}
+
+    }
+
+  printf("\n");
+  printf("                      MPD DELAY25 Configuration\n");
+  printf("\n");
+  printf("Slot    CR0     CR1     CR2     CR3     CR4     GCR [MHz]\n");
+  printf("--------------------------------------------------------------------------------\n");
+  for(impd = 0; impd < nmpd; impd++)
+    {
+      id = mpdSlot(impd);
+
+      printf(" %2d     ",
+	     id);
+
+      for(iaddr = 0; iaddr < 5; iaddr++)
+	{
+	  if(delay25[id][iaddr] & MPD_DELAY25_CHANNEL_ENABLED)
+	    printf("%3d     ",
+		   delay25[id][iaddr] & MPD_DELAY25_CHANNEL_DELAY_MASK);
+	  else
+	    printf("OFF     ");
+	}
+
+      printf("%3d",
+	     (delay25[id][5] & MPD_DELAY25_GCR_40MHZ) ? 40 :
+	     (delay25[id][5] & MPD_DELAY25_GCR_40MHZ) ? 80 :
+	     (delay25[id][5] & MPD_DELAY25_GCR_40MHZ) ? 32 :
+	     64);
+
+      printf("\n");
+    }
+
+  printf("\n");
+  printf("\n");
+
+  return OK;
 }
 
 //======================================================
