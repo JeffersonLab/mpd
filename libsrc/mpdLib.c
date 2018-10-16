@@ -3599,6 +3599,113 @@ mpdOBUF_Read(int id, volatile uint32_t * data, int size, int *wrec)
 }
 
 int
+mpdOBUF_ReadLL(volatile uint32_t * data, int size, int *wrec, int rflag)
+{
+  int retVal, xferCount, dummy, id, impd, ilist;
+  volatile uint32_t *laddr;
+  uint32_t vmeAdrLL[MPD_MAX_BOARDS], dmaSizeLL[MPD_MAX_BOARDS],
+    destAdrLL[MPD_MAX_BOARDS], numLL;
+  uint32_t buf_index = 0, fifowords = 0, nwords = 0, ievent = 0;
+  uint32_t blocklevel = 0;	/* FIXME: Obtained from rflag */
+
+
+  MPDLOCK;
+  *wrec = 0;
+
+  /* Check for 8 byte boundary for address - insert dummy word (Slot 0 FADC Dummy DATA) */
+  if ((unsigned long) (data) & 0x7)
+    {
+      *data = 0;		/* Data word added for byte alignment */
+      dummy = 1;
+      laddr = (data + 1);
+    }
+  else
+    {
+      dummy = 0;
+      laddr = data;
+    }
+
+  /* Setup the LL arrays */
+  ilist = 0;
+  for (impd = 0; impd < nmpd; impd++)
+    {
+      id = mpdSlot(impd);
+
+      vmeAdrLL[ilist] =
+	(uint32_t) mpdOutputBufferBaseAddr + mpdOutputBufferSpace * id;
+
+      // FIXME: Need to find a smart way to check number of total words to transfer
+      //  versus nwrds input from user.
+
+      fifowords = 0;
+      for (ievent = 0; ievent < blocklevel; ievent++)
+	{
+	  /* Get the number of words in the FIFO for each event from the module */
+	  nwords = mpdRead32(&MPDp[id]->ob_status.output_buffer_flag_wc);
+	  // FIXME: Need full or empty check here?
+	  fifowords += (nwords & 0xffff);
+	}
+
+      /* 128 bit alignment for 2eVME/2eSST */
+      if (fifowords % 4)
+	dmaSizeLL[ilist] = (fifowords + (4 - (fifowords % 4))) << 2;
+      else
+	dmaSizeLL[ilist] = fifowords << 2;
+
+      destAdrLL[ilist] = (uint32_t) & laddr[buf_index];
+      buf_index += (dmaSizeLL[ilist] >> 2);
+      ilist++;
+
+      numLL = ilist;
+
+      for (ilist = 0; ilist < numLL; ilist++)
+	{
+	  MPD_DBGN(MPD_DEBUG_DMA, "%d   0x%08x   0x%08x   0x%08x\n",
+		   ilist, vmeAdrLL[ilist], destAdrLL[ilist],
+		   dmaSizeLL[ilist]);
+	}
+
+      vmeDmaSetupLL((uint32_t) laddr, vmeAdrLL, dmaSizeLL, numLL);
+    }
+
+  retVal = vmeDmaSendLL();
+
+  if (retVal != OK)
+    {
+      MPD_ERR("ERROR in DMA transfer Initialization 0x%x\n", retVal);
+      MPDUNLOCK;
+      return (retVal);
+    }
+
+  /* Wait until Done or Error */
+  retVal = vmeDmaDone();
+
+  if (retVal > 0)
+    {
+      xferCount = (retVal >> 2) + dummy;	/* Number of Longwords transfered */
+      *wrec = xferCount;
+      MPDUNLOCK;
+      return (xferCount);	/* Return number of data words transfered */
+    }
+  else if (retVal == 0)
+    {				/* DMA finished with zero words transferred */
+      MPD_ERR("DMA transfer returned zero word count 0x%x\n", nwords);
+      MPDUNLOCK;
+      return (OK);
+    }
+  else
+    {				/* Error in DMA */
+      MPD_ERR("vmeDmaDone returned an Error\n");
+      MPDUNLOCK;
+      return (ERROR);
+    }
+
+  MPDUNLOCK;
+  return (OK);
+
+}
+
+int
 mpdSDRAM_GetParam(int id, int *init, int *overrun, int *rdaddr, int *wraddr,
 		  int *nwords)
 {
