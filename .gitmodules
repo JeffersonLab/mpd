@@ -1,3 +1,4 @@
 [submodule "rolDBG"]
 	path = rolDBG
-	url = git@github.com:JeffersonLab/rolDBG.git
+	url = /home/moffit/work/rolDBG
+	branch = mpd_debug
