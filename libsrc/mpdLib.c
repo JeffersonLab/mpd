@@ -539,9 +539,8 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
       rdata = mpdRead32(&mpd->compile_time);
 
       fMpd[boardID].FpgaCompileTime = rdata;
-      printf("               - Firmware Revision Time: %s %x",
-	     ctime((const time_t *) &fMpd[boardID].FpgaCompileTime),
-	     fMpd[boardID].FpgaCompileTime);
+      printf("               - Firmware Revision Time: %s",
+	     ctime((const time_t *) &fMpd[boardID].FpgaCompileTime));
 
       if (!noConfigFileCheck)
 	{
@@ -1270,10 +1269,10 @@ mpdI2C_Init(int id)
      interpreted as a i2c transaction */
   I2C_SendStop(id);
 
-   mpdLM95235_Read(id, &core_t, &air_t);
+  mpdLM95235_Read(id, &core_t, &air_t);
 
-   MPD_MSG("Slot %2d: Board temperatures: core: %.2f degC air: %.2f degC\n",
-	   id, core_t, air_t);
+  MPD_DBG("Slot %2d - Board temperatures: core: %.2f degC air: %.2f degC\n",
+	  id, core_t, air_t);
 
   return success;
 
@@ -2170,7 +2169,7 @@ mpdAPV_Scan(int id)
 	    }
 	}
     }
-  MPD_MSG("MPD %2d: %2d APV found in blind scan (i2c adr mask = 0x%08x)\n",
+  MPD_DBG("MPD %2d: %2d APV found in blind scan (i2c adr mask = 0x%08x)\n",
 	  id, nFound, (uint32_t)(fMpd[id].CtrlHdmiInitMask));
 
   mpdResetApvEnableMask(id);
@@ -2185,8 +2184,8 @@ mpdAPV_Scan(int id)
 
       if ((fMpd[id].CtrlHdmiInitMask & (1 << fApv[id][iapv].i2c)) == 0)
 	{
-	  MPD_DBGN(MPD_DEBUG_APVINIT,
-		   "Slot %d: I2C 0x%02x  ADC %d  Not found in blindscan.  Skipping\n",
+	  /* MPD_DBGN(MPD_DEBUG_APVINIT, */
+	  MPD_ERR("Slot %d: I2C 0x%02x  ADC %d  Not found in blindscan.  It is disabled\n",
 		   id, fApv[id][iapv].i2c, fApv[id][iapv].adc);
 	  fApvEnableMask[id] &= ~(1 << fApv[id][iapv].adc);
 	  fApv[id][iapv].enabled = 0;
@@ -2208,15 +2207,15 @@ mpdAPV_Scan(int id)
 	}
       else
 	{
-	  MPD_DBGN(MPD_DEBUG_APVINIT,
-		   "MPD %2d APV i2c = 0x%02x (adc %d) does not respond.  It is disabled\n",
-		   id, fApv[id][iapv].i2c, fApv[id][iapv].adc);
+	  /* MPD_DBGN(MPD_DEBUG_APVINIT, */
+	  MPD_ERR("MPD %2d APV i2c = 0x%02x (adc %d) does not respond.  It is disabled\n",
+		  id, fApv[id][iapv].i2c, fApv[id][iapv].adc);
 	  fApvEnableMask[id] &= ~(1 << fApv[id][iapv].adc);
 	  fApv[id][iapv].enabled = 0;
 	}
     }
 
-  MPD_MSG("MPD %2d: %2d APV found matching settings (adc mask = 0x%08x)\n",
+  MPD_DBG("MPD %2d: %2d APV found matching settings (adc mask = 0x%08x)\n",
 	  id, nApv[id], fApvEnableMask[id]);
 
   return nApv[id];
@@ -2275,13 +2274,21 @@ mpdAPV_Read(int id, uint8_t apv_addr, uint8_t reg_addr, uint8_t * val)
 int
 mpdAPV_Config(int id, int apv_index)
 {
-  int success, i;
+  int rval = 0, success, i;
   uint8_t apv_addr, reg_addr = 0, val = 0;
 
 
   if (CHECKMPD(id))
     {
       MPD_ERR("MPD in slot %d is not initialized.\n", id);
+      return ERROR;
+    }
+
+  /* Make sure it's enabled, before configuration */
+  if(fApv[id][apv_index].enabled == 0)
+    {
+      MPD_ERR("Slot %2d: APV %d (adc = %d, i2c = 0x%02x) is not enabled\n",
+	      id, apv_index, fApv[id][apv_index].adc, fApv[id][apv_index].i2c);
       return ERROR;
     }
 
@@ -2369,7 +2376,7 @@ mpdAPV_Config(int id, int apv_index)
 	    ("This message should not appear, please check code consistency");
 	}
 
-      usleep(300);
+      usleep(1);
 
       MPD_DBG("Slot %d: I2C 0x%02x Write to 0x%02x (from config file) val = 0x%02x\n",
 	      id, (int) apv_addr, fApv[id][apv_index].adc, val);
@@ -2378,9 +2385,9 @@ mpdAPV_Config(int id, int apv_index)
 
       if (success != OK)
 	{
-	  MPD_ERR("I2C Bus Error: i/addr/reg/val/err %d/ %d 0x%x 0x%x 0x%x\n",
-		  i, apv_addr, reg_addr, val, success);
-	  return success;
+	  MPD_ERR("Slot %2d: ERROR writing to i2c = 0x%x (adc = %d) reg = 0x%x\n",
+		  id, apv_addr, fApv[id][apv_index].adc, reg_addr);
+	  rval = ERROR;
 	}
     }				// end loop
 
@@ -2391,7 +2398,7 @@ mpdAPV_Config(int id, int apv_index)
   mpdApvBufferAlloc(id, apv_index);	// alloc readout buffer
   //#endif /* DOTHISDIFFERENTLY */
 
-  return success;
+  return rval;
 
 }
 
@@ -2949,12 +2956,12 @@ mpdFIR_Config(int id)
       coeff0 = mpdGetFIRcoeff(id, i * 2);
       coeff1 = mpdGetFIRcoeff(id, i * 2 + 1);
       data = ((coeff1 << 16) & 0xffff0000) | (coeff0 & 0xffff);
-      printf(" %2d: W 0x%4x 0x%4x", i * 2, coeff0 & 0xffff, coeff1 & 0xffff);
+      MPD_DUMP(" %2d: W 0x%4x 0x%4x", i * 2, coeff0 & 0xffff, coeff1 & 0xffff);
 
       mpdWrite32(&MPDp[id]->fir_coefficients[i], data);
 
       rdata = mpdRead32(&MPDp[id]->fir_coefficients[i]);
-      printf(" R 0x%4x 0x%4x\n", rdata & 0xffff, (rdata >> 16) & 0xffff);
+      MPD_DUMP(" R 0x%4x 0x%4x\n", rdata & 0xffff, (rdata >> 16) & 0xffff);
     }
 
   return OK;
@@ -3106,7 +3113,7 @@ mpdADS5281_NonInvertChannels(int id, int adc)	/* adc == 0, 1 */
       return ERROR;
     }
 
-  MPD_MSG("Board= %d ADC= %d Direct Polarity\n", fMpd[id].fSlot, adc);
+  MPD_DBG("Board= %d ADC= %d Direct Polarity\n", fMpd[id].fSlot, adc);
   return mpdADS5281_Set(id, adc, 0x240000);
 
 }
@@ -3154,7 +3161,7 @@ mpdADS5281_Normal(int id, int adc)	/* adc == 0, 1 */
       return ERROR;
     }
 
-  MPD_MSG("Board= %d ADC= %d No Pattern (Normal Acq)\n", fMpd[id].fSlot, adc);
+  MPD_DBG("Board= %d ADC= %d No Pattern (Normal Acq)\n", fMpd[id].fSlot, adc);
   if ((success = mpdADS5281_Set(id, adc, 0x450000)) != OK)
     {
       return success;
@@ -3175,7 +3182,7 @@ mpdADS5281_Sync(int id, int adc)	/* adc == 0, 1 */
       return ERROR;
     }
 
-  MPD_MSG("Board= %d ADC= %d Sync Pattern\n", fMpd[id].fSlot, adc);
+  MPD_DBG("Board= %d ADC= %d Sync Pattern\n", fMpd[id].fSlot, adc);
   if ((success = mpdADS5281_Set(id, adc, 0x250000)) != OK)
     {
       return success;
@@ -3196,7 +3203,7 @@ mpdADS5281_Deskew(int id, int adc)	/* adc == 0, 1 */
       return ERROR;
     }
 
-  MPD_MSG("Board= %d ADC= %d Deskew Pattern\n", fMpd[id].fSlot, adc);
+  MPD_DBG("Board= %d ADC= %d Deskew Pattern\n", fMpd[id].fSlot, adc);
   if ((success = mpdADS5281_Set(id, adc, 0x250000)) != OK)
     {
       return success;
@@ -3218,7 +3225,7 @@ mpdADS5281_Ramp(int id, int adc)	/* adc == 0, 1 */
       return ERROR;
     }
 
-  MPD_MSG("Board= %d ADC= %d Ramp Pattern\n", fMpd[id].fSlot, adc);
+  MPD_DBG("Board= %d ADC= %d Ramp Pattern\n", fMpd[id].fSlot, adc);
   if ((success = mpdADS5281_Set(id, adc, 0x450000)) != OK)
     {
       return success;
@@ -3243,7 +3250,7 @@ mpdADS5281_SetGain(int id, int adc,
       return ERROR;
     }
 
-  MPD_MSG("Board= %d ADC= %d Set Gain %d %d %d %d %d %d %d %d\n", id, adc,
+  MPD_DBG("Board= %d ADC= %d Set Gain %d %d %d %d %d %d %d %d\n", id, adc,
 	  gain0, gain1, gain2, gain3, gain4, gain5, gain6, gain7);
 
   data = 0x2A0000;
@@ -3297,7 +3304,7 @@ mpdHISTO_MemTest(int id)
     }
   else
     {
-      MPD_MSG("MPD %2d: SUCCESS\n", id);
+      MPD_DBG("MPD %2d: SUCCESS\n", id);
     }
 
   return rval;
@@ -4556,14 +4563,14 @@ mpdDAQ_Config(int id)
 
       mpdWrite32(&MPDp[id]->sample_per_event, data);
 
-      MPD_MSG("Sample_per_event = 0x%x\n", data);
+      MPD_DBG("Sample_per_event = 0x%x\n", data);
       data = mpdGetEventPerBlock(id) & 0xff;
       if (data == 0)
 	data = 1;
 
       mpdWrite32(&MPDp[id]->event_per_block, data);
 
-      MPD_MSG("Event_per_block = 0x%x\n", data);
+      MPD_DBG("Event_per_block = 0x%x\n", data);
     }
 
   data = (mpdGetAcqMode(id) & 0x07) |	// ((test & 0x01) << 15) |
@@ -4575,7 +4582,7 @@ mpdDAQ_Config(int id)
 
   mpdWrite32(&MPDp[id]->readout_config, data);
 
-  MPD_MSG("ReadoutConfig = 0x%x\n", data);
+  MPD_DBG("ReadoutConfig = 0x%x\n", data);
 
   data = ((mpdGetInputLevel(id, 0) & 0x1) << 0) |	// NIM=1/TTL=0 Level LEMO IN0
     ((mpdGetInputLevel(id, 1) & 0x1) << 1) |	// NIM/TTL Level LEMO IN1
@@ -4584,7 +4591,7 @@ mpdDAQ_Config(int id)
 
   mpdWrite32(&MPDp[id]->io_config, data);
 
-  MPD_MSG("IOConfig = 0x%x\n", data);
+  MPD_DBG("IOConfig = 0x%x\n", data);
 
   if (UseSdram)
     {
@@ -4596,11 +4603,11 @@ mpdDAQ_Config(int id)
     }
 
   mpdWrite32(&MPDp[id]->obuf_base_addr, data);
-  MPD_MSG("Output buffer base address = 0x%x (0=no SDRAM)\n", data);
+  MPD_DBG("Output buffer base address = 0x%x (0=no SDRAM)\n", data);
 
   data = mpdSdramBaseAddr;
   mpdWrite32(&MPDp[id]->sdram_base_addr, data);
-  MPD_MSG("Sdram base address = 0x%x (test only)\n", data);
+  MPD_DBG("Sdram base address = 0x%x (test only)\n", data);
 
   for (i = 0; i < fMpd[id].nAPV; i++)
     {
@@ -5516,6 +5523,8 @@ mpdGStatus(int sflag)
   struct mpd_struct st[MPD_MAX_BOARDS + 1];
   unsigned int a24addr[MPD_MAX_BOARDS + 1];
 
+  // FIXME: Need to add in output buffer status (0x200 -> 0x228)
+
   MPDLOCK;
   for (impd = 0; impd < nmpd; impd++)
     {
@@ -5558,6 +5567,17 @@ mpdGStatus(int sflag)
 	= mpdRead32(&MPDp[id]->ob_status.missed_trigger);
       st[id].ob_status.incoming_trigger
 	= mpdRead32(&MPDp[id]->ob_status.incoming_trigger);
+
+      st[id].ob_status.sdram_fifo_wr_addr
+	= mpdRead32(&MPDp[id]->ob_status.sdram_fifo_wr_addr);
+      st[id].ob_status.sdram_fifo_rd_addr
+	= mpdRead32(&MPDp[id]->ob_status.sdram_fifo_rd_addr);
+      st[id].ob_status.sdram_flag_wc
+	= mpdRead32(&MPDp[id]->ob_status.sdram_flag_wc);
+      st[id].ob_status.output_buffer_flag_wc
+	= mpdRead32(&MPDp[id]->ob_status.output_buffer_flag_wc);
+      st[id].ob_status.latched_full
+	= mpdRead32(&MPDp[id]->ob_status.latched_full);
 
       st[id].adc_config = mpdRead32(&MPDp[id]->adc_config);
 
@@ -5630,8 +5650,8 @@ mpdGStatus(int sflag)
       printf("%5d       ",st[id].busy_thr_local & 0xFFFF);
 
       printf("%2d       ", st[id].trigger_delay & 0x3F);
-      printf("%2d  ", st[id].sync_period & 0x3F);
-      printf("0x%08x  ", st[id].channel_enable);
+      printf("%2d      ", st[id].sync_period & 0x3F);
+      printf("0x%04x  ", st[id].channel_enable);
       printf("%4d   ", st[id].zero_threshold & 0xFFF);
       printf("%4d ", st[id].one_threshold & 0xFFF);
       printf("\n");
@@ -5720,6 +5740,93 @@ mpdGStatus(int sflag)
 
       printf("\n");
     }
+
+  printf("\n");
+  printf("                              Output Buffer Status\n");
+  printf("\n");
+  printf("           Event Builder\n");
+  printf("         OutFIFO   Full Flags       \n");
+  printf("Slot   nWrds  F E    O E C T   Blks    Events     Trigs    Missed  Incoming\n");
+  printf("--------------------------------------------------------------------------------\n");
+
+  for(impd=0; impd<nmpd; impd++)
+    {
+      id = mpdSlot(impd);
+      printf(" %2d     ",id);
+
+      printf("%4d  ",
+	     st[id].ob_status.evb_fifo_word_count & 0xFFFF);
+
+      printf("%d %d    ",
+	     (st[id].ob_status.evb_fifo_word_count & (1<<17) ? 1 : 0),
+	     (st[id].ob_status.evb_fifo_word_count & (1<<16) ? 1 : 0));
+
+      printf("%d %d %d %d    ",
+	     (st[id].ob_status.evb_fifo_word_count & (1<<27) ? 1 : 0),
+	     (st[id].ob_status.evb_fifo_word_count & (1<<26) ? 1 : 0),
+	     (st[id].ob_status.evb_fifo_word_count & (1<<25) ? 1 : 0),
+	     (st[id].ob_status.evb_fifo_word_count & (1<<24) ? 1 : 0));
+
+      printf("%3d  ",
+	     st[id].ob_status.block_count & 0xFF);
+
+      printf("%8d  ",
+	     st[id].ob_status.event_count & 0xFFFFFF);
+
+      printf("%8d  ",
+	     st[id].ob_status.trigger_count);
+
+      printf("%8d  ",
+	     st[id].ob_status.missed_trigger);
+
+      printf("%8d",
+	     st[id].ob_status.incoming_trigger);
+
+      printf("\n");
+    }
+  printf("--------------------------------------------------------------------------------\n");
+
+  printf("\n");
+  printf("       ---------------------- SDRAM --------------------   -- OBUF -    Latched\n");
+  printf("                  FIFO Addr                        Word         Word   APV  PROC\n");
+  printf("Slot          WR OK         RD OK     Overrun      Count   F E Count  Full  Full\n");
+  printf("--------------------------------------------------------------------------------\n");
+
+  for(impd=0; impd<nmpd; impd++)
+    {
+      id = mpdSlot(impd);
+      printf(" %2d    ",id);
+
+      printf("0x%7x  %d  ",
+	     st[id].ob_status.sdram_fifo_wr_addr & 0x1FFFFFF,
+	     (st[id].ob_status.sdram_fifo_wr_addr & (1<<31)) ? 1 : 0
+	     );
+
+      printf("0x%7x  %d         ",
+	     st[id].ob_status.sdram_fifo_rd_addr & 0x1FFFFFF,
+	     (st[id].ob_status.sdram_fifo_rd_addr & (1<<31)) ? 1 : 0
+	     );
+
+      printf("%s  ",
+	     (st[id].ob_status.sdram_flag_wc & (1<<31)) ? "YES" : " no"
+	     );
+
+      printf("0x%7x   ",
+	     st[id].ob_status.sdram_flag_wc & 0x1FFFFFF
+	     );
+
+      printf("%d %d  %4d  ",
+	     (st[id].ob_status.output_buffer_flag_wc & (1<<31) ) ? 1 : 0,
+	     (st[id].ob_status.output_buffer_flag_wc & (1<<30) ) ? 1 : 0,
+	     st[id].ob_status.output_buffer_flag_wc & 0x1FFF
+	     );
+
+      printf("0x%8x",
+	     st[id].ob_status.latched_full
+	     );
+
+      printf("\n");
+    }
   printf("--------------------------------------------------------------------------------\n");
 
   printf("\n");
@@ -5764,33 +5871,37 @@ mpdApvStatus(int id, uint32_t apv_mask)
   memset(rval, 0, sizeof(rval));
   memset(err, 0, sizeof(err));
 
+  if(apv_mask == 0)
+    apv_mask = mpdGetApvEnableMask(id);
+
   for(iapv = 0; iapv < 32; iapv++)
     {
       if( apv_mask & (1 << iapv))
 	{
 	  for(ireg = 0; ireg < 18; ireg++)
 	    {
-	      err[iapv][ireg] = mpdAPV_Read(id, iapv, APVreg[ireg]+1, &rval[iapv][ireg]);
+	      err[iapv][ireg] = mpdAPV_Read(id, fApv[id][iapv].i2c, APVreg[ireg]+1, &rval[iapv][ireg]);
 	    }
 	}
     }
 
+  MPD_MSG("Slot %2d: \n", id);
   for(itable = 0; itable < 3; itable++)
     {
-
       printf("\n");
-      printf("APV  ");
+      printf("   APV\n");
+      printf("adc - i2c  ");
       for(ireg = itable*6; ireg < (itable+1)*6; ireg++)
 	{
 	  printf("%8s  ", regname[ireg]);
 	}
       printf("\n");
       printf("--------------------------------------------------------------------------------\n");
-      for(iapv = 0; iapv < 32; iapv++)
+      for(iapv = 0; iapv < fMpd[id].nAPV; iapv++)
 	{
 	  if( apv_mask & (1 << iapv))
 	    {
-	      printf(" %2x  ", iapv);
+	      printf(" %2d - 0x%02x ", fApv[id][iapv].adc, fApv[id][iapv].i2c);
 	      for(ireg = itable*6; ireg < (itable+1)*6; ireg++)
 		{
 		  if(err[iapv][ireg] == OK)

@@ -54,6 +54,7 @@
 #define MPD_DEBUG_I2C     (1<<4)
 
 #define MPD_MSG(format, ...) {printf("%s: ",__FUNCTION__); printf(format, ## __VA_ARGS__);}
+#define MPD_WARN(format, ...) {printf("%s: WARNING",__FUNCTION__); printf(format, ## __VA_ARGS__);}
 #define MPD_DUMP(format, ...) {if(mpdPrintDebug&2) {printf("%s: ",__FUNCTION__); printf(format, ## __VA_ARGS__);} }
 #define MPD_DBG(format, ...) {if(mpdPrintDebug&1) {printf("%s: DEBUG: ",__FUNCTION__); printf(format, ## __VA_ARGS__);} }
 #define MPD_DBGN(x,format, ...) {if(mpdPrintDebug&x) {printf("%s: DEBUG%d: ",__FUNCTION__, x); printf(format, ## __VA_ARGS__);} }
@@ -71,8 +72,8 @@ struct output_buffer_struct /* .ob_status */
   /* 0x021C */  volatile uint32_t sdram_fifo_rd_addr;
   /* 0x0220 */  volatile uint32_t sdram_flag_wc;
   /* 0x0224 */  volatile uint32_t output_buffer_flag_wc;
-  /* 0x0228 */  volatile uint32_t output_buffer_rd_addr;
-  /* 0x022C */  volatile uint32_t output_buffer_wr_addr;
+  /* 0x0228 */  volatile uint32_t latched_full;
+  /* 0x022C */  volatile uint32_t blank;
 };
 
 struct mpd_i2c_control_struct /* .i2c */
