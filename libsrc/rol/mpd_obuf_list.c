@@ -260,7 +260,8 @@ rocDownload()
   //END of MPD configure
 
   mpdResetApvEnableMask(0);
-  mpdSetApvEnableMask(7, (1<<5) | (1<<6) | (1<<7) | (1<<8) | (1<<9));
+  mpdSetApvEnableMask(7,
+		      (1 << 5) | (1 << 6) | (1 << 7) | (1 << 8) | (1 << 9));
 
   // summary report
   printf("\n");
@@ -293,7 +294,7 @@ rocDownload()
     }
   printf("\n");
 
-  if(error_status != OK)
+  if (error_status != OK)
     daLogMsg("ERROR", "MPD initialization has errors");
 
 
@@ -347,7 +348,7 @@ rocGo()
   /*
      Get the current block level
      Use this info to change block level is all modules
-  */
+   */
 
   BLOCKLEVEL = tiGetCurrentBlockLevel();
   printf("%s: Current Block Level = %d\n", __FUNCTION__, BLOCKLEVEL);
@@ -361,7 +362,7 @@ rocGo()
       mpdSDRAM_GetParam(id, &sd_init, &sd_overrun, &sd_rdaddr, &sd_wraddr,
 			&sd_nwords);
 
-      if((sd_nwords != 0) || (sd_overrun == 1) || (sd_init == 0))
+      if ((sd_nwords != 0) || (sd_overrun == 1) || (sd_init == 0))
 	{
 	  printf("ERROR: Slot %2d SDRAM status: \n"
 		 "init=%d, overrun=%d, rdaddr=0x%x, wraddr=0x%x, nwords=%d\n",
@@ -371,7 +372,7 @@ rocGo()
       obuf_nblock = mpdOBUF_GetBlockCount(id);
       mpdOBUF_GetFlags(id, &empty, &full, &nwords);
 
-      if((obuf_nblock != 0) || (empty == 0) || (full == 1) || (nwords != 0))
+      if ((obuf_nblock != 0) || (empty == 0) || (full == 1) || (nwords != 0))
 	{
 	  printf("ERROR: Slot %2d OBUF status: \n"
 		 "nblock = %d  empty=%d  full=%d  nwords=%d\n",

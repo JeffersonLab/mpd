@@ -61,6 +61,17 @@ event_list.so: event_list.c
 	@echo
 	${CC} ${CODA_CFLAGS} -o $@ $<
 
+v965_mpd.c: v965_mpd.crl
+	@echo
+	@echo "Converting $< to $@"
+	@${CCRL} $<
+
+v965_mpd.so: v965_mpd.c
+	@echo
+	@echo "Building $@ from $<"
+	@echo
+	${CC} ${CODA_CFLAGS} -o $@ $<
+
 %.so: %.c Makefile
 	@echo
 	@echo "Building $@ from $<"
