@@ -2049,7 +2049,7 @@ mpdAPV_TryHdmi(int id, uint8_t apv_addr, int ihdmi)
 {
 
   int timeout = 0;
-  uint8_t x = apv_addr + 32, y = 0;
+  uint8_t write_val = apv_addr + 32, read_val = 0;
   int ret = ERROR;
   uint8_t reg = latency_addr;
 
@@ -2064,14 +2064,14 @@ mpdAPV_TryHdmi(int id, uint8_t apv_addr, int ihdmi)
 
   while ((ret != OK) && (timeout < 10))
     {
-      /* ret = myAPV_Write(id, apv_addr, reg, x); */
-      ret = mpdI2C_ByteWrite(id, 0x20 | apv_addr, reg, 1, &x);
+      /* ret = myAPV_Write(id, apv_addr, reg, write_val); */
+      ret = mpdI2C_ByteWrite(id, 0x20 | apv_addr, reg, 1, &write_val);
       timeout++;
     }
 
   MPD_DBGN(MPD_DEBUG_APVINIT,
 	   "WRITE hdmi %d i2c 0x%02x  dev 0x%02x  val = 0x%02x  to = %d  ret %d\n",
-	   ihdmi, apv_addr, reg, x, timeout, ret);
+	   ihdmi, apv_addr, reg, write_val, timeout, ret);
 
    if(ret != OK)
     return ret;
@@ -2085,22 +2085,24 @@ mpdAPV_TryHdmi(int id, uint8_t apv_addr, int ihdmi)
 
   while ((ret != OK) && (timeout < 10))
     {
-      ret = mpdI2C_ByteRead(id, 0x20 | apv_addr, (reg + 1), 1, &y);
+      ret = mpdI2C_ByteRead(id, 0x20 | apv_addr, (reg + 1), 1, &read_val);
       timeout++;
     }
 
 
   MPD_DBGN(MPD_DEBUG_APVINIT,
 	   "READ  hdmi %d i2c 0x%02x  dev 0x%02x  val = 0x%02x  to = %d  ret %d\n",
-	   ihdmi, apv_addr, reg, y, timeout, ret);
+	   ihdmi, apv_addr, reg, read_val, timeout, ret);
 
   if(ret != OK)
     return ret;
 
-  if(x != y)
+  if(write_val != read_val)
     {
-      MPD_DBGN(MPD_DEBUG_APVINIT,
-	   "Slot %2d   i2c 0x%02x  W != R (0x%x != 0x%x)\n", id, apv_addr, x, y);
+      MPD_ERR("Slot %2d (hdmi %d, APV i2c = 0x%x): \n"
+	      "\t*** Read (0x%x) != Write (0x%x). "
+	      "It is disabled\n",
+	      id, ihdmi, apv_addr, read_val, write_val);
       return ERROR;
     }
 
@@ -2185,7 +2187,7 @@ mpdAPV_Scan(int id)
       if ((fMpd[id].CtrlHdmiInitMask & (1 << fApv[id][iapv].i2c)) == 0)
 	{
 	  /* MPD_DBGN(MPD_DEBUG_APVINIT, */
-	  MPD_ERR("Slot %d: I2C 0x%02x  ADC %d  Not found in blindscan.  It is disabled\n",
+	  MPD_ERR("Slot %d: I2C 0x%02x  ADC %2d  Not found in blindscan.  It is disabled\n",
 		   id, fApv[id][iapv].i2c, fApv[id][iapv].adc);
 	  fApvEnableMask[id] &= ~(1 << fApv[id][iapv].adc);
 	  fApv[id][iapv].enabled = 0;
