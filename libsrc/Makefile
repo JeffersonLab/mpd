@@ -83,8 +83,8 @@ OBJ		= $(SRC:.c=.o)
 
 ifeq ($(ARCH),Linux)
 all: echoarch libmpd.a libmpd.so
-else 
-all: echoarch mpdLib.o 
+else
+all: echoarch mpdLib.o
 endif
 
 clean:
@@ -97,10 +97,10 @@ ifeq ($(OSNAME),Linux)
 libmpd.a: $(OBJ)
 	@echo
 	@echo "Building "$@
-	$(AR) ruv $(@) $(OBJ) 
+	$(AR) ruv $(@) $(OBJ)
 	$(RANLIB) $(@)
 
-libmpd.so: $(SRC)
+libmpd.so: $(SRC) $(OBJ)
 	@echo
 	@echo "Building "$@
 	$(CC) -fpic -shared $(CFLAGS) -o $(@) $(OBJ)
@@ -123,3 +123,8 @@ install: libmpd.a libmpd.so
 
 endif
 
+
+##
+##  Local Variables:
+##  compile-command: "make -k install"
+##  End:
