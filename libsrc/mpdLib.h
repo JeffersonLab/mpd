@@ -54,10 +54,11 @@
 #define MPD_DEBUG_I2C     (1<<4)
 
 #define MPD_MSG(format, ...) {printf("%s: ",__FUNCTION__); printf(format, ## __VA_ARGS__);}
+#define MPD_WARN(format, ...) {printf("%s: WARNING",__FUNCTION__); printf(format, ## __VA_ARGS__);}
 #define MPD_DUMP(format, ...) {if(mpdPrintDebug&2) {printf("%s: ",__FUNCTION__); printf(format, ## __VA_ARGS__);} }
 #define MPD_DBG(format, ...) {if(mpdPrintDebug&1) {printf("%s: DEBUG: ",__FUNCTION__); printf(format, ## __VA_ARGS__);} }
 #define MPD_DBGN(x,format, ...) {if(mpdPrintDebug&x) {printf("%s: DEBUG%d: ",__FUNCTION__, x); printf(format, ## __VA_ARGS__);} }
-#define MPD_ERR(format, ...) {fprintf(stderr,"%s: ERROR: ",__FUNCTION__); fprintf(stderr,format, ## __VA_ARGS__);}
+#define MPD_ERR(format, ...) {fprintf(stdout,"%s: ERROR: ",__FUNCTION__); fprintf(stdout,format, ## __VA_ARGS__);}
 
 struct output_buffer_struct /* .ob_status */
 {
@@ -71,8 +72,8 @@ struct output_buffer_struct /* .ob_status */
   /* 0x021C */  volatile uint32_t sdram_fifo_rd_addr;
   /* 0x0220 */  volatile uint32_t sdram_flag_wc;
   /* 0x0224 */  volatile uint32_t output_buffer_flag_wc;
-  /* 0x0228 */  volatile uint32_t output_buffer_rd_addr;
-  /* 0x022C */  volatile uint32_t output_buffer_wr_addr;
+  /* 0x0228 */  volatile uint32_t latched_full;
+  /* 0x022C */  volatile uint32_t blank;
 };
 
 struct mpd_i2c_control_struct /* .i2c */
@@ -174,6 +175,7 @@ struct mpd_struct
 #define MPD_I2C_COMMSTAT_RD   (1<<5)
 #define MPD_I2C_COMMSTAT_WR   (1<<4)
 #define MPD_I2C_COMMSTAT_ACK  (1<<3)
+#define MPD_I2C_COMMSTAT_TIP  (1<<1)
 #define MPD_I2C_COMMSTAT_IACK (1<<0)
 
 
@@ -518,6 +520,7 @@ int  mpdHISTO_Read(int id, int ch, uint32_t *histogram);
 // Daq-Readout methods
 int mpdOBUF_GetFlags(int id, int *empty, int *full, int *nwords);
 int mpdOBUF_Read(int id, volatile uint32_t *data, int size, int *wrec);
+int mpdOBUF_ReadLL(volatile uint32_t * data, int size, int *wrec, int rflag);
 
 int mpdSDRAM_GetParam(int id, int *init, int *overrun, int *rdaddr, int *wraddr, int *nwords);
 
@@ -609,6 +612,13 @@ void mpdRUPD_wr_param(int id, int par, int val);
 int mpdRUPD_rd_param(int id, int par);
 
 int mpdGStatus(int sflag);
-int mpdApvStatus(int id, uint32_t apv_mask);
+int mpdApvStatus(int id, uint16_t apv_mask);
 int mpdReset(int id, int pflag);
 #endif /* __MPDLIB__ */
+
+
+/*
+  Local Variables:
+  compile-command: "make -k install"
+  End:
+ */
