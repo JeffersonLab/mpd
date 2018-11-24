@@ -28,66 +28,17 @@
 #include "mpdConfig.h"
 #include "dmaBankTools.h"
 
-
-
-
 /*MPD Definitions*/
 
-/* int h, i, j, k, kk, m; */
-int fnMPD = 10;
-int error_count;
-int rdone;
-
-uint16_t mfull, mempty;
-uint32_t e_head, e_head0, e_size;
-uint32_t e_data32[130];
-uint32_t e_trai, e_eblo;
-
-
-
-char outfile[1000];
-int acq_mode = 1;
-int n_event = 10;
-
-int vint_data;
-uint32_t v_data;
-#define MPD_TIMEOUT 10
-
-pthread_mutex_t mpdMutex = PTHREAD_MUTEX_INITIALIZER;
-#define MPDLOCK      if(pthread_mutex_lock(&mpdMutex)<0) perror("pthread_mutex_lock");
-#define MPDUNLOCK    if(pthread_mutex_unlock(&mpdMutex)<0) perror("pthread_mutex_unlock");
-extern volatile struct mpd_struct *MPDp[(MPD_MAX_BOARDS + 1)];	/* pointers to MPD memory map */
+int fnMPD = 0;
 extern int mpdOutputBufferBaseAddr;	/* output buffer base address */
-extern int mpdOutputBufferSpace;	/* output buffer space (8 Mbyte) */
 #define DMA_BUFSIZE 80000
 
-extern GEF_VME_BUS_HDL vmeHdl;
-GEF_VME_DMA_HDL dmaHdl;
-uint32_t vmeAdrs;
-unsigned long physMemBase;
-uint32_t *fBuffer;		// DMA data buffer
-
-//Output file TAG
-#define VERSION_TAG 0xE0000000
-#define EVENT_TAG   0x10000000
-#define MPD_TAG     0x20000000
-#define ADC_TAG     0x30000000
-#define HEADER_TAG  0x00000040
-#define DATA_TAG    0x0
-#define TRAILER_TAG 0x00000050
-
-#define FILE_VERSION 0x1
 // End of MPD definition
-
-
-
 
 /* Default block level */
 unsigned int BLOCKLEVEL = 1;
 #define BUFFERLEVEL 1
-
-int mpd_evt[21];
-//int evt;
 
 /* function prototype */
 void rocTrigger(int arg);
@@ -155,7 +106,7 @@ rocDownload()
   /* Init and config MPD+APV */
 
   // discover MPDs and initialize memory mapping
-  mpdInit(0x180000, 0x80000, 18, 0x0);
+  mpdInit((3<<19), 0x80000, 18, 0x0);
   fnMPD = mpdGetNumberMPD();
 
   if (fnMPD <= 0)
@@ -170,6 +121,7 @@ rocDownload()
 
   // APV configuration on all active MPDs
   int impd, iapv, id;
+  /* for (impd = 5; impd < 6; impd++) */
   for (impd = 0; impd < fnMPD; impd++)
     {				// only active mpd set
       id = mpdSlot(impd);
@@ -185,6 +137,26 @@ rocDownload()
 	  error_status = ERROR;
 	}
 
+#if 0
+      printf(" - APV Reset\n");
+      if (mpdI2C_ApvReset(id) != OK)
+	{
+	  printf(" * * FAILED\n");
+	  error_status = ERROR;
+	}
+#endif
+      printf(" - APV discovery and init\n");
+
+      mpdSetPrintDebug(0x0);
+      if (mpdAPV_Scan(id) <= 0)
+	{			// no apd found, skip next
+	  printf(" * * None Found\n");
+	  error_status = ERROR;
+	  continue;
+	}
+      mpdSetPrintDebug(0);
+
+      // apv reset
       printf(" - APV Reset\n");
       if (mpdI2C_ApvReset(id) != OK)
 	{
@@ -192,16 +164,10 @@ rocDownload()
 	  error_status = ERROR;
 	}
 
-      printf(" - APV discovery and init\n");
-
-      if (mpdAPV_Scan(id) <= 0)
-	{			// no apd found, skip next
-	  printf(" * * None Found\n");
-	  error_status = ERROR;
-	  continue;
-	}
-
+      usleep(10);
+      I2C_SendStop(id);
       // board configuration (APV-ADC clocks phase)
+      // (do this while APVs are resetting)
       printf(" - DELAY setting\n");
       if (mpdDELAY25_Set
 	  (id, mpdGetAdcClockPhase(id, 0), mpdGetAdcClockPhase(id, 1)) != OK)
@@ -210,15 +176,8 @@ rocDownload()
 	  error_status = ERROR;
 	}
 
-      // apv reset----this check will never fail...see "mpdI2C_ApvReset()"
-      printf(" - APV Reset\n");
-      if (mpdI2C_ApvReset(id) != OK)
-	{
-	  printf(" * * FAILED\n");
-	  error_status = ERROR;
-	}
-
       // apv configuration
+      mpdSetPrintDebug(0);
       printf(" - Configure Individual APVs\n");
       printf(" - - ");
       for (iapv = 0; iapv < mpdGetNumberAPV(id); iapv++)
@@ -234,6 +193,7 @@ rocDownload()
 	    }
 	}
       printf("\n");
+      mpdSetPrintDebug(0);
 
       // configure adc on MPD
       printf(" - Configure ADC\n");
@@ -259,9 +219,7 @@ rocDownload()
     }				// end loop on mpds
   //END of MPD configure
 
-  mpdResetApvEnableMask(0);
-  mpdSetApvEnableMask(7,
-		      (1 << 5) | (1 << 6) | (1 << 7) | (1 << 8) | (1 << 9));
+  mpdGStatus(1);
 
   // summary report
   printf("\n");
@@ -308,15 +266,13 @@ rocDownload()
 void
 rocPrestart()
 {
-  int impd;
 
   tiStatus(0);
   vmeCheckMutexHealth(1);
   tiSetBlockLimit(0);
-  printf("rocPrestart: User Prestart Executed\n");
 
-  for (impd = 0; impd < 21; impd++)
-    mpd_evt[impd] = 0;
+
+  printf("rocPrestart: User Prestart Executed\n");
 
 }
 
@@ -343,6 +299,11 @@ rocGo()
 
       // enable acq
       mpdDAQ_Enable(id);
+
+      if (mpdAPV_Reset101(id) != OK)
+        {
+          printf("MPD Slot %2d: Reset101 FAILED\n", id);
+        }
     }
 
   /*
@@ -394,7 +355,8 @@ rocEnd()
   int impd;
 
   tiStatus(0);
-  //mpd close
+
+  //mpd disable
   for (impd = 0; impd < fnMPD; impd++)
     {
       mpdDAQ_Disable(mpdSlot(impd));
@@ -410,9 +372,16 @@ rocEnd()
 void
 rocTrigger(int arg)
 {
-  int dCnt;
+  int dCnt, iw;
   int ti_data_offset = 0;
   static int timeout = 0;
+  int UseSdram, FastReadout;
+  int empty, full, nwords, obuf_nblock;
+  int nwread;
+  int blen;
+  int verbose_level = 2;
+  int errFlag = 0;
+  int mpd_data_offset = 0;
 
   /* Data bank (4) for TI data */
   BANKOPEN(4, BT_UI4, 0);
@@ -432,26 +401,52 @@ rocTrigger(int arg)
       dma_dabufp += dCnt;
     }
 
+  if (verbose_level > 1)
+    {
+      printf(" (TI dump data on screen)\n");
+      if (dCnt > 0)
+	{
+
+	  for (iw = 0; iw < ((dCnt > 16) ? 16 : dCnt); iw++)
+	    {
+	      uint32_t datao =
+		LSWAP(the_event->data[iw + ti_data_offset]);
+
+	      if (verbose_level > 1)
+		{
+		  if ((iw % 8) == 0)
+		    {
+		      printf("0x%06x:", iw);
+		    }
+		  printf(" 0x%08x", datao);
+
+		  if (((iw % 8) == 7) || (iw == (dCnt - 1)))
+		    {
+		      printf("\n");
+		    }
+		}
+	    }
+
+
+	  printf(" - Summary: TI data word count = %d\n\n", dCnt);
+	}
+    }
+
   BANKCLOSE;
 
   /* Data bank (10) for MPD data */
   BANKOPEN(10, BT_UI4, 0);
 
-  int UseSdram, FastReadout;
-  int empty, full, nwords, obuf_nblock;
-  int nwread;
-  int iw, blen;
-  int verbose_level = 2;
-  int errFlag = 0;
-  int mpd_data_offset = 0;
-
   // assume sdram and fastreadout are the same for all MPDs
   UseSdram = mpdGetUseSdram(mpdSlot(0));
   FastReadout = mpdGetFastReadout(mpdSlot(0));
 
-  printf
-    ("\n\n ========= UseSDRAM= %d , FastReadout= %d   Readout Event = %d\n",
-     UseSdram, FastReadout, tiGetIntCount());
+  if(verbose_level > 0)
+    {
+      printf("\n\n ========= "
+	     "UseSDRAM= %d , FastReadout= %d   Readout Event = %d\n",
+	     UseSdram, FastReadout, tiGetIntCount());
+    }
 
   // -> now trigger can be enabled
 
@@ -570,7 +565,7 @@ rocTrigger(int arg)
 	}
       else
 	{			// if not Sdram
-
+	  // FIXME: THIS PROCEDURE IS CURRENTLY BROKEN
 	  mpdFIFO_IsEmpty(id, 0, &empty);	//  read fifo channel=0 status
 
 	  if (!empty)
@@ -637,6 +632,7 @@ rocCleanup()
   int impd = 0, ia = 0;
 
   printf("%s: Free single read buffers\n", __FUNCTION__);
+
   for (impd = 0; impd < fnMPD; impd++)
     {
       for (ia = 0; ia < 16; ia++)
