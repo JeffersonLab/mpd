@@ -58,7 +58,7 @@
 #define MPD_DUMP(format, ...) {if(mpdPrintDebug&2) {printf("%s: ",__FUNCTION__); printf(format, ## __VA_ARGS__);} }
 #define MPD_DBG(format, ...) {if(mpdPrintDebug&1) {printf("%s: DEBUG: ",__FUNCTION__); printf(format, ## __VA_ARGS__);} }
 #define MPD_DBGN(x,format, ...) {if(mpdPrintDebug&x) {printf("%s: DEBUG%d: ",__FUNCTION__, x); printf(format, ## __VA_ARGS__);} }
-#define MPD_ERR(format, ...) {fprintf(stderr,"%s: ERROR: ",__FUNCTION__); fprintf(stderr,format, ## __VA_ARGS__);}
+#define MPD_ERR(format, ...) {fprintf(stdout,"%s: ERROR: ",__FUNCTION__); fprintf(stdout,format, ## __VA_ARGS__);}
 
 struct output_buffer_struct /* .ob_status */
 {
@@ -175,6 +175,7 @@ struct mpd_struct
 #define MPD_I2C_COMMSTAT_RD   (1<<5)
 #define MPD_I2C_COMMSTAT_WR   (1<<4)
 #define MPD_I2C_COMMSTAT_ACK  (1<<3)
+#define MPD_I2C_COMMSTAT_TIP  (1<<1)
 #define MPD_I2C_COMMSTAT_IACK (1<<0)
 
 
@@ -611,6 +612,13 @@ void mpdRUPD_wr_param(int id, int par, int val);
 int mpdRUPD_rd_param(int id, int par);
 
 int mpdGStatus(int sflag);
-int mpdApvStatus(int id, uint32_t apv_mask);
+int mpdApvStatus(int id, uint16_t apv_mask);
 int mpdReset(int id, int pflag);
 #endif /* __MPDLIB__ */
+
+
+/*
+  Local Variables:
+  compile-command: "make -k install"
+  End:
+ */
