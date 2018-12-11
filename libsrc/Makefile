@@ -9,8 +9,12 @@
 #  ARCH = Linux:
 #   This driver requires access to the jvme headers (JLab specific Linux routine header)
 #
-# Uncomment DEBUG line for debugging info ( -g and -Wall )
-DEBUG=1
+
+# Compile (by default) with warnings in compiling output, and named symbols in the objects
+DEBUG ?= 1
+# Compile (by default) with SSP library support.  Use 'make WITHSSP=0' to build without it.
+WITHSSP	?= 1
+
 #
 ifndef ARCH
 	ifdef LINUXVME_LIB
@@ -51,11 +55,15 @@ CODAINC 	= $(CODA)/common/include
 CFLAGS 		= -O $(DEFS) \
 		-I. -Ilibconfig -I${LINUXVME_INC}  \
 		-L. -Llibconfig -L${LINUXVME_LIB} -DJLAB
-ifdef DEBUG
+ifeq ($(DEBUG),1)
 CFLAGS		+= -Wall -g
 else
 CFLAGS		+= -O2
 endif
+ifeq ($(WITHSSP),1)
+CFLAGS		+= -DWITHSSP
+endif
+
 AR		= ar
 RANLIB		= ranlib
 endif

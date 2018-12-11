@@ -98,8 +98,10 @@ mpdParameters fMpd[(MPD_MAX_BOARDS) + 1];
 unsigned short fApvEnableMask[(MPD_MAX_BOARDS) + 1];
 int nApv[(MPD_MAX_BOARDS) + 1];
 static int mpdSSPMode = 0;
+#ifdef WITHSSP
 static uint32_t mpdSSPFiberMask[(MPD_SSP_MAX_BOARDS) + 1];	/* index = ssp#, value = fiber port mask of MPDs */
 static int mpdSSPFiberMaskUsed = 0;
+#endif /* WITHSSP */
 int mpdPrintDebug = 0;
 
 /* */
@@ -135,11 +137,13 @@ int I2C_SendNack(int id);
 int I2C_CtrlHdmiEnable(int id, int upper);
 int I2C_CtrlHdmiDisable(int id);
 
+#ifdef WITHSSP
 extern int sspID[MPD_SSP_MAX_BOARDS + 1];
 extern int nSSP;
 extern uint32_t sspMpdReadReg(int id, int impd, unsigned int reg);
 extern int sspMpdWriteReg(int id, int impd, unsigned int reg,
 			  unsigned int value);
+#endif /* WITHSSP */
 
 #define CHECKMPD(x) (((int32_t)MPDp[x]==-1) || (x<0) || (x>21))
 
@@ -147,9 +151,10 @@ extern int sspMpdWriteReg(int id, int impd, unsigned int reg,
 uint32_t
 mpdRead32(volatile uint32_t * reg)
 {
+  uint32_t read = 0;
+#ifdef WITHSSP
   int issp, impd;
   uint32_t newreg;
-  uint32_t read = 0;
 
   if (mpdSSPMode)
     {
@@ -169,8 +174,8 @@ mpdRead32(volatile uint32_t * reg)
       read = sspMpdReadReg(issp, impd, newreg);
     }
   else
+#endif /* WITHSSP */
     read = vmeRead32(reg);
-
 
   return read;
 }
@@ -178,6 +183,7 @@ mpdRead32(volatile uint32_t * reg)
 void
 mpdWrite32(volatile uint32_t * reg, uint32_t val)
 {
+#ifdef WITHSSP
   int issp, impd;
   uint32_t newreg;
 
@@ -199,6 +205,7 @@ mpdWrite32(volatile uint32_t * reg, uint32_t val)
       sspMpdWriteReg(issp, impd, newreg, val);
     }
   else
+#endif /* WITHSSP */
     vmeWrite32(reg, val);
 }
 
@@ -213,6 +220,7 @@ mpdWrite32(volatile uint32_t * reg, uint32_t val)
 int
 mpdSetSSPFiberMap_preInit(int ssp, int mpdmask)
 {
+#ifdef WITHSSP
   int issp, impd;
 
   if (ssp <= MPD_SSP_MAX_BOARDS)
@@ -237,6 +245,12 @@ mpdSetSSPFiberMap_preInit(int ssp, int mpdmask)
 	if (mpdSSPFiberMask[issp] & (1 << impd))
 	  mpdSSPFiberMaskUsed++;
     }
+
+#else /* WITHSSP */
+  printf("%s: ERROR: Library not compiled with WITHSSP flag\n",
+	 __func__);
+  return ERROR;
+#endif /* WITHSSP */
 
   return OK;
 }
@@ -278,20 +292,22 @@ STATUS
 mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
 {
 
-  int ii, issp, ibit, impd, impd_disc, res, errFlag = 0;
+  int ii, impd, impd_disc, res, errFlag = 0;
   int boardID = 0;
   int maxSlot = 1;
   int minSlot = 21;
   uint32_t magic_const = MPD_MAGIC_VALUE;
-  uint32_t rdata, laddr, laddr_inc;
+  uint32_t rdata, laddr, laddr_inc = 0;
   volatile struct mpd_struct *mpd = NULL;
   int noBoardInit = 0;
   int useList = 0;
   int noFirmwareCheck = 0;
   int noConfigFileCheck = 0;
-  int *mpdssp_list = NULL, nlist = 0;
   int rval = OK;
-  int value;
+#ifdef WITHSSP
+  int ibit = 0, issp = 0;
+  int *mpdssp_list = NULL, nlist = 0;
+#endif
 
   /* Check if we are to exit when pointers are setup */
   noBoardInit = (iFlag & MPD_INIT_SKIP) ? 1 : 0;
@@ -313,6 +329,7 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
 
   if (mpdSSPMode)
     {				// SSP Mode
+#ifdef WITHSSP
       if (nSSP == 0)
 	{
 	  MPD_MSG("ERROR: Must initialize SSPs first\n");
@@ -343,6 +360,11 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
 		      sspID[issp], mpdSSPFiberMask[sspID[issp]]);
 	    }
 	}
+#else /* WITHSSP */
+      printf("%s: ERROR: Library not compiled with WITHSSP flag\n",
+	     __func__);
+      return ERROR;
+#endif /* WITHSSP */
     }
   else
     {				// VME Mode
@@ -388,8 +410,10 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
   impd = 0;
   impd_disc = 0;
 
+#ifdef WITHSSP
   if (mpdSSPMode)
     {
+      int value;
       printf("****************************************\n");
       /* Make a quick and dirty array to use in the next iteration
          over mpds up to ninc */
@@ -407,6 +431,7 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
 	    }
 	}
     }
+#endif /* WITHSSP */
 
 
   for (ii = 0; ii < ninc; ii++)
@@ -416,11 +441,13 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
 
       if (mpdSSPMode)
 	{
+#ifdef WITHSSP
 	  laddr_inc = mpdssp_list[ii];
 	  mpd = (struct mpd_struct *) laddr_inc;
 
 	  rdata = mpdRead32(&mpd->magic_value);
 	  res = 1;
+#endif /* WITHSSP */
 	}
       else
 	{
