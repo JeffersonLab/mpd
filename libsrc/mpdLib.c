@@ -1949,6 +1949,7 @@ mpdApvGetSample(int id, int ia)
 void
 mpdApvSetSampleLeft(int id, int ia)
 {
+  // FIXME: Should get read of fReadCount
   fApv[id][ia].fReadCount = fApv[id][ia].fNumberSample;
 };
 
@@ -2607,6 +2608,7 @@ mpdApvGetBufferPointer(int id, int ia, int ib)
   exit(1);
 }
 
+/* Get the number of samples obtained for channel ia */
 int
 mpdApvGetBufferSample(int id, int ia)
 {
@@ -3835,6 +3837,14 @@ mpdFIFO_ReadSingle(int id,
   wmax = *wrec;
   *wrec = 0;			// returned words
 
+  if (!fApv[id][channel].enabled)
+    {
+      // FIXME: Change this from WARN to DBG?
+      MPD_WARN("APV Channel %d (adc = %d) not enabled\n",
+	       channel, fApv[id][channel].adc);
+      return 0;
+    }
+
   nwords = 0;
 
   i = 0;
@@ -3877,10 +3887,11 @@ mpdFIFO_ReadSingle(int id,
 	   "dbuf addr = 0x%lx  vmeAdrs = 0x%08x   size = %d\n",
 	   (unsigned long) dbuf, vmeAdrs, size);
 
-  /* Add in the buffer details for potential use later */
+  /*
+     Add in the buffer details for potential use later
+     fBi0 and fBi1 initialized in mpdArmReadout(..)
+  */
   fApv[id][channel].fBuffer = (uint32_t *)laddr;
-  fApv[id][channel].fBi0    = 0;
-  fApv[id][channel].fBi1    = 0;
   fApv[id][channel].fBs     = wmax;
 
   retVal =
@@ -3935,7 +3946,7 @@ mpdFIFO_ReadSingle(int id,
 	      if ((iword % 4) == 0)
 		printf("\n%4d:  ", iword);
 
-	      printf("0x%08x   ", LSWAP(fApv[id][0].fBuffer[iword]));
+	      printf("0x%08x   ", LSWAP(fApv[id][channel].fBuffer[iword]));
 	    }
 	  printf("\n");
 	}
@@ -3948,6 +3959,7 @@ mpdFIFO_ReadSingle(int id,
       MPD_DBG("Count Mismatch: %d expected %d\n", *wrec, size);
       return ERROR;
     }
+
   return success;
 }
 
@@ -4258,17 +4270,20 @@ mpdFIFO_WaitNotEmpty(int id, int channel, int max_retry)
 
 /**
  * Standard event mode (no process)
- *
+ *   Similar to mpdFIFO_ReadSingle(..) but perform a linked-list for each enabled channel.
  * return true if all cards have been read
  */
-// FIXME: This routine was broken when I removed the DMA memory allocation.
 int
-mpdFIFO_ReadAll(int id, int *timeout, int *global_fifo_error)
+mpdFIFO_ReadAll(int id,
+		volatile uint32_t * data,	// data buffer
+		int *wrec,	// max number of words to get / return words received
+		int max_retry)	// max number of retry for timeout
 {
-
-  unsigned int k;
-  int sample_left, n;
-  int nread, err = OK;
+  int success = OK, retVal = 0, xferCount = 0, dummy = 0, itry = 0, iapv, ilist = 0;
+  volatile uint32_t *laddr = NULL;
+  uint32_t ch_words[MPD_MAX_APV], vmeAdrLL[MPD_MAX_APV], dmaSizeLL[MPD_MAX_APV],
+    destAdrLL[MPD_MAX_APV], numLL = 0;
+  uint32_t buf_index = 0, fifowords = 0, nwords = 0;
 
 
   if (CHECKMPD(id))
@@ -4277,59 +4292,134 @@ mpdFIFO_ReadAll(int id, int *timeout, int *global_fifo_error)
       return ERROR;
     }
 
-  sample_left = 0;
-  *global_fifo_error = 0;
+  *wrec = 0;
 
-  if (fMpd[id].fReadDone == 0)
-    {				// at least one MPD FIFO needs to be read
-      for (k = 0; k < fMpd[id].nAPV; k++)
-	{			// loop on ADC channels on single board
+  /* Zero out the LL arrays */
+  memset((char *)ch_words, 0, sizeof(ch_words));
+  memset((char *)vmeAdrLL, 0, sizeof(vmeAdrLL));
+  memset((char *)dmaSizeLL, 0, sizeof(dmaSizeLL));
+  memset((char *)destAdrLL, 0, sizeof(destAdrLL));
 
-	  if (fApv[id][k].enabled == 0)
-	    {
-	      continue;
-	    }
+  /* Loop over the enabled channels to get the number of words to be read out */
+  while (itry <= max_retry)
+    {
+      if (max_retry > 0)
+	itry++;
 
-	  if (mpdApvReadDone(id, k) == 0)
-	    {			// APV FIFO has data to be read
+      for(iapv = 0; iapv < fMpd[id].nAPV; iapv++)
+	{
+	  if (fApv[id][iapv].enabled && (ch_words[iapv] == 0))
+	    { /* Skip if disabled... or already have number of words available */
+	      success = mpdFIFO_GetNwords(id, fApv[id][iapv].adc, (int *)&nwords);
 
-	      nread = mpdApvGetBufferAvailable(id, k);
-	      // printf(" EC: card %d %d buffer size available = %d\n",id, k,nread);
-	      if (nread > 0)
-		{		// space in memory buffer
-		  err = mpdFIFO_ReadSingle(id, k /*fApv[id][k].adc */ , mpdApvGetBufferPWrite(id, k), &nread, 20);	//not this
-
-		  mpdApvIncBufferPointer(id, k, nread);
-
-		  *global_fifo_error |= err;	// ???
-		  //printf(" EC: card %d readsingle done nread=%d, err=%d\n",k,nread,err);
-		}
-	      else
-		{		// no space in memory buffer
-		  MPD_ERR
-		    ("MPD/APV(i2c)/(adc) = %d/%d, no space in memory buffer adc=%d\n",
-		     id, k, fApv[id][k].adc);
+	      if (success != OK)
+		{
+		  MPD_ERR("mpdFIFO_GetNwords(id = %d, adc = %d, ..) returned %d.  nwords = %d\n",
+			  id, fApv[id][iapv].adc, success, nwords);
+		  return success;
 		}
 
-	      if ((err == ERROR) || (nread == 0))
-		*timeout = *timeout + 1;	// timeout
-
-	      n = mpdApvGetBufferSample(id, k);
-
-	      MPD_DBG
-		("MPD: %d APV_idx= %d, ADC_FIFO= %d, word read= %d, event/sample read= %d, error=%d\n",
-		 id, k, fApv[id][k].adc, nread, n, *global_fifo_error);
-
-	      sample_left += mpdApvGetSampleLeft(id, k);
-
+	      ch_words[iapv] = nwords;
 	    }
+	}
+    }
 
-	  //MPD_DBG("Fifo= %d, total sample left= %d (<0 means more samples than requested)\n",k, sample_left);
 
-	}			// loop on ADC
-      fMpd[id].fReadDone = (sample_left > 0) ? 0 : 1;
-    }				// if fReadDone
-  return fMpd[id].fReadDone;
+  MPDLOCK;
+  /* Check for 8 byte boundary for address - insert dummy word (Slot 0 FADC Dummy DATA) */
+  if ((unsigned long) (data) & 0x7)
+    {
+      *data = 0;		/* Data word added for byte alignment */
+      dummy = 1;
+      laddr = (data + 1);
+    }
+  else
+    {
+      dummy = 0;
+      laddr = data;
+    }
+
+  /* Setup the LL arrays */
+  ilist = 0;
+  for (iapv = 0; iapv < fMpd[id].nAPV; iapv++)
+    {
+      if (fApv[id][iapv].enabled && (ch_words[iapv] > 0))
+	{
+	  /* VME addresses for each channel fifo */
+	  vmeAdrLL[ilist] =
+	    (uint32_t) & MPDp[id]->data_ch[fApv[id][iapv].adc][0] - mpdA24Offset;
+
+	  fifowords = ch_words[iapv];
+
+	  /* Amount of available data for each channel fifo */
+	  /* 128 bit alignment for 2eVME/2eSST */
+	  if (fifowords % 4)
+	    dmaSizeLL[ilist] = (fifowords + (4 - (fifowords % 4))) << 2;
+	  else
+	    dmaSizeLL[ilist] = fifowords << 2;
+
+	  /* Destination for each channel data */
+	  destAdrLL[ilist] = (uint32_t) & laddr[buf_index];
+
+
+	  /*
+	     Populate the APV buffer pointer and indices
+	     so use will know where in the "data" array to find each channel data.
+	  */
+	  fApv[id][iapv].fBuffer = (uint32_t *)laddr[buf_index];
+	  fApv[id][iapv].fBi1    = dmaSizeLL[ilist] >> 2;
+	  fApv[id][iapv].fBs     = fApv[id][iapv].fBi1;
+
+	  buf_index += (dmaSizeLL[ilist] >> 2);
+	  ilist++;
+	  numLL = ilist;
+
+	}
+
+      for (ilist = 0; ilist < numLL; ilist++)
+	{
+	  MPD_DBGN(MPD_DEBUG_DMA, "%d   0x%08x   0x%08x   0x%08x\n",
+		   ilist, vmeAdrLL[ilist], destAdrLL[ilist],
+		   dmaSizeLL[ilist]);
+	}
+
+      vmeDmaSetupLL((uint32_t) laddr, vmeAdrLL, dmaSizeLL, numLL);
+    }
+
+  retVal = vmeDmaSendLL();
+
+  if (retVal != OK)
+    {
+      MPD_ERR("ERROR in DMA transfer Initialization 0x%x\n", retVal);
+      MPDUNLOCK;
+      return (retVal);
+    }
+
+  /* Wait until Done or Error */
+  retVal = vmeDmaDone();
+
+  if (retVal > 0)
+    {
+      xferCount = (retVal >> 2) + dummy;	/* Number of Longwords transfered */
+      *wrec = xferCount;
+      MPDUNLOCK;
+      return (xferCount);	/* Return number of data words transfered */
+    }
+  else if (retVal == 0)
+    {				/* DMA finished with zero words transferred */
+      MPD_ERR("DMA transfer returned zero word count 0x%x\n", nwords);
+      MPDUNLOCK;
+      return (OK);
+    }
+  else
+    {				/* Error in DMA */
+      MPD_ERR("vmeDmaDone returned an Error\n");
+      MPDUNLOCK;
+      return (ERROR);
+    }
+
+  MPDUNLOCK;
+  return (OK);
 
 }
 
@@ -4374,31 +4464,8 @@ mpdSearchEndMarker(uint32_t * b, int i0, int i1)
 void
 mpdApvShiftDataBuffer(int id, int k, int i0)
 {
-
-  uint32_t *b;
-  int delta;
-
-  if (CHECKMPD(id))
-    {
-      MPD_ERR("MPD in slot %d is not initialized.\n", id);
-      return;
-    }
-
-  b = mpdApvGetBufferPointer(id, k, 0);
-  delta = fApv[id][k].fBi1 - i0;
-
-  //MPD_DBG("Move block of %d words from %d to 0\n",delta,i0);
-
-  if (delta > 0)
-    {
-      memmove(&b[0], &b[i0], sizeof(uint32_t) * delta);	// areas may overlap
-    }
-
-  fApv[id][k].fBi0 = 0;		// to be removed
-  fApv[id][k].fBi1 = delta;
-
-  //MPD_DBG("Fifo= %d cleaned (data shifted) write pointer at=%d\n",fApv[id][k].adc,fApv[id][k].fBi1);
-
+  MPD_ERR("This routine is no longer used\n");
+  return;
 }
 
 /**

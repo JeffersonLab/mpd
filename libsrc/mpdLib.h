@@ -541,8 +541,7 @@ int  mpdFIFO_IsEmpty(int id, int channel, int *empty);
 int  mpdFIFO_ClearAll(int id);
 int  mpdFIFO_WaitNotEmpty(int id, int channel, int max_retry);
 
-int  mpdFIFO_ReadAll(int id, int *timeout, int *global_fifo_error);
-
+int  mpdFIFO_ReadAll(int id, volatile uint32_t * data, int *wrec, int max_retry);
 
 int  mpdSearchEndMarker(uint32_t *b, int i0, int i1);
 void mpdApvShiftDataBuffer(int id, int k, int i0);
