@@ -267,7 +267,10 @@ typedef struct apvparm_struct // actually a structure
   int fReadCount;
   uint32_t *fBuffer; // data buffer
   int fBufSize;
-  int fBi0, fBi1, fBs;
+  // Buffer indices
+  int fBi0; // Beginning (should always be 0, unless and offset is needed for byte alignment)
+  int fBi1; // End of event (last sample index)
+  int fBs;  // End of buffer
 
 } ApvParameters;
 
@@ -525,7 +528,6 @@ int mpdOBUF_ReadLL(volatile uint32_t * data, int size, int *wrec, int rflag);
 int mpdSDRAM_GetParam(int id, int *init, int *overrun, int *rdaddr, int *wraddr, int *nwords);
 
 int  mpdFIFO_ReadSingle(int id, int channel, volatile uint32_t *dbuf, int *wrec, int max_retry);
-int  mpdFIFO_ReadSingle0(int id, int channel, int blen, uint32_t *event, int *nread);
 int  mpdFIFO_Samples(int id,
 		     int channel,
 		     uint32_t *event, int *nread, int max_samples, int *err);

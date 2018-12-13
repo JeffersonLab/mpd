@@ -2574,27 +2574,16 @@ mpdApvGetMaxLatency(int id)
 void
 mpdApvBufferAlloc(int id, int ia)
 {
-
-  // at least 6 times larger @@@ increased to 15 -- need improvement
-  fApv[id][ia].fBufSize = 15 * fApv[id][ia].fNumberSample * (EVENT_SIZE + 2);
-
-  fApv[id][ia].fBuffer =
-    (uint32_t *) malloc(fApv[id][ia].fBufSize * sizeof(uint32_t));
-  fApv[id][ia].fBi1 = 0;
-
-  MPD_DBG("id=%d  ia=%d  Fifo %d, buffer allocated with word size %d\n", id,
-	  ia, fApv[id][ia].adc, fApv[id][ia].fBufSize);
-
+  MPD_ERR("This routine is no longer used\n");
+  MPD_MSG("  Must allocate memory for APV readout outside of MPD library\n");
 }
 
 void
 mpdApvBufferFree(int id, int ia)
 {
-  if (fApv[id][ia].fBuffer != 0)
-    {
-      free(fApv[id][ia].fBuffer);
-      MPD_DBG("Fifo %d, buffer released\n", fApv[id][ia].adc);
-    }
+  MPD_ERR("This routine is no longer used\n");
+  MPD_MSG("  Must free memory for APV readout outside of MPD library\n");
+  return;
 }
 
 void
@@ -2606,21 +2595,22 @@ mpdApvIncBufferPointer(int id, int ia, int b)
 uint32_t *
 mpdApvGetBufferPointer(int id, int ia, int ib)
 {
-  //MPD_DBG("Fifo %d, retrieved pointer from position %d , size is %d\n",fApv[id][ia].adc, ib, fApv[id][ia].fBufSize);
+
   if (ib < fApv[id][ia].fBufSize)
-    {				// probably not required !!
+    {
       return &(fApv[id][ia].fBuffer[ib]);
     }
+
   MPD_ERR("MPD %d Fifo %d, index %d is out of range (buf size = %d)\n", id,
 	  fApv[id][ia].adc, ib, fApv[id][ia].fBufSize);
+
   exit(1);
 }
 
 int
 mpdApvGetBufferSample(int id, int ia)
 {
-  int ix = fApv[id][ia].fBi1 / EVENT_SIZE;
-  //MPD_DBG("Fifo = %d has %d samples (%d bytes) stored\n",fApv[id][ia].adc, ix, fApv[id][ia].fBi1);
+  int ix = fApv[id][ia].fBi1 + 1;
   return ix;
 
 }
@@ -2646,13 +2636,14 @@ mpdApvGetBufferAvailable(int id, int ia)
 int
 mpdApvGetBufferLength(int id, int ia)
 {
-  return fApv[id][ia].fBi1;
+  return fApv[id][ia].fBi1 + 1;
 }
 
 int
 mpdApvGetEventSize(int id, int ia)
 {
-  return EVENT_SIZE;		// TO BE CHANGED (variable size !!!)
+  MPD_ERR("This routine is no longer used\n");
+  return ERROR;
 }
 
 
@@ -3815,12 +3806,13 @@ mpdSDRAM_GetParam(int id, int *init, int *overrun, int *rdaddr, int *wraddr,
 }
 
 /**
- * Readout Fifo
+ * Readout Fifo (Using DMA)
  * Standard Event Mode (no zero suppression or pedestal subtraction)
- * Return 0 when something has been read, error otherwise
+ * Return 0 when channel has been read, error otherwise
  */
 int
-mpdFIFO_ReadSingle(int id, int channel,	// apv channel (FIFO)
+mpdFIFO_ReadSingle(int id,
+		   int channel,	// apv channel (FIFO)
 		   volatile uint32_t * dbuf,	// data buffer
 		   int *wrec,	// max number of words to get / return words received
 		   int max_retry)	// max number of retry for timeout
@@ -3885,6 +3877,12 @@ mpdFIFO_ReadSingle(int id, int channel,	// apv channel (FIFO)
 	   "dbuf addr = 0x%lx  vmeAdrs = 0x%08x   size = %d\n",
 	   (unsigned long) dbuf, vmeAdrs, size);
 
+  /* Add in the buffer details for potential use later */
+  fApv[id][channel].fBuffer = (uint32_t *)laddr;
+  fApv[id][channel].fBi0    = 0;
+  fApv[id][channel].fBi1    = 0;
+  fApv[id][channel].fBs     = wmax;
+
   retVal =
     vmeDmaSend((unsigned long) laddr, vmeAdrs, (size << 2));
 
@@ -3922,6 +3920,9 @@ mpdFIFO_ReadSingle(int id, int channel,	// apv channel (FIFO)
     {
       *wrec = (retVal >> 2) + dummy;
 
+      /* Mark the end of the channel data in the buffer */
+      mpdApvIncBufferPointer(id, channel, *wrec);
+
       if(mpdPrintDebug & MPD_DEBUG_DMA)
 	{
 	  MPD_DBGN(MPD_DEBUG_DMA,
@@ -3950,82 +3951,12 @@ mpdFIFO_ReadSingle(int id, int channel,	// apv channel (FIFO)
   return success;
 }
 
-/*
- * For Zero Suppression Processor / Pedestal Subtraction
- *
- * channel : ADC Channel (correspond to a single APV)
- * blen    : buffer lenght available
- * event   : event buffer
- * nread   : the number of words read back
- *
- * return error or 0 on success
- *
+
+/**
+ * Readout Fifo (Using Programmed I/O)
+ * Standard Event Mode (no zero suppression or pedestal subtraction)
+ * Return 0 when channel has been read, error otherwise
  */
-
-int
-mpdFIFO_ReadSingle0(int id, int channel, int blen, uint32_t * event,
-		    int *nread)
-{
-
-  int rval, nwords, size;
-  int n_part;
-  int i = 0;
-
-
-  if (CHECKMPD(id))
-    {
-      MPD_ERR("MPD in slot %d is not initialized.\n", id);
-      return ERROR;
-    }
-
-  *nread = 0;
-  nwords = 0;
-  n_part = 0;
-
-  rval = mpdFIFO_GetNwords(id, channel, &nwords);
-  if (rval != OK)
-    return 2;
-
-  size = (nwords > blen) ? blen : nwords;	// cannot exceed memory buffer size
-
-  if (size > 0)
-    {
-
-      MPDLOCK;
-#ifdef BLOCK_TRANSFER
-      rval = BUS_BlockRead(fifo_addr, size, event, &n_part);
-#else
-      for (i = 0; i < size; i++)
-	{
-	  event[i] = mpdRead32(&MPDp[id]->data_ch[channel][i * 4]);
-	  n_part++;
-	}
-#endif
-
-#ifdef DEBUG_DUMP
-      printf("\nReadData: %x %d\n", fifo_addr, channel);
-      for (i = 0; i < n_part; i++)
-	{
-	  if ((i % 16) == 0)
-	    printf("\n%4d", i);
-	  printf(" %6x", event[i]);
-	}
-
-      printf(" -> %d\n", n_part);
-#endif
-      *nread += n_part;
-
-      if (n_part != size)
-	return 1;
-
-    }
-
-  MPDUNLOCK;
-  return *nread;
-
-}
-
-
 int
 mpdFIFO_Samples(int id,
 		int channel,
@@ -4051,19 +3982,13 @@ mpdFIFO_Samples(int id,
     }
 
   MPDLOCK;
-#ifdef BLOCK_TRANSFER
-  success = BUS_BlockRead(fifo_addr, nwords, event, nread);
-#else
-  printf("addr: %08x \n",
-	 (&MPDp[id]->data_ch[0][0] - &MPDp[id]->histo_memory[0][0]));
-
   for (i = 0; i < nwords; i++)
     {
       event[i] = mpdRead32(&MPDp[id]->data_ch[channel][i]);
     }
   *nread = nwords * 4;
-#endif
   *nread /= 4;
+
   if (*nread == nwords)
     *err = 0;
 
@@ -4475,95 +4400,6 @@ mpdApvShiftDataBuffer(int id, int k, int i0)
   //MPD_DBG("Fifo= %d cleaned (data shifted) write pointer at=%d\n",fApv[id][k].adc,fApv[id][k].fBi1);
 
 }
-
-#ifdef NOTDONE
-int
-mpdFIFO_ReadAllNew(int id, int *timeout, int *global_fifo_error)
-{
-
-  int n;
-  unsigned int k;
-  int sample_left;
-
-  int nread, err;
-  uint32_t multiple_events;
-
-  int ii1 = 0;
-
-
-  if (CHECKMPD(id))
-    {
-      MPD_ERR("MPD in slot %d is not initialized.\n", id);
-      return ERROR;
-    }
-
-  n = 1;			// single event mode
-
-  sample_left = 0;
-
-  if (fMpd[id].fReadDone == 0)
-    {				// MPD fifos need to be read
-      for (k = 0; k < fMpd[id].nAPV; k++)
-	{			// loop on ADC channels on single board
-
-	  if (fApv[id][k].enabled == 0)
-	    {
-	      continune;
-	    }
-	  if (mpdApvReadDone(id, k) == 0)
-	    {			// APV FIFO has data to be read
-
-	      uint32_t *bptr = mpdApvGetBufferPointer(id, k, ii1);
-
-	      int bsiz = fApv[k].fBufSize - ii1;	// space left in buffer
-
-	      err =
-		mpdFIFO_ReadSingle(id, fApv[id][k].adc, bsiz, bptr, nread);
-
-	      // ***
-	      if (nread > 0)
-		{
-		  for (int i = 0; i < nread; i++)
-		    {
-		      if (mpdIsEndBlock(bptr[i]))
-			{
-			  mpdApvDecSampleLeft(id, k, 1);
-			  if (mpdApvGetSampleLeft(id, k) == 0)
-			    {
-			      fApv[id][k].fBs = ii1 + i;	// pointer to the last sample word
-			    }
-			}
-		    }
-
-		  fApv[id][k].fBi1 = ii1 + nread;
-
-		}
-	      else
-		{
-		  *timeout++;
-		}
-
-	      if (err != 2)
-		*global_fifo_error |= err;
-
-	      if (err == 2)
-		*timeout++;
-
-	      if (n > 1)
-		multiple_events++;	// not used
-
-	    }
-
-	  sample_left += mpdApvGetSampleLeft(id, k);
-
-	}			// loop on ADC FIFOs
-      fMpd[id].fReadDone = (sample_left == 0) ? 1 : 0;
-    }
-
-  return fMpd[id].fReadDone;
-
-}
-#endif /* NOTDONE */
 
 /**
  *
