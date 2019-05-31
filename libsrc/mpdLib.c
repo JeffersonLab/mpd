@@ -1960,7 +1960,7 @@ mpdApvGetAdc(int id, int ia)
 int
 mpdAPV_Reset101(int id)
 {
-  uint32_t data;
+  uint32_t data0 = 0, data = 0;
 
   if (CHECKMPD(id))
     {
@@ -1970,7 +1970,7 @@ mpdAPV_Reset101(int id)
 
   MPDLOCK;
 
-  data = mpdRead32(&MPDp[id]->trigger_config);
+  data0 = data = mpdRead32(&MPDp[id]->trigger_config);
 
   data |= MPD_APVDAQ_TRIGCONFIG_ENABLE_MACH;	// Enable trig machine
   data |= SOFTWARE_CLEAR_MASK;
@@ -1983,6 +1983,8 @@ mpdAPV_Reset101(int id)
   data &= ~MPD_APVDAQ_TRIGCONFIG_ENABLE_MACH;	// Disable trig machine
 
   mpdWrite32(&MPDp[id]->trigger_config, data);
+
+  mpdWrite32(&MPDp[id]->trigger_config, data0); // restore initial configuration
 
   MPDUNLOCK;
 
