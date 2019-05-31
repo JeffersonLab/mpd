@@ -606,6 +606,8 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
 
       if (!noBoardInit)
 	{
+/* 	  mpdReset(boardID,1); */
+
 	  /* Some more initialize here, if needed */
 	  fMpd[boardID].CtrlHdmiMask[0] = 0;
 	  fMpd[boardID].CtrlHdmiMask[1] = 0;
@@ -1507,11 +1509,14 @@ I2C_SendByte(int id, uint8_t byteval, uint8_t command)
 
   mpdWrite32(&MPDp[id]->i2c.comm_stat, command);
   rdata = mpdRead32(&MPDp[id]->i2c.comm_stat);
+  MPD_DBG("start: 0x%08x\n", rdata);
   while( (rdata & MPD_I2C_COMMSTAT_TIP) != 0 && (retry_count < mpdGetI2CMaxRetry(id)) )
     {
       usleep(10);
       rdata = mpdRead32(&MPDp[id]->i2c.comm_stat);
       if(retry_count > 0) MPD_DBG("%2d: 0x%08x\n", retry_count, rdata);
+
+      MPD_DBG("retry %2d: 0x%08x\n", retry_count, rdata);
       retry_count++;
     }
 
@@ -1688,6 +1693,41 @@ I2C_IACK(int id)
 }
 
 int
+I2C_CtrlHdmiEnableBoth(int id)
+{
+  uint32_t data;
+  int rval = OK;
+
+  if (CHECKMPD(id))
+    {
+      MPD_ERR("MPD in slot %d is not initialized.\n", id);
+      return ERROR;
+    }
+
+  MPDLOCK;
+  data = mpdRead32(&MPDp[id]->readout_config);
+
+  data |= 0x00000200;		// set bit 9
+  data |= 0x00000400;		// set bit 10
+  MPD_DBGN(MPD_DEBUG_I2C,
+	       "Enabling I2C on both HDMI cables (readout_config = 0x%04x)\n",
+	       data);
+
+  MPDUNLOCK;
+  I2C_SendStop(id);
+
+  MPDLOCK;
+  mpdWrite32(&MPDp[id]->readout_config, data);
+  MPDUNLOCK;
+
+  I2C_SendStop(id);
+  usleep(10);
+
+  return rval;
+}
+
+
+int
 I2C_CtrlHdmiEnable(int id, int upper)
 {
   uint32_t data;
@@ -1748,7 +1788,7 @@ I2C_CtrlHdmiDisable(int id)
       return ERROR;
     }
 
-  /* Skip if not supported */
+/*   Skip if not supported */
   if(mpdGetFpgaCompileTime(id) < MPD_HDMI_SUPPORTED_FIRMWARE_TIME)
     return OK;
 
@@ -1988,7 +2028,7 @@ mpdApvGetAdc(int id, int ia)
 int
 mpdAPV_Reset101(int id)
 {
-  uint32_t data;
+  uint32_t data0 = 0, data;
 
   if (CHECKMPD(id))
     {
@@ -1998,7 +2038,7 @@ mpdAPV_Reset101(int id)
 
   MPDLOCK;
 
-  data = mpdRead32(&MPDp[id]->trigger_config);
+  data0 = data = mpdRead32(&MPDp[id]->trigger_config);
 
   data |= MPD_APVDAQ_TRIGCONFIG_ENABLE_MACH;	// Enable trig machine
   data |= SOFTWARE_CLEAR_MASK;
@@ -2011,6 +2051,8 @@ mpdAPV_Reset101(int id)
   data &= ~MPD_APVDAQ_TRIGCONFIG_ENABLE_MACH;	// Disable trig machine
 
   mpdWrite32(&MPDp[id]->trigger_config, data);
+
+  mpdWrite32(&MPDp[id]->trigger_config, data0);  // Restore initial config
 
   MPDUNLOCK;
 
@@ -2782,6 +2824,8 @@ mpdTRIG_Enable(int id)
 
   MPDUNLOCK;
 
+  MPD_DBG("id = %d: trigger_config = 0x%x\n", id, data);
+
 
   return OK;
 }
@@ -3405,12 +3449,6 @@ mpdHISTO_Clear(int id, int ch, int val)	/* ch == 0, 15 */
     }
 
   MPDLOCK;
-#ifdef BLOCK_TRANSFER
-  success = BUS_BlockWrite(addr, 4096, data, &j);
-  if (j != (4096))
-    success = BUS_GENERIC_ERROR;
-#else
-
   for (i = 0; i < ntimes; i++)
     {
       for (j = 0; j < 64; j++)
@@ -3419,8 +3457,8 @@ mpdHISTO_Clear(int id, int ch, int val)	/* ch == 0, 15 */
 		     data[i * 64 + j]);
 	}
     }
-#endif
   MPDUNLOCK;
+
   return success;
 }
 
