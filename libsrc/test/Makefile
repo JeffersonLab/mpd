@@ -32,7 +32,7 @@ ifdef DEBUG
 CFLAGS			+= -Wall -g
 endif
 
-PROGS			= mpdLibTest mpdSSPLibTest mpdReset mpdDMAexercise
+PROGS			= mpdLibTest i2c_test mpd_histo
 
 all: $(PROGS)
 

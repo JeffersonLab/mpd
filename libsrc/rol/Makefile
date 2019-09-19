@@ -76,7 +76,14 @@ v965_mpd.so: v965_mpd.c
 	@echo
 	@echo "Building $@ from $<"
 	@echo
-	$(CC) -fpic -shared  $(CFLAGS) -DINIT_NAME=$(@:.so=__init) -o $@ $<
+	$(CC) -fpic -shared  $(CFLAGS) -DINIT_NAME=$(@:.so=__init) -DINIT_NAME_POLL=$(@:.so=__poll) -o $@ $<
+
+mpd_slave_list.so: mpd_obuf_list.c Makefile
+	@echo
+	@echo "Building $@ from $<"
+	@echo
+	$(CC) -fpic -shared  $(CFLAGS) -DTI_SLAVE -DINIT_NAME=$(@:.so=__init) -DINIT_NAME_POLL=$(@:.so=__poll) -o $@ $<
+
 
 clean distclean:
 	@rm -f  $(VMEROL) $(SOBJS) $(CFILES) *~

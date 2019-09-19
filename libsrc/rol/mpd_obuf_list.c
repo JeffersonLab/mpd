@@ -10,12 +10,24 @@
 #define MAX_EVENT_POOL     100
 #define MAX_EVENT_LENGTH   1024*600	/* Size in Bytes */
 
-/* Define TI_MASTER or TI_SLAVE */
+/* Define TI_MASTER or TI_SLAVE in Makefile !! */
+#if !defined(TI_MASTER) && !defined(TI_SLAVE)
+#warning TI_MASTER or TI_SLAVE not defined.  Using TI_MASTER
 #define TI_MASTER
+#endif
 /* Poll for available data, external triggers */
+
+#ifdef TI_MASTER
 #define TI_READOUT TI_READOUT_EXT_POLL
+#endif
+
+#ifdef TI_SLAVE
+#define TI_READOUT TI_READOUT_TS_POLL
+#endif
+
+
 /* GEO slot 21 */
-#define TI_ADDR    (21<<19)
+#define TI_ADDR    (21 << 19)
 
 #define FIBER_LATENCY_OFFSET 0x4A	/* measured longest fiber length */
 #include <unistd.h>
@@ -68,10 +80,15 @@ rocDownload()
   /* Set crate ID */
   tiSetCrateID(0x01);		/* ROC 1 */
 
+/* #define INTRANDOMPULSER */
+#ifdef INTRANDOMPULSER
+  tiSetTriggerSource(TI_TRIGGER_PULSER); /* TS Inputs enabled */
+#else
   tiSetTriggerSource(TI_TRIGGER_TSINPUTS);
 
   /* Set needed TS input bits */
   tiEnableTSInput(TI_TSINPUT_1);
+#endif
 
   /* Load the trigger table that associates
      pins 21/22 | 23/24 | 25/26 : trigger1
@@ -99,8 +116,16 @@ rocDownload()
    *****************/
   int rval = OK;
 
-  /*Read config file and fill internal variables */
-  mpdConfigInit("/home/moffit/work/mpd/libsrc/rol/infn_cfg/config_apv.txt");
+  /* Read config file and fill internal variables
+     Change this to point to your main configuration file */
+
+  rval = mpdConfigInit("config_apv.txt");
+  if(rval != OK)
+    {
+      daLogMsg("ERROR","Error in configuration file");
+      error_status = ERROR;
+    }
+
   mpdConfigLoad();
 
   /* Init and config MPD+APV */
@@ -121,7 +146,7 @@ rocDownload()
 
   // APV configuration on all active MPDs
   int impd, iapv, id;
-  /* for (impd = 5; impd < 6; impd++) */
+
   for (impd = 0; impd < fnMPD; impd++)
     {				// only active mpd set
       id = mpdSlot(impd);
@@ -131,22 +156,16 @@ rocDownload()
       rval = mpdHISTO_MemTest(id);
 
       printf(" - Initialize I2C\n");
+      fflush(stdout);
       if (mpdI2C_Init(id) != OK)
 	{
 	  printf(" * * FAILED\n");
 	  error_status = ERROR;
 	}
 
-#if 0
-      printf(" - APV Reset\n");
-      if (mpdI2C_ApvReset(id) != OK)
-	{
-	  printf(" * * FAILED\n");
-	  error_status = ERROR;
-	}
-#endif
       printf(" - APV discovery and init\n");
 
+      fflush(stdout);
       mpdSetPrintDebug(0x0);
       if (mpdAPV_Scan(id) <= 0)
 	{			// no apd found, skip next
@@ -158,6 +177,7 @@ rocDownload()
 
       // apv reset
       printf(" - APV Reset\n");
+      fflush(stdout);
       if (mpdI2C_ApvReset(id) != OK)
 	{
 	  printf(" * * FAILED\n");
@@ -169,6 +189,7 @@ rocDownload()
       // board configuration (APV-ADC clocks phase)
       // (do this while APVs are resetting)
       printf(" - DELAY setting\n");
+      fflush(stdout);
       if (mpdDELAY25_Set
 	  (id, mpdGetAdcClockPhase(id, 0), mpdGetAdcClockPhase(id, 1)) != OK)
 	{
@@ -180,23 +201,60 @@ rocDownload()
       mpdSetPrintDebug(0);
       printf(" - Configure Individual APVs\n");
       printf(" - - ");
-      for (iapv = 0; iapv < mpdGetNumberAPV(id); iapv++)
+      fflush(stdout);
+      int itry, badTry = 0, saveError = error_status;
+      error_status = OK;
+      for (itry = 0; itry < 3; itry++)
 	{
-	  printf("%2d ", iapv);
-	  fflush(stdout);
-
-	  if (mpdAPV_Config(id, iapv) != OK)
+	  if(badTry)
 	    {
-	      printf(" * * FAILED for APV %2d\n", iapv);
+	      printf(" ******** RETRY ********\n");
 	      printf(" - - ");
-	      error_status = ERROR;
+	      fflush(stdout);
+	      error_status = OK;
 	    }
+	  badTry = 0;
+	  for (iapv = 0; iapv < mpdGetNumberAPV(id); iapv++)
+	    {
+	      printf("%2d ", iapv);
+	      fflush(stdout);
+
+	      if (mpdAPV_Config(id, iapv) != OK)
+		{
+		  printf(" * * FAILED for APV %2d\n", iapv);
+		  if(iapv < (mpdGetNumberAPV(id) - 1))
+		    printf(" - - ");
+		  fflush(stdout);
+		  error_status = ERROR;
+		  badTry = 1;
+		}
+	    }
+	  printf("\n");
+	  fflush(stdout);
+	  if(badTry)
+	    {
+	      printf(" ***** APV RESET *****\n");
+	      fflush(stdout);
+	      mpdI2C_ApvReset(id);
+	    }
+	  else
+	    {
+	      if(itry > 0)
+		{
+		  printf(" ****** SUCCESS!!!! ******\n");
+		  fflush(stdout);
+		}
+	      break;
+	    }
+
 	}
-      printf("\n");
+
+      error_status |= saveError;
       mpdSetPrintDebug(0);
 
       // configure adc on MPD
       printf(" - Configure ADC\n");
+      fflush(stdout);
       if (mpdADS5281_Config(id) != OK)
 	{
 	  printf(" * * FAILED\n");
@@ -208,6 +266,7 @@ rocDownload()
 
       // RESET101 on the APV
       printf(" - Do APV RESET101\n");
+      fflush(stdout);
       if (mpdAPV_Reset101(id) != OK)
 	{
 	  printf(" * * FAILED\n");
@@ -216,6 +275,7 @@ rocDownload()
 
       // <- MPD+APV initialization ends here
       printf("\n");
+      fflush(stdout);
     }				// end loop on mpds
   //END of MPD configure
 
@@ -343,6 +403,10 @@ rocGo()
 
   mpdGStatus(1);
 
+#ifdef INTRANDOMPULSER
+  /* Enable Random at rate 500kHz/(2^7) = ~3.9kHz */
+  tiSetRandomTrigger(1,0x7);
+#endif
 }
 
 /****************************************
@@ -353,6 +417,11 @@ rocEnd()
 {
 
   int impd;
+
+#ifdef INTRANDOMPULSER
+  /* Disable random pulser */
+  tiDisableRandomTrigger();
+#endif
 
   tiStatus(0);
 
@@ -379,8 +448,9 @@ rocTrigger(int arg)
   int empty, full, nwords, obuf_nblock;
   int nwread;
   int blen;
-  int verbose_level = 2;
-  int errFlag = 0;
+  int verbose_level = 0;
+  int errFlagMask = 0;
+  int errSlotMask = 0;
   int mpd_data_offset = 0;
 
   /* Data bank (4) for TI data */
@@ -496,7 +566,9 @@ rocTrigger(int arg)
 	    {
 	      timeout = 1;
 
-	      errFlag = 1;
+	      errFlagMask |= (1 << 0);
+	      errSlotMask |= (1 << id);
+
 	      printf("WARNING: *** Timeout while waiting for data in mpd %d"
 		     " - check MPD/APV configuration\n", id);
 	    }
@@ -530,7 +602,8 @@ rocTrigger(int arg)
 		  printf("\n\n **** OUTPUT BUFFER FIFO is FULL in MPD %d "
 			 "!!! RESET EVERYTHING !!!\n\n", id);
 
-		  errFlag = 1;
+		  errSlotMask |= (1 << id);
+		  errFlagMask |= (1 << 1);
 		}
 	      if (verbose_level > 0)
 		printf(" - OBUF Data Ready: %d (32b-words)\n", nwords);
@@ -553,7 +626,8 @@ rocTrigger(int arg)
 		      printf
 			(" * ERROR: MPD %2d OBUF Data Ready (%d) != Data Readout (%d)\n",
 			 id, nwords, nwread);
-		      errFlag = 1;
+		      errSlotMask |= (1 << id);
+		      errFlagMask |= (1 << 2);
 		    }
 
 		  dma_dabufp += nwread;
@@ -577,7 +651,7 @@ rocTrigger(int arg)
 		{
 		  printf(" * ERROR: word read count is 0, "
 			 "while some words are expected back\n");
-		  errFlag = 1;
+		  errFlagMask = (1 << 0);
 		}
 	    }
 
@@ -615,11 +689,27 @@ rocTrigger(int arg)
 	}
     }				// active mpd loop
 
-  if (errFlag)
+  if (errFlagMask)
     {
+      int ibit;
+      tiSetBlockLimit(5);
       tiStatus(1);
       mpdGStatus(1);
-      printf(" * * ERRORS in Readout\n");
+      printf(" * * ERRORS in Readout. Types: \n");
+      if(errFlagMask & (1<<0))
+	printf("   * Empty\n");
+      if(errFlagMask & (1<<1))
+	printf("   * Full\n");
+      if(errFlagMask & (1<<2))
+	printf("   * nwords ready != nwords readout\n");
+
+      printf(" * * MPDS with errors: \n     ");
+      for (ibit = 0; ibit < 21; ibit++)
+	{
+	  if(errSlotMask & (1 << ibit))
+	    printf(" %2d", ibit);
+	}
+      printf("\n");
     }
 
   BANKCLOSE;

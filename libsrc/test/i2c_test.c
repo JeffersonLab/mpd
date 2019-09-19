@@ -18,11 +18,6 @@
 #include "mpdLib.h"
 #include "mpdConfig.h"
 
-extern int mpdPrintDebug;
-/* extern volatile struct mpd_struct *MPDp[(MPD_MAX_BOARDS + 1)]; */
-/* #define CHECKMPD(x) (((int32_t)MPDp[x]==-1) || (x<0) || (x>21)) */
-
-void MPDtemp(uint32_t slot);
 int
 main(int argc, char *argv[])
 {
@@ -32,14 +27,14 @@ main(int argc, char *argv[])
     {
       slot = atoi(argv[1]);
 
-      if ((slot < 0) || (slot > 22))
+      if ((slot < 0) || (slot > 32))
 	{
 	  printf("invalid slot... using 21");
-	  slot = 21;
+	  slot = 2;
 	}
     }
   else
-    slot = 21;
+    slot = 2;
 
   printf("\n %s: slot = %d\n", argv[0], slot);
   printf("----------------------------\n");
@@ -48,12 +43,25 @@ main(int argc, char *argv[])
   if(stat != OK)
     goto CLOSE;
 
+  vmeCheckMutexHealth(1);
   vmeBusLock();
 
-  mpdConfigInit("config_apv.txt");
+
+  if(mpdConfigInit("config_apv.txt") < 0)
+    {
+      printf(" Config initialization ERROR!\n");
+      goto CLOSE;
+    }
   mpdConfigLoad();
 
-  if(mpdInit((slot << 19), (1<<19), 2, 0) <= 0)
+/* #define DEBUGI2C */
+#ifdef DEBUGI2C
+  vmeSetVMEDebugMode(1);
+  vmeSetVMEDebugModeOutputFilename("out.dbg");
+  extern FILE *fDebugMode;
+#endif
+
+  if(mpdInit((slot << 19), (1<<19), 1, 0) < 0)
     {
       printf("%s: Init error \n",
 	     __func__);
@@ -61,16 +69,29 @@ main(int argc, char *argv[])
     }
 
   slot = mpdSlot(0);
+  printf("MPD slot %2d config:\n", slot);
 
-  mpdI2C_Init(slot);
 
-  mpdAPV_Scan(slot);
+  printf(" - Initialize I2C\n");
+
+#ifdef DEBUGI2C
+  fprintf(fDebugMode, "I2C INIT\n");
+#endif
+  if (mpdI2C_Init(slot) != OK)
+    {
+      printf(" * * FAILED\n");
+    }
+
+  printf(" - APV discovery and init\n");
+#ifdef DEBUGI2C
+  fprintf(fDebugMode, "I2C SCAN\n");
+#endif
+  /* mpdSetPrintDebug(MPD_DEBUG_APVINIT); */
+  if (mpdAPV_Scan(slot) <= 0)
+    {			// no apv found, skip next
+      printf(" * * FAILED\n");
+    }
   mpdSetPrintDebug(0);
-
-  mpdDELAY25_GStatus();
-  mpdDELAY25_Set(slot, 0x12, 0x31);
-  mpdDELAY25_Set(slot+1, 0x22, 0x33);
-  mpdDELAY25_GStatus();
 
   /* apv reset */
   printf("Do APV reset on MPD slot %d\n", slot);
@@ -79,30 +100,115 @@ main(int argc, char *argv[])
       printf("ERR: apv reset failed on mpd %d\n",slot);
     }
 
-
+  usleep(10);
 
   /* // apv configuration */
-  printf("Configure single APV on MPD slot %d\n",slot);
+  printf(" - Configure Individual APVs\n");
+  printf(" - - ");
   int iapv;
-
-  for (iapv=0; iapv < mpdGetNumberAPV(slot); iapv++)
+  unsigned int apvConfigMask = 0;
+  int itry, badTry = 0;
+  for (itry = 0; itry < 3; itry++)
     {
-      if (mpdAPV_Config(slot ,iapv) != OK)
-  	{
-  	  printf("ERR: config apv card %d failed in mpd %d\n", iapv, slot);
-  	}
+
+      if(badTry)
+	{
+	  printf(" ******** RETRY ********\n");
+	  printf(" - - ");
+	  fflush(stdout);
+	}
+      badTry = 0;
+      for (iapv = 0; iapv < mpdGetNumberAPV(slot); iapv++)
+	{
+	  apvConfigMask |= (1 << mpdApvGetAdc(slot, iapv));
+
+	  printf("%2d ", iapv);
+	  fflush(stdout);
+
+#ifdef DEBUGI2C
+	  fprintf(fDebugMode, "APV CONFIG %d\n", iapv);
+#endif
+	  if (mpdAPV_Config(slot, iapv) != OK)
+	    {
+	      printf(" * * FAILED for APV %2d\n", iapv);
+	      if(iapv < (mpdGetNumberAPV(slot) - 1))
+		printf(" - - ");
+	      fflush(stdout);
+	      badTry = 1;
+	    }
+	  mpdSetPrintDebug(0);
+	}
+      printf("\n");
+      fflush(stdout);
+
+      if(badTry)
+	{
+	  printf(" ***** APV RESET *****\n");
+	  fflush(stdout);
+	  mpdI2C_ApvReset(slot);
+	}
+      else
+	{
+	  if(itry > 0)
+	    {
+	      printf(" ****** SUCCESS!!!! ******\n");
+	      fflush(stdout);
+	    }
+	  break;
+	}
     }
 
-  mpdApvStatus(slot, 0x0a000000);
-
-  double core_t = 0., air_t = 0.;
-  mpdLM95235_Read(slot, &core_t, &air_t);
-
-  MPD_MSG("Slot %2d: Board temperatures: core: %.2f degC air: %.2f degC\n",
-	  slot, core_t, air_t);
+  // summary report
+  printf("\n");
 
 
-  /* mpdGStatus(0); */
+  int ibit = 0;
+  printf("APVs in Config File (ADC 15 ... 0):\n");
+  printf("  MPD %2d : ", slot);
+  iapv = 0;
+  for (ibit = 15; ibit >= 0; ibit--)
+    {
+      if (((ibit + 1) % 4) == 0)
+	printf(" ");
+      if (apvConfigMask & (1 << ibit))
+	{
+	  printf("1");
+	  iapv++;
+	}
+      else
+	{
+	  printf(".");
+	}
+    }
+  printf(" (#APV %d)\n", iapv);
+
+  printf("\n");
+  printf("Found and Configured APVs: \n");
+
+  /* if (mpdGetApvEnableMask(slot) != 0) */
+    {
+      printf("  MPD %2d : ", slot);
+      iapv = 0;
+      for (ibit = 15; ibit >= 0; ibit--)
+	{
+	  if (((ibit + 1) % 4) == 0)
+	    printf(" ");
+	  if (mpdGetApvEnableMask(slot) & (1 << ibit))
+	    {
+	      printf("1");
+	      iapv++;
+	    }
+	  else
+	    {
+	      printf(".");
+	    }
+	}
+      printf(" (#APV %d)\n", iapv);
+    }
+  printf("\n");
+
+/*   mpdGStatus(1); */
+  mpdApvStatus(slot, 0xffff);
 
  CLOSE:
   vmeBusUnlock();
@@ -111,76 +217,6 @@ main(int argc, char *argv[])
 
   exit(0);
 }
-
-// MPD temp readout test
-void
-MPDtemp(uint32_t slot)
-{
-  uint8_t devaddr, devreg, rdata;
-  int timeout, ret;
-
-  devaddr = 0x4C;
-  devreg  = 0x0;
-  rdata = 0;
-
-  timeout = 0; ret = ERROR;
-  while ((ret != OK) && (timeout < 10))
-    {
-      ret = mpdI2C_ByteRead(slot, devaddr, devreg, 1, &rdata);
-      timeout++;
-    }
-
-  MPD_MSG("\n Temperature (signed local): 0x%x (%d)  to = %d  ret = %d\n",
-	 rdata,
-	 rdata, timeout, ret);
-
-  devaddr = 0x4C;
-  devreg  = 0x01;
-  rdata = 0;
-
-  timeout = 0; ret = ERROR;
-  while ((ret != OK) && (timeout < 10))
-    {
-      ret = mpdI2C_ByteRead(slot, devaddr, devreg, 1, &rdata);
-      timeout++;
-    }
-
-  MPD_MSG("\n Temperature (signed remotes): 0x%x (%d) \n",
-	 rdata,
-	 rdata);
-
-  devaddr = 0x4C;
-  devreg  = 0x31;
-  rdata = 0;
-
-  timeout = 0; ret = ERROR;
-  while ((ret != OK) && (timeout < 10))
-    {
-      ret = mpdI2C_ByteRead(slot, devaddr, devreg, 1, &rdata);
-      timeout++;
-    }
-
-  MPD_MSG("\n Temperature (unsigned remote): 0x%x (%d) \n",
-	 rdata,
-	 rdata);
-
-  devaddr = 0x4C;
-  devreg  = 0xFF;
-  rdata = 0;
-
-  timeout = 0; ret = ERROR;
-  while ((ret != OK) && (timeout < 10))
-    {
-      ret = mpdI2C_ByteRead(slot, devaddr, devreg, 1, &rdata);
-      timeout++;
-    }
-
-  MPD_MSG("\n Device Revision Code: 0x%x (%d) \n\n",
-	 rdata,
-	 rdata);
-
-}
-
 
 /*
   Local Variables:
