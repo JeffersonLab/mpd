@@ -1263,6 +1263,7 @@ mpdI2C_Init(int id)
   MPDUNLOCK;
 
   usleep(500);
+  return success;
 
   /* Send a STOP, this should clear up any noise that may be
      interpreted as a i2c transaction */
@@ -1287,6 +1288,13 @@ mpdI2C_ByteWrite(int id, uint8_t dev_addr, uint8_t reg_addr,
 {
   uint8_t command = 0;
   int idata, rval = OK;
+
+/* #define DEBUGI2C */
+#ifdef DEBUGI2C
+  extern FILE *fDebugMode;
+  fprintf(fDebugMode, "%s  id = %d  dev_addr = 0x%x  reg_addr = 0x%x, ndata = %d\n",
+	  __func__, id, dev_addr, reg_addr, ndata);
+#endif
 
   if (CHECKMPD(id))
     {
@@ -1346,6 +1354,12 @@ mpdI2C_ByteRead(int id, uint8_t dev_addr, uint8_t reg_addr,
 {
   uint8_t command = 0, rdata = 0;
   int idata, rval = OK;
+
+#ifdef DEBUGI2C
+  extern FILE *fDebugMode;
+  fprintf(fDebugMode, "%s  id = %d  dev_addr = 0x%x  reg_addr = 0x%x, ndata = %d\n",
+	  __func__, id, dev_addr, reg_addr, ndata);
+#endif
 
   if (CHECKMPD(id))
     {
@@ -1467,7 +1481,7 @@ int
 I2C_SendByte(int id, uint8_t byteval, uint8_t command)
 {
   uint32_t rdata = 0;
-  int retry_count = 0, rval = OK, send_stop = 0;
+  int retry_count = 0, rval = OK;
 
   if (CHECKMPD(id))
     {
@@ -1475,10 +1489,20 @@ I2C_SendByte(int id, uint8_t byteval, uint8_t command)
       return ERROR;
     }
 
+#ifdef DEBUGI2C
+  extern FILE *fDebugMode;
+  fprintf(fDebugMode, "%s  id = %d  byteval = 0x%x  command = 0x%x\n",
+	  __func__, id, byteval, command);
+#endif
+  MPD_DBGN(MPD_DEBUG_I2C,"id = %d   byteval = 0x%x  command = 0x%x\n",
+	   id, byteval, command);
+
   MPDLOCK;
+
   mpdWrite32(&MPDp[id]->i2c.tx_rx, byteval);
 
   mpdWrite32(&MPDp[id]->i2c.comm_stat, command);
+  usleep(10);
   rdata = mpdRead32(&MPDp[id]->i2c.comm_stat);
   while( (rdata & MPD_I2C_COMMSTAT_TIP) != 0 && (retry_count < mpdGetI2CMaxRetry(id)) )
     {
@@ -1501,12 +1525,8 @@ I2C_SendByte(int id, uint8_t byteval, uint8_t command)
     {
       MPD_DBGN(MPD_DEBUG_I2C, "NACK received 0x%x\n", rdata);
       rval = ERROR;
-      send_stop = 1;
     }
   MPDUNLOCK;
-
-  if(send_stop)
-    I2C_SendStop(id);
 
   return rval;
 }
@@ -1562,6 +1582,12 @@ I2C_SendStop(int id)
       return ERROR;
     }
 
+#ifdef DEBUGI2C
+  extern FILE *fDebugMode;
+  fprintf(fDebugMode, "%s  id = %d\n",
+	  __func__, id);
+#endif
+
   MPDLOCK;
   usleep(100);
   mpdWrite32(&MPDp[id]->i2c.comm_stat, MPD_I2C_COMMSTAT_STOP);
@@ -1573,7 +1599,7 @@ I2C_SendStop(int id)
 	   id);
 
   MPDLOCK;
-  data = MPD_I2C_COMMSTAT_TIP;
+  data = mpdRead32(&MPDp[id]->i2c.comm_stat);
   while ((data & MPD_I2C_COMMSTAT_TIP) != 0 && retry_count < mpdGetI2CMaxRetry(id))
     {
       usleep(100);
@@ -1664,7 +1690,7 @@ int
 I2C_CtrlHdmiEnable(int id, int upper)
 {
   uint32_t data;
-  int rval = OK;
+  int writeIt = 0, rval = OK;
 
   if (CHECKMPD(id))
     {
@@ -1677,34 +1703,76 @@ I2C_CtrlHdmiEnable(int id, int upper)
     return OK;
 
   MPDLOCK;
+  usleep(20);
   data = mpdRead32(&MPDp[id]->readout_config);
 
-  if( upper == 0 )
+  switch (upper)
     {
-      data &= ~0x00000400;	// clear bit 10
-      data |= 0x00000200;		// set bit 9
-      MPD_DBGN(MPD_DEBUG_I2C,
-	       "Enabling I2C on lower HDMI cable only (readout_config = 0x%04x)\n",
-	       data);
+    case 0: /* Lower connector 0:7 */
+
+      if ((data & MPD_ROCONFIG_I2C_ENABLE_MASK) == MPD_ROCONFIG_I2C_ENABLE_0_7)
+	{
+	  MPD_DBGN(MPD_DEBUG_I2C,
+		   "DIG 0:7 I2C already enabled (readout_config = 0x%04x)\n",
+		   data);
+	}
+      else
+	{
+	  data &= ~MPD_ROCONFIG_I2C_ENABLE_8_15;
+	  data |= MPD_ROCONFIG_I2C_ENABLE_0_7;
+	  writeIt = 1;
+	  MPD_DBGN(MPD_DEBUG_I2C,
+		   "Enabling I2C on DIG 0:7 only (readout_config = 0x%04x)\n",
+		   data);
+	}
+      break;
+
+    case 1: /* Lower connector 8:15 */
+
+      if ((data & MPD_ROCONFIG_I2C_ENABLE_MASK) == MPD_ROCONFIG_I2C_ENABLE_8_15)
+	{
+	  MPD_DBGN(MPD_DEBUG_I2C,
+		   "DIG 8:15 I2C already enabled (readout_config = 0x%04x)\n",
+		   data);
+	}
+      else
+	{
+
+	  data &= ~MPD_ROCONFIG_I2C_ENABLE_0_7;
+	  data |= MPD_ROCONFIG_I2C_ENABLE_8_15;
+	  writeIt = 1;
+	  MPD_DBGN(MPD_DEBUG_I2C,
+		   "Enabling I2C on DIG 8:15 only (readout_config = 0x%04x)\n",
+		   data);
+	}
+      break;
+
+    default: /* Both on */
+
+      if ((data & MPD_ROCONFIG_I2C_ENABLE_MASK) ==
+	  (MPD_ROCONFIG_I2C_ENABLE_MASK) )
+	{
+	  MPD_DBGN(MPD_DEBUG_I2C,
+		   "DIG 0:7 and 8:15 I2C already enabled (readout_config = 0x%04x)\n",
+		   data);
+	}
+      else
+	{
+
+	  data |= MPD_ROCONFIG_I2C_ENABLE_MASK;
+	  writeIt = 1;
+	  MPD_DBGN(MPD_DEBUG_I2C,
+		   "Enabling I2C on DIG 0:7 and 8:15 (readout_config = 0x%04x)\n",
+		   data);
+	}
     }
-  else
-    {
-      data &= ~0x00000200;	// clear bit 9
-      data |= 0x00000400;		// set bit 10
-      MPD_DBGN(MPD_DEBUG_I2C,
-	       "Enabling I2C on upper HDMI cable only (readout_config = 0x%04x)\n",
-	       data);
-    }
+
+  if(writeIt)
+    mpdWrite32(&MPDp[id]->readout_config, data);
 
   MPDUNLOCK;
-  I2C_SendStop(id);
 
-  MPDLOCK;
-  mpdWrite32(&MPDp[id]->readout_config, data);
-  MPDUNLOCK;
-
-  I2C_SendStop(id);
-  usleep(10);
+  usleep(20);
 
   return rval;
 }
@@ -2040,6 +2108,11 @@ mpdAPV_Try(int id, uint8_t apv_addr)	// i2c addr
   uint8_t y;
   int ret = 1;
 
+#ifdef DEBUGI2C
+  extern FILE *fDebugMode;
+  fprintf(fDebugMode, "%s: id = %d  apv_addr = 0x%x\n",
+	  __func__, id, apv_addr);
+#endif
 
   if (CHECKMPD(id))
     {
@@ -2057,6 +2130,7 @@ mpdAPV_Try(int id, uint8_t apv_addr)	// i2c addr
 
   MPD_DBG("Slot %2d:   i2c 0x%02x  W  0x%02x   tout %d   ret %d\n", id, apv_addr, x, timeout,
 	  ret);
+
 
   if (ret != OK)
     return ret;
@@ -2093,6 +2167,45 @@ mpdAPV_Try(int id, uint8_t apv_addr)	// i2c addr
 }
 
 int
+mpdAPV_TryNoHdmi(int id, uint8_t apv_addr)
+{
+
+  int timeout = 0;
+  uint8_t x = apv_addr + 32, y = 0;
+  int ret = ERROR;
+  uint8_t reg = latency_addr;
+
+#ifdef DEBUGI2C
+  extern FILE *fDebugMode;
+  fprintf(fDebugMode, "%s: id = %d  apv_addr = 0x%x\n",
+	  __func__, id, apv_addr);
+#endif
+
+  if (CHECKMPD(id))
+    {
+      MPD_ERR("MPD in slot %d is not initialized.\n", id);
+      return ERROR;
+    }
+
+  MPD_DBGN(MPD_DEBUG_APVINIT,
+	   "Enter: id = %d  apv_addr = 0x%x\n",
+	   id, apv_addr);
+
+  while ((ret != OK) && (timeout < 20))
+    {
+      ret = mpdI2C_ByteWrite(id, 0x20 | apv_addr, reg, 1, &x);
+      usleep(1);
+      timeout++;
+    }
+
+  MPD_DBGN(MPD_DEBUG_APVINIT,
+	   "WRITE i2c 0x%02x  dev 0x%02x  val = 0x%02x  to = %d  ret %d\n",
+	   apv_addr, reg, x, timeout, ret);
+
+  return ret;
+}
+
+int
 mpdAPV_TryHdmi(int id, uint8_t apv_addr, int ihdmi)
 {
 
@@ -2101,16 +2214,25 @@ mpdAPV_TryHdmi(int id, uint8_t apv_addr, int ihdmi)
   int ret = ERROR;
   uint8_t reg = latency_addr;
 
+#ifdef DEBUGI2C
+  extern FILE *fDebugMode;
+  fprintf(fDebugMode, "%s: id = %d  apv_addr = 0x%x  ihdmi = %d\n",
+	  __func__, id, apv_addr, ihdmi);
+#endif
+
   if (CHECKMPD(id))
     {
       MPD_ERR("MPD in slot %d is not initialized.\n", id);
       return ERROR;
     }
 
+  MPD_DBGN(MPD_DEBUG_APVINIT,
+	   "Enter: id = %d  apv_addr = 0x%x  ihdmi = %d\n",
+	   id, apv_addr, ihdmi);
 
   I2C_CtrlHdmiEnable(id, ihdmi);
 
-  while ((ret != OK) && (timeout < 10))
+  while ((ret != OK) && (timeout < 20))
     {
       /* ret = myAPV_Write(id, apv_addr, reg, x); */
       ret = mpdI2C_ByteWrite(id, 0x20 | apv_addr, reg, 1, &x);
@@ -2121,7 +2243,7 @@ mpdAPV_TryHdmi(int id, uint8_t apv_addr, int ihdmi)
 	   "WRITE hdmi %d i2c 0x%02x  dev 0x%02x  val = 0x%02x  to = %d  ret %d\n",
 	   ihdmi, apv_addr, reg, x, timeout, ret);
 
-   if(ret != OK)
+  if(ret != OK)
     return ret;
 
   /* Unmodified MPDs will stop having reliable i2c if READ commands
@@ -2131,7 +2253,7 @@ mpdAPV_TryHdmi(int id, uint8_t apv_addr, int ihdmi)
 
   timeout = -1; ret = ERROR;
 
-  while ((ret != OK) && (timeout < 10))
+  while ((ret != OK) && (timeout < 20))
     {
       ret = mpdI2C_ByteRead(id, 0x20 | apv_addr, (reg + 1), 1, &y);
       timeout++;
@@ -2173,7 +2295,133 @@ mpdGetApvEnableMask(int id)
   return fApvEnableMask[id];
 }
 
+#define NEWSCAN
+#ifdef NEWSCAN
+int
+mpdAPV_Scan(int id)
+{
+  int iapv = 0, iapv_addr = 0, ihdmi = 0, nhdmi = 2;
+  int nFound = 0;
+  unsigned int configApvMask = 0;
 
+  if (CHECKMPD(id))
+    {
+      MPD_ERR("MPD in slot %d is not initialized.\n", id);
+      return ERROR;
+    }
+
+  if(mpdGetFpgaCompileTime(id) < MPD_HDMI_SUPPORTED_FIRMWARE_TIME)
+    {
+      nhdmi = 1;
+    }
+
+  // !!! Blindscan used to determine which HDMI output to use
+  MPD_DBGN(MPD_DEBUG_APVINIT,
+	   "MPD %2d Blind scan on %d apvs: \n", id, MPD_MAX_APV);
+
+  /* Construct the i2c mask of APVs in config file */
+  for (iapv = 0; iapv < fMpd[id].nAPV; iapv++)
+    {
+      if(fApv[id][iapv].adc > -1)
+	configApvMask |= (1 << fApv[id][iapv].i2c);
+    }
+
+  MPD_DBGN(MPD_DEBUG_APVINIT,
+	   "MPD %2d: %2d APV found config files (i2c adr mask = 0x%08x)\n",
+	   id, fMpd[id].nAPV, configApvMask);
+
+
+  /* Turn on both i2c repeaters */
+  I2C_CtrlHdmiEnable(id, 2);
+
+  for (iapv_addr = 0; iapv_addr < MPD_MAX_APV; iapv_addr++)
+    {
+      if (mpdAPV_TryNoHdmi(id, iapv_addr) == OK)
+	{
+	  MPD_DBGN(MPD_DEBUG_APVINIT,
+		   "MPD %2d HDMI %d found candidate card at i2c addr 0x%02x 0x%04x\n",
+		   id, ihdmi, iapv_addr, mpdRead32(&MPDp[id]->readout_config));
+
+	  fMpd[id].CtrlHdmiInitMask  |= (1 << iapv_addr);
+	  nFound++;
+	}
+    }
+
+  MPD_DBGN(MPD_DEBUG_APVINIT,
+	   "MPD %2d: %2d APV found in blind scan (i2c adr mask = 0x%08x)\n",
+	  id, nFound, (uint32_t)(fMpd[id].CtrlHdmiInitMask));
+
+  /* Retry for those missing APVs that are defined in config file */
+  if(configApvMask != fMpd[id].CtrlHdmiInitMask)
+    {
+      int ibit = 0, retry = 0;
+      for(ibit = 0; ibit < MPD_MAX_APV; ibit++)
+	{
+	  if(configApvMask & (1<<ibit))
+	    {
+	      if((fMpd[id].CtrlHdmiInitMask & (1 << ibit)) == 0)
+		{
+		  MPD_ERR("Did not find APV with i2c address 0x%x\n",
+			  ibit);
+
+		  retry = 19;
+		  while ((mpdAPV_TryNoHdmi(id, ibit) != OK) && (retry < 20))
+		    {
+		      MPD_ERR("%2d: Retry NOT successfull\n", retry);
+		      // FIXME: Need something to do here.
+		      usleep(20);
+		      retry++;
+		    }
+
+		  if(retry < 20)
+		    {
+		      MPD_MSG("Retry successfull!\n");
+		      fMpd[id].CtrlHdmiInitMask  |= (1 << ibit);
+		      nFound++;
+		    }
+		}
+	    }
+	}
+      MPD_DBGN(MPD_DEBUG_APVINIT,
+	       "MPD %2d: %2d APV found after retry (i2c adr mask = 0x%08x)\n",
+	       id, nFound, (uint32_t)(fMpd[id].CtrlHdmiInitMask));
+    }
+
+  mpdResetApvEnableMask(id);
+
+  nApv[id] = 0;
+
+  for (iapv = 0; iapv < fMpd[id].nAPV; iapv++)
+    {
+      MPD_DBGN(MPD_DEBUG_APVINIT,
+	       "Try i2c=0x%02x adc=%2d : \n", fApv[id][iapv].i2c,
+	       fApv[id][iapv].adc);
+
+      if ((fMpd[id].CtrlHdmiInitMask & (1 << fApv[id][iapv].i2c)) == 0)
+	{
+	  /* MPD_DBGN(MPD_DEBUG_APVINIT, */
+	  MPD_ERR("Slot %d: I2C 0x%02x  ADC %d  Not found in blindscan.  It is disabled\n",
+		   id, fApv[id][iapv].i2c, fApv[id][iapv].adc);
+	  fApvEnableMask[id] &= ~(1 << fApv[id][iapv].adc);
+	  fApv[id][iapv].enabled = 0;
+	  continue;
+	}
+
+      MPD_DBGN(MPD_DEBUG_APVINIT,
+	       "0x%02x matched in MPD in slot %d\n", fApv[id][iapv].i2c, id);
+
+      mpdSetApvEnableMask(id, (1 << fApv[id][iapv].adc));
+
+      fApv[id][iapv].enabled = 1;
+      nApv[id]++;
+    }
+
+  MPD_DBG("MPD %2d: %2d APV found matching settings (adc mask = 0x%08x)\n",
+	  id, nApv[id], fApvEnableMask[id]);
+
+  return nApv[id];
+}
+#else
 int
 mpdAPV_Scan(int id)
 {
@@ -2207,11 +2455,16 @@ mpdAPV_Scan(int id)
 		  break;
 		}
 
+	      fMpd[id].CtrlHdmiMask[ihdmi] |= (1 << iapv);
+	      fMpd[id].CtrlHdmiInitMask  |= (1 << iapv);
 	      MPD_DBGN(MPD_DEBUG_APVINIT,
 		       "MPD %2d HDMI %d found candidate card at i2c addr 0x%02x 0x%04x\n",
 		       id, ihdmi, iapv, mpdRead32(&MPDp[id]->readout_config));
-	      fMpd[id].CtrlHdmiMask[ihdmi] |= (1 << iapv);
-	      fMpd[id].CtrlHdmiInitMask  |= (1 << iapv);
+	      MPD_DBGN(MPD_DEBUG_APVINIT,
+		       "  CtrlHdmiMask[%d] = 0x%x   CtrlHdmiInitMask = 0x%x\n",
+		       ihdmi,
+		       fMpd[id].CtrlHdmiMask[ihdmi],
+		       fMpd[id].CtrlHdmiInitMask);
 	      nFound++;
 	      break;
 	    }
@@ -2268,7 +2521,7 @@ mpdAPV_Scan(int id)
 
   return nApv[id];
 }
-
+#endif
 
 int
 mpdAPV_Write(int id, uint8_t apv_addr, uint8_t reg_addr, uint8_t val)
@@ -2281,11 +2534,15 @@ mpdAPV_Write(int id, uint8_t apv_addr, uint8_t reg_addr, uint8_t val)
       return ERROR;
     }
 
+#define I2C_BOTH_HDMI_ENABLED_WHENEVER_POSSIBLE
+#ifdef I2C_BOTH_HDMI_ENABLED_WHENEVER_POSSIBLE
+  I2C_CtrlHdmiEnable(id, 2); /* 2 = both on */
+#else
   if(mpdAPV_SetCtrlHdmi(id, apv_addr) != OK)
     {
       return ERROR;
     }
-
+#endif
   success = mpdI2C_ByteWrite(id, 0x20 | apv_addr, reg_addr, 1, &val);
 
   MPD_DBG("Slot %2d:  i2c = 0x%02x  reg = 0x%02x  val = 0x%02x success = %d\n",
@@ -2297,7 +2554,7 @@ mpdAPV_Write(int id, uint8_t apv_addr, uint8_t reg_addr, uint8_t val)
 int
 mpdAPV_Read(int id, uint8_t apv_addr, uint8_t reg_addr, uint8_t * val)
 {
-  int success;
+  int success, ihdmi;
 
   if (CHECKMPD(id))
     {
@@ -2305,13 +2562,16 @@ mpdAPV_Read(int id, uint8_t apv_addr, uint8_t reg_addr, uint8_t * val)
       return ERROR;
     }
 
-  if(mpdAPV_SetCtrlHdmi(id, apv_addr) != OK)
+  for(ihdmi = 0; ihdmi < 2; ihdmi++)
     {
-      return ERROR;
-    }
+      I2C_CtrlHdmiEnable(id, ihdmi);
 
-  success =
-    mpdI2C_ByteRead(id, 0x20 | apv_addr, reg_addr, 1, val);
+      success =
+	mpdI2C_ByteRead(id, 0x20 | apv_addr, reg_addr, 1, val);
+
+      if(success == OK)
+	break;
+    }
 
   MPD_DBG("Slot %2d:  i2c = 0x%02x  reg = 0x%02x  val = 0x%02x success = %d\n",
 	  id, apv_addr, reg_addr, *val, success);
@@ -2324,7 +2584,7 @@ mpdAPV_Config(int id, int apv_index)
 {
   int rval = 0, success, i;
   uint8_t apv_addr, reg_addr = 0, val = 0;
-
+  int write_error_count = 0;
 
   if (CHECKMPD(id))
     {
@@ -2426,18 +2686,29 @@ mpdAPV_Config(int id, int apv_index)
 
       usleep(1);
 
-      MPD_DBG("Slot %2d: i2c = 0x%02x  reg = 0x%02x  val = 0x%02x\n",
-	      id, fApv[id][apv_index].i2c, fApv[id][apv_index].adc, val);
+      MPD_DBGN(MPD_DEBUG_I2C,"Slot %2d: apv_addr = 0x%02x  reg_addr = 0x%02x  val = 0x%02x\n",
+	       id, apv_addr, reg_addr, val);
 
       success = mpdAPV_Write(id, apv_addr, reg_addr, val);
+      if (success != OK)
+	{
+	  /* Retry once if unsuccessful */
+	  success = mpdAPV_Write(id, apv_addr, reg_addr, val);
+	}
 
       if (success != OK)
 	{
-	  MPD_ERR("Slot %2d: ERROR writing to i2c = 0x%x (adc = %d) reg = 0x%x\n",
-		  id, apv_addr, fApv[id][apv_index].adc, reg_addr);
+	  write_error_count++;
 	  rval = ERROR;
 	}
     }				// end loop
+
+  if(write_error_count > 0)
+    {
+      MPD_ERR("Slot %2d: ERROR writing (%d) regs i2c = 0x%x (adc = %d)\n",
+	  id, write_error_count, apv_addr, fApv[id][apv_index].adc);
+    }
+
 
   //#ifdef DOTHISDIFFERENTLY
   // need improvement
