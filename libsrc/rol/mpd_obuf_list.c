@@ -726,7 +726,7 @@ rocTrigger(int arg)
 
       printf(" * * Trying a reset \n");
       daLogMsg("INFO","Resetting MPDs with ERRORs");
-      broken_status = resetMPDs(&broken_list, nbroken);
+      broken_status = resetMPDs((unsigned int *)&broken_list, nbroken);
 
       if(broken_status != OK)
 	{
