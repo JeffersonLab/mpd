@@ -54,6 +54,7 @@ unsigned int BLOCKLEVEL = 1;
 
 /* function prototype */
 void rocTrigger(int arg);
+int resetMPDs(unsigned int *broken_list, int nbroken);
 
 /****************************************
  *  DOWNLOAD
@@ -76,6 +77,8 @@ rocDownload()
   /*****************
    *   TI SETUP
    *****************/
+  /* Set prompt output width (100 + 2) * 4 = 408 ns */
+  tiSetPromptTriggerWidth(127);
 
   /* Set crate ID */
   tiSetCrateID(0x01);		/* ROC 1 */
@@ -99,10 +102,10 @@ rocDownload()
   tiSetTriggerHoldoff(1, 10, 1);
   tiSetTriggerHoldoff(2, 10, 1);
 
+#ifdef TI_MASTER
   /* Set the busy source to non-default value (no Switch Slot B busy) */
   tiSetBusySource(TI_BUSY_LOOPBACK, 1);
 
-#ifdef TI_MASTER
   /* Set number of events per block */
   tiSetBlockLevel(BLOCKLEVEL);
 #endif
@@ -691,8 +694,15 @@ rocTrigger(int arg)
 
   if (errFlagMask)
     {
-      int ibit;
-      tiSetBlockLimit(5);
+      int ibit = 0, nbroken = 0;
+      unsigned int broken_list[21] =
+	{
+	  0,0,0,0,0,0,0,
+	  0,0,0,0,0,0,0,
+	  0,0,0,0,0,0,0
+	};
+      int broken_status = OK;
+
       tiStatus(1);
       mpdGStatus(1);
       printf(" * * ERRORS in Readout. Types: \n");
@@ -707,9 +717,29 @@ rocTrigger(int arg)
       for (ibit = 0; ibit < 21; ibit++)
 	{
 	  if(errSlotMask & (1 << ibit))
-	    printf(" %2d", ibit);
+	    {
+	      printf(" %2d", ibit);
+	      broken_list[nbroken++] = ibit;
+	    }
 	}
       printf("\n");
+
+      printf(" * * Trying a reset \n");
+      daLogMsg("INFO","Resetting MPDs with ERRORs");
+      broken_status = resetMPDs(&broken_list, nbroken);
+
+      if(broken_status != OK)
+	{
+	  printf("ERROR: Unable to reset MPDs with ERRORS\n");
+	  daLogMsg("ERROR","Unable to reset MPDs with ERRORS");
+	  tiSetBlockLimit(5);
+	}
+      else
+	{
+	  printf(" * Success?  Be sure to check the data!\n");
+	  daLogMsg("INFO","MPDs reset.  CHECK THE DATA");
+	}
+
     }
 
   BANKCLOSE;
@@ -729,6 +759,77 @@ rocCleanup()
 	mpdApvBufferFree(mpdSlot(impd), ia);
     }
 
+#ifdef TI_MASTER
+  tiResetSlaveConfig();
+#endif
+
+}
+
+int
+resetMPDs(unsigned int *broken_list, int nbroken)
+{
+  int impd = 0,  id = 0, rval = OK;
+  static int ncalls = 0;
+
+  printf("%s: Number of calls = %d\n",
+	 __func__, ncalls);
+
+  for (impd = 0; impd < nbroken; impd++)
+    {
+      id = broken_list[impd];
+      mpdDAQ_Disable(id);
+    }
+
+  for (impd = 0; impd < nbroken; impd++)
+    {				// only active mpd set
+      id = broken_list[impd];
+
+      // mpd latest configuration before trigger is enabled
+      mpdSetAcqMode(id, "process");
+
+      // load pedestal and thr default values
+      mpdPEDTHR_Write(id);
+
+      // enable acq
+      mpdDAQ_Enable(id);
+
+      if (mpdAPV_Reset101(id) != OK)
+	{
+	  printf("MPD Slot %2d: Reset101 FAILED\n", id);
+	  rval = ERROR;
+	}
+    }
+
+  /* Check MPDs for data */
+  int sd_init, sd_overrun, sd_rdaddr, sd_wraddr, sd_nwords;
+  int obuf_nblock = 0, empty = 0, full = 0, nwords = 0;
+  for (impd = 0; impd < nbroken; impd++)
+    {				// only active mpd set
+      id = broken_list[impd];
+      mpdSDRAM_GetParam(id, &sd_init, &sd_overrun, &sd_rdaddr, &sd_wraddr,
+			&sd_nwords);
+
+      if ((sd_nwords != 0) || (sd_overrun == 1) || (sd_init == 0))
+	{
+	  printf("ERROR: Slot %2d SDRAM status: \n"
+		 "init=%d, overrun=%d, rdaddr=0x%x, wraddr=0x%x, nwords=%d\n",
+		 id, sd_init, sd_overrun, sd_rdaddr, sd_wraddr, sd_nwords);
+	  rval = ERROR;
+	}
+
+      obuf_nblock = mpdOBUF_GetBlockCount(id);
+      mpdOBUF_GetFlags(id, &empty, &full, &nwords);
+
+      if ((obuf_nblock != 0) || (empty == 0) || (full == 1) || (nwords != 0))
+	{
+	  printf("ERROR: Slot %2d OBUF status: \n"
+		 "nblock = %d  empty=%d  full=%d  nwords=%d\n",
+		 id, obuf_nblock, empty, full, nwords);
+	  rval = ERROR;
+	}
+    }
+
+  return rval;
 }
 
 
