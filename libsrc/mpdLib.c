@@ -5577,7 +5577,7 @@ mpdFiberEnable(int id)
     }
 
   MPDLOCK;
-  mpdWrite32(&MPDp[id]->fiber_status_ctrl, 1);
+  mpdWrite32(&MPDp[id]->fiber_status_ctrl, 0);
   MPDUNLOCK;
 
   return OK;
@@ -5599,7 +5599,7 @@ mpdFiberDisable(int id)
     }
 
   MPDLOCK;
-  mpdWrite32(&MPDp[id]->fiber_status_ctrl, 0);
+  mpdWrite32(&MPDp[id]->fiber_status_ctrl, 1);
   MPDUNLOCK;
 
   return OK;
