@@ -377,10 +377,8 @@ mpdReadSettingInt(config_setting_t **setting, char *name, int index)
 {
   int rval=0;
   config_setting_t *member;
-
-  member = config_setting_get_member(setting[0],name);
-  //  if(config_setting_lookup_int(setting[0], name, &rval))
-  if (member != NULL) {
+  if(setting[0] != NULL
+     && (member = config_setting_get_member(setting[0],name)) != NULL) {
     if (config_setting_length(member)) { // array
       rval = config_setting_get_int_elem(member,index);
     } else {
@@ -389,11 +387,17 @@ mpdReadSettingInt(config_setting_t **setting, char *name, int index)
     //    printf(" %s = %d\n", name, rval);
     return rval;
   }
-  else
-    if(config_setting_lookup_int(setting[1], name, &rval)) {
-      //      printf(" %s = %d (default)\n",name, rval);
-      return rval;
+  else{
+    member = config_setting_get_member(setting[1],name);
+    if (config_setting_length(member)) { // array
+      rval = config_setting_get_int_elem(member,index);
+    } else {
+      config_setting_lookup_int(setting[1], name, &rval);
     }
+    //    printf(" %s = %d\n", name, rval);
+    return rval;
+  }
+
 
   MPD_ERR("cannot get %s setting (neither specific nor default)\n",
 	  name);

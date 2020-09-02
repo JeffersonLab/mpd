@@ -210,12 +210,22 @@ mpdWrite32(volatile uint32_t * reg, uint32_t val)
  * @defgroup Deprec Deprecated - To be removed
  */
 
+uint32_t mpdGetSSPFiberMask(int sspSlot)
+{
+  if (sspSlot >= MPD_SSP_MAX_BOARDS)
+    {
+      MPD_MSG("ERROR: ssp (%d) out of range\n", sspSlot);
+      return ERROR;
+    }
+  return mpdSSPFiberMask[sspSlot];
+}
+
 int
-mpdSetSSPFiberMap_preInit(int ssp, int mpdmask)
+mpdSetSSPFiberMap_preInit(int ssp, uint32_t mpdmask)
 {
   int issp, impd;
 
-  if (ssp <= MPD_SSP_MAX_BOARDS)
+  if (ssp >= MPD_SSP_MAX_BOARDS)
     {
       MPD_MSG("ERROR: ssp (%d) out of range\n", ssp);
       return ERROR;
@@ -228,13 +238,13 @@ mpdSetSSPFiberMap_preInit(int ssp, int mpdmask)
     }
 
   mpdSSPFiberMask[ssp] = mpdmask;
-
+  printf("sspFiberMask: SSP in slot %d, fiber mask 0x%08x\n",ssp,mpdmask);
   /* Count up currently stored ports to use */
   mpdSSPFiberMaskUsed = 0;
   for (issp = 0; issp < nSSP; issp++)
     {
       for (impd = 0; impd < 32; impd++)
-	if (mpdSSPFiberMask[issp] & (1 << impd))
+	if (mpdSSPFiberMask[sspID[issp]] & (1 << impd))
 	  mpdSSPFiberMaskUsed++;
     }
 
@@ -327,6 +337,7 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
       else
 	{
 	  /* Initialize fiber mask array */
+	  // FIXME: Need to check if preInit routine was called
 	  memset(&mpdSSPFiberMask, 0, sizeof(mpdSSPFiberMask));
 	}
 
@@ -488,7 +499,7 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
       impd_disc++;
 
       if (mpdSSPMode)
-	boardID = ii;
+	boardID = (mpdssp_list[ii] >> 24) & 0xf;
       else
 	boardID = mpdRead32(&mpd->a24_bar) >> 3;
 
@@ -611,6 +622,10 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
 
   printf("\n");
   return (rval);
+}
+
+void mpdSetNmpdToInit(int n){
+  nmpd = n;
 }
 
 int
@@ -1864,6 +1879,8 @@ mpdAPV_SetCtrlHdmi(int id, uint8_t apv_addr)
 void
 mpdSetAdcClockPhase(int id, int adc, int phase)
 {
+  MPD_DBG("#############Setting Clock phase for mpd_%d, adc_%d, phase: %d \n", id, adc, phase);
+
   fMpd[id].fAdcClockPhase[adc] = phase;
 };
 
@@ -4300,8 +4317,6 @@ mpdFIFO_Samples(int id,
 #ifdef BLOCK_TRANSFER
   success = BUS_BlockRead(fifo_addr, nwords, event, nread);
 #else
-  printf("addr: %08x \n",
-	 (&MPDp[id]->data_ch[0][0] - &MPDp[id]->histo_memory[0][0]));
 
   for (i = 0; i < nwords; i++)
     {
@@ -5577,7 +5592,7 @@ mpdFiberEnable(int id)
     }
 
   MPDLOCK;
-  mpdWrite32(&MPDp[id]->fiber_status_ctrl, 0);
+  mpdWrite32(&MPDp[id]->fiber_status_ctrl, 1);
   MPDUNLOCK;
 
   return OK;
@@ -5599,7 +5614,7 @@ mpdFiberDisable(int id)
     }
 
   MPDLOCK;
-  mpdWrite32(&MPDp[id]->fiber_status_ctrl, 1);
+  mpdWrite32(&MPDp[id]->fiber_status_ctrl, 0);
   MPDUNLOCK;
 
   return OK;
@@ -6255,7 +6270,7 @@ mpdApvStatus(int id, uint16_t apv_mask)
 	}
       printf("\n");
       printf("--------------------------------------------------------------------------------\n");
-      for(iapv = 0; iapv < fMpd[id].nAPV; iapv++)
+      for(iapv = 0; iapv < MPD_MAX_APV; iapv++)
 	{
 	  if( apv_mask & (1 << iapv))
 	    {

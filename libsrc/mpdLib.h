@@ -362,6 +362,8 @@ int  mpdCheckAddresses(int id);
 int  mpdSlot(uint32_t i);
 int mpdSetPrintDebug(int debug);
 
+int mpdSetSSPFiberMap_preInit(int ssp, uint32_t mpdmask);
+uint32_t mpdGetSSPFiberMask(int sspSlot);
 void mpdSetZeroLevel(int id, uint16_t level);
 int  mpdGetZeroLevel(int id);
 void mpdSetOneLevel(int id, uint16_t level);
@@ -572,6 +574,7 @@ void mpdSetPedThrCommon(int id, int p, int t);
 int  mpdGetPedCommon(int id);
 int  mpdGetThrCommon(int id);
 
+void mpdSetNmpdToInit(int n);
 int mpdGetNumberMPD();
 
 void mpdSetFIRenable(int id, int flag);
