@@ -1,130 +1,140 @@
 #
-# Description:  Makefile for mpdLib.o, mpdLib.so
-#   Depending on ARCH:
+# File:
+#    Makefile
 #
-#  ARCH = VXWORKSPPC:
-#   This driver is specific to VxWorks BSPs and must be compiled
-#   with access to vxWorks headers.
+# Description:
+#    Makefile for the fADC250 (v2) Library using a VME Controller
+#      running vxWorks or Linux
 #
-#  ARCH = Linux:
-#   This driver requires access to the jvme headers (JLab specific Linux routine header)
 #
-# Uncomment DEBUG line for debugging info ( -g and -Wall )
-DEBUG=1
+BASENAME=mpd
 #
-ifndef ARCH
-	ifdef LINUXVME_LIB
-		ARCH=Linux
-	else
-		ARCH=VXWORKSPPC
-	endif
+# Uncomment DEBUG line, to include some debugging info ( -g and -Wall)
+DEBUG	?= 1
+QUIET	?= 1
+#
+ifeq ($(QUIET),1)
+        Q = @
+else
+        Q =
 endif
 
+ARCH	?= $(shell uname -m)
 
-#Check Operating system we are using
-ifndef OSNAME
-  OSNAME := $(subst -,_,$(shell uname))
+# Check for CODA 3 environment
+ifdef CODA_VME
+
+INC_CODA	= -I${CODA_VME}/include
+LIB_CODA	= -L${CODA_VME_LIB}
+
 endif
 
-ifndef ARCH
-  ARCH = VXWORKSPPC
+# Defs and build for VxWorks
+ifeq (${ARCH}, PPC)
+VXWORKS_ROOT		?= /site/vxworks/5.5/ppc/target
+OS			= VXWORKS
+
+ifdef LINUXVME_INC
+VME_INCLUDE             ?= -I$(LINUXVME_INC)
 endif
 
-ifndef WIND_BASE
-  WIND_BASE = /site/vxworks/5.5/ppc
+CC			= ccppc
+LD			= ldppc
+DEFS			= -mcpu=604 -DCPU=PPC604 -DVXWORKS -D_GNU_TOOL -mlongcall \
+				-fno-for-scope -fno-builtin -fvolatile -DVXWORKSPPC
+INCS			= -I. -I$(VXWORKS_ROOT)/h  \
+				$(VME_INCLUDE)
+CFLAGS			= $(INCS) $(DEFS)
+
+else
+OS			= LINUX
+endif #OS=VXWORKS#
+
+# Defs and build for Linux
+ifeq ($(OS),LINUX)
+
+# Safe defaults
+LINUXVME_LIB		?= ../lib
+LINUXVME_INC		?= ../include
+
+CC			= gcc
+ifeq ($(ARCH),i686)
+CC			+= -m32
 endif
+AR                      = ar
+RANLIB                  = ranlib
+CFLAGS			= -L. -Llibconfig -L${LINUXVME_LIB} ${LIB_CODA} -DLinux_vme -DLinux
+INCS			= -I. -Ilibconfig -I${LINUXVME_INC} ${INC_CODA}
 
+LIBS			= lib${BASENAME}.a lib${BASENAME}.so
+endif #OS=LINUX#
 
-ifeq ($(OSNAME),SunOS)
-CODALIB		= $(CODA)/$(OSNAME)/lib
-CODAINC		= $(CODA)/common/include
-CFLAGS		= -O $(DEFS)
-endif
-
-ifeq ($(ARCH),Linux)
-
-LINUXVME_LIB	?= ${CODA}/linuxvme/lib
-LINUXVME_INC	?= ${CODA}/linuxvme/include
-
-CODALIB 	= $(CODA)/$(OSNAME)/lib
-CODAINC 	= $(CODA)/common/include
-CFLAGS 		= -O $(DEFS) \
-		-I. -Ilibconfig -I${LINUXVME_INC}  \
-		-L. -Llibconfig -L${LINUXVME_LIB} -DJLAB
 ifdef DEBUG
-CFLAGS		+= -Wall -g
+CFLAGS			+= -Wall -g
 else
-CFLAGS		+= -O2
+CFLAGS			+= -O2
 endif
-AR		= ar
-RANLIB		= ranlib
-endif
+SRC			= ${BASENAME}Lib.c ${BASENAME}Config.c
+HDRS			= $(SRC:.c=.h)
+OBJ			= ${BASENAME}Lib.o ${BASENAME}Config.o
+DEPS			= $(SRC:.c=.d)
 
-ifeq ($(ARCH),VXWORKSPPC)
-INCDIR		= $(WIND_BASE)/target/h -I../universeDma
-CC		= ccppc
-LD		= ldppc
-DEFS		= -mcpu=604 -DCPU=PPC604 -DVXWORKS -D_GNU_TOOL -DVXWORKSPPC
-CFLAGS		= -O $(DEFS)
-INCS		= -fno-for-scope -fno-builtin -fvolatile -fstrength-reduce -mlongcall \
-		 -I. -I$(CODAINC) -I$(INCDIR)
-endif
-
-ifeq ($(ARCH),VXWORKS68K51)
-INCDI		= /site/vxworks/5.3/68k/target/h
-CC		= cc68k
-DEFS		= -DCPU=MC68040 -DVXWORKS -DVXWORKS68K51
-CFLAGS		= -O $(DEFS)
-INCS		= -Wall -mc68020 -fvolatile -fstrength-reduce -nostdinc -I. -I$(INCDIR)
-endif
-
-SRC		= mpdLib.c mpdConfig.c
-OBJ		= $(SRC:.c=.o)
-
-ifeq ($(ARCH),Linux)
-all: echoarch libmpd.a libmpd.so
+ifeq ($(OS),LINUX)
+all: echoarch ${LIBS}
 else
-all: echoarch mpdLib.o
+all: echoarch $(OBJ)
+endif
+
+%.o: %.c
+	@echo " CC     $@"
+	${Q}$(CC) $(CFLAGS) $(INCS) -c -o $@ $<
+
+libmpd.so: ${SRC}
+	@echo " CC     $@"
+	${Q}$(CC) -fpic -shared $(CFLAGS) -lm $(INCS) -o $@ ${SRC}
+
+%.a: $(OBJ)
+	@echo " AR     $@"
+	${Q}$(AR) ru $@ $<
+	@echo " RANLIB $@"
+	${Q}$(RANLIB) $@
+
+ifeq ($(OS),LINUX)
+install: $(LIBS)
+	@echo " CP     $<"
+	${Q}cp $(PWD)/$< $(LINUXVME_LIB)/$<
+	@echo " CP     $(<:%.a=%.so)"
+	${Q}cp $(PWD)/$(<:%.a=%.so) $(LINUXVME_LIB)/$(<:%.a=%.so)
+	@echo " CP     ${BASENAME}Lib.h"
+	${Q}cp ${PWD}/${BASENAME}Lib.h $(LINUXVME_INC)
+	@echo " CP     ${BASENAME}Config.h"
+	${Q}cp ${PWD}/${BASENAME}Config.h $(LINUXVME_INC)
+
+coda_install: $(LIBS)
+	@echo " CODACP $<"
+	${Q}cp $(PWD)/$< $(CODA_VME_LIB)/$<
+	@echo " CODACP $(<:%.a=%.so)"
+	${Q}cp $(PWD)/$(<:%.a=%.so) $(CODA_VME_LIB)/$(<:%.a=%.so)
+	@echo " CODACP ${BASENAME}Lib.h"
+	${Q}cp ${PWD}/${BASENAME}Lib.h $(CODA_VME)/include
+	@echo " CODACP ${BASENAME}Config.h"
+	${Q}cp ${PWD}/${BASENAME}Config.h $(CODA_VME)/include
+
+%.d: %.c
+	@echo " DEP    $@"
+	${Q}set -e; rm -f $@; \
+	$(CC) -MM -shared  -DLinux_vme -DLinux $(INCS) $< > $@.$$$$; \
+	sed 's,\($*\)\.o[ :]*,\1.o $@ : ,g' < $@.$$$$ > $@; \
+	rm -f $@.$$$$
+
+-include $(DEPS)
+
 endif
 
 clean:
-	rm -f mpd*.o libmpd.{a,so} *~
+	@rm -vf ${BASENAME}Lib.{o,d} fadc250Config.{o,d} lib${BASENAME}.{a,so}
 
 echoarch:
-	@echo "Make for $(ARCH)"
+	@echo "Make for $(OS)-$(ARCH)"
 
-ifeq ($(OSNAME),Linux)
-libmpd.a: $(OBJ)
-	@echo
-	@echo "Building "$@
-	$(AR) ruv $(@) $(OBJ)
-	$(RANLIB) $(@)
-
-libmpd.so: $(SRC) $(OBJ)
-	@echo
-	@echo "Building "$@
-	$(CC) -fpic -shared $(CFLAGS) -o $(@) $(OBJ)
-
-%.o: %.c
-	@echo
-	@echo "Building "$@
-	$(CC) -c $(CFLAGS) $(INCS) $(<) -o $(@)
-
-links: libmpd.a
-	ln -sf $(PWD)/libmpd.a $(LINUXVME_LIB)/libmpd.a
-	ln -sf $(PWD)/libmpd.so $(LINUXVME_LIB)/libmpd.so
-	ln -sf $(PWD)/mpdLib.h $(LINUXVME_INC)/mpdLib.h
-
-install: libmpd.a libmpd.so
-	@cp -v $(PWD)/$< $(LINUXVME_LIB)/$<
-	@cp -v $(PWD)/$(<:%.a=%.so) $(LINUXVME_LIB)/$(<:%.a=%.so)
-	@cp -v ${PWD}/*Lib.h $(LINUXVME_INC)
-	@cp -v ${PWD}/*Config.h $(LINUXVME_INC)
-
-endif
-
-
-##
-##  Local Variables:
-##  compile-command: "make -k install"
-##  End:
+.PHONY: clean echoarch
