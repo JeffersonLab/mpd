@@ -141,7 +141,7 @@ extern uint32_t sspMpdReadReg(int id, int impd, unsigned int reg);
 extern int sspMpdWriteReg(int id, int impd, unsigned int reg,
 			  unsigned int value);
 
-#define CHECKMPD(x) (((int32_t)MPDp[x]==-1) || (x<0) || (x>21))
+#define CHECKMPD(x) ((MPDp[x]==NULL) || (x<0) || (x>21))
 
 
 uint32_t
@@ -154,8 +154,8 @@ mpdRead32(volatile uint32_t * reg)
   if (mpdSSPMode)
     {
       /* SSP stored in bits 29-31, mpd stored in bits 24-28 */
-      issp = (int) (((uint32_t) reg & 0xE0000000) >> 29);
-      impd = (int) (((uint32_t) reg & 0x1F000000) >> 24);
+      issp = (int) (((uintptr_t) reg & 0xE0000000) >> 29);
+      impd = (int) (((uintptr_t) reg & 0x1F000000) >> 24);
 
       /* Check if this is in the mask */
       if ((mpdSSPFiberMask[sspID[issp]] & (1 << impd)) == 0)
@@ -164,7 +164,7 @@ mpdRead32(volatile uint32_t * reg)
 	  return ERROR;
 	}
 
-      newreg = (uint32_t) ((uint32_t) reg & 0x00FFFFFF);
+      newreg = (uint32_t) ((uintptr_t) reg & 0x00FFFFFF);
 
       read = sspMpdReadReg(issp, impd, newreg);
     }
@@ -179,13 +179,13 @@ void
 mpdWrite32(volatile uint32_t * reg, uint32_t val)
 {
   int issp, impd;
-  uint32_t newreg;
+  uintptr_t newreg;
 
   if (mpdSSPMode)
     {
       /* SSP stored in bits 29-31, mpd stored in bits 24-28 */
-      issp = (int) (((uint32_t) reg & 0xE0000000) >> 29);
-      impd = (int) (((uint32_t) reg & 0x1F000000) >> 24);
+      issp = (int) (((uintptr_t) reg & 0xE0000000) >> 29);
+      impd = (int) (((uintptr_t) reg & 0x1F000000) >> 24);
 
       /* Check if this is in the mask */
       if ((mpdSSPFiberMask[sspID[issp]] & (1 << impd)) == 0)
@@ -194,7 +194,7 @@ mpdWrite32(volatile uint32_t * reg, uint32_t val)
 	  return;
 	}
 
-      newreg = (uint32_t) ((uint32_t) reg & 0x00FFFFFF);
+      newreg = (uint32_t) ((uintptr_t) reg & 0x00FFFFFF);
 
       sspMpdWriteReg(issp, impd, newreg, val);
     }
@@ -293,7 +293,8 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
   int maxSlot = 1;
   int minSlot = 21;
   uint32_t magic_const = MPD_MAGIC_VALUE;
-  uint32_t rdata, laddr, laddr_inc;
+  uint32_t rdata;
+  uintptr_t laddr, laddr_inc;
   volatile struct mpd_struct *mpd = NULL;
   int noBoardInit = 0;
   int useList = 0;
@@ -375,9 +376,9 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
 
 	  /* get the MPD address */
 #ifdef VXWORKS
-	  res = sysBusToLocalAdrs(0x39, (char *) addr, (char **) &laddr);
+	  res = sysBusToLocalAdrs(0x39, (char *)(uintptr_t)addr, (char **) &laddr);
 #else
-	  res = vmeBusToLocalAdrs(0x39, (char *) addr, (char **) &laddr);
+	  res = vmeBusToLocalAdrs(0x39, (char *)(uintptr_t)addr, (char **) &laddr);
 #endif
 	  if (res != 0)
 	    {
@@ -393,7 +394,7 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
 
 	  mpdA24Offset = laddr - addr;
 	}
-      MPD_DBG("A24 mapping: VME addr=0x%x -> Local 0x%x\n", addr, laddr);
+      MPD_DBG("A24 mapping: VME addr=0x%x -> Local 0x%lx\n", addr, laddr);
     }
 
   impd = 0;
@@ -477,8 +478,8 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
 	  MPD_MSG("WARN: No addressable board at addr=0x%x\n", (UINT32) mpd);
 #else
 	  MPD_MSG
-	    ("No addressable board at VME (Local) address=0x%x (0x%x)\n",
-	     (UINT32) addr + ii * addr_inc, (UINT32) mpd);
+	    ("No addressable board at VME (Local) address=0x%x (0x%lx)\n",
+	     (UINT32) addr + ii * addr_inc, (uintptr_t) mpd);
 #endif
 	  printf("\n");
 	  errFlag = 1;
@@ -505,8 +506,8 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
 
       if ((boardID < 0) || (boardID > 21))
 	{
-	  MPD_ERR("For Board at 0x%x,  Slot number is not in range: %d\n",
-		  (UINT32) mpd - mpdA24Offset, boardID);
+	  MPD_ERR("For Board at 0x%lx,  Slot number is not in range: %d\n",
+		  (uintptr_t) mpd - mpdA24Offset, boardID);
 	  continue;
 	}
 
@@ -575,17 +576,17 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
 
       if (mpdSSPMode)
 	{
-	  MPD_MSG("MPD %2d at SSP %d Fiber Connection %d initialized\n",
+	  MPD_MSG("MPD %2d at SSP %ld Fiber Connection %ld initialized\n",
 		  impd, (laddr_inc & 0xE0000000) >> 29,
 		  (laddr_inc & 0x1F000000) >> 24);
-	  MPD_DBG(" Local address = 0x%08x \n", (uint32_t) MPDp[boardID]);
+	  MPD_DBG(" Local address = 0x%08lx \n", (uintptr_t) MPDp[boardID]);
 	}
       else
 	{
 	  printf
-	    ("               - MPD %2d at VME (Local) address 0x%08x (0x%08x)\n\n",
-	     impd, (UINT32) MPDp[boardID] - mpdA24Offset,
-	     (UINT32) MPDp[boardID]);
+	    ("               - MPD %2d at VME (Local) address 0x%08lx (0x%08lx)\n\n",
+	     impd, (uintptr_t) MPDp[boardID] - mpdA24Offset,
+	     (uintptr_t) MPDp[boardID]);
 	}
 
       if (!noBoardInit)
@@ -662,112 +663,112 @@ mpdGetNumberConfiguredAPV(int id)
 int
 mpdCheckAddresses(int id)
 {
-  uint32_t offset = 0, expected = 0, base = 0;
+  uintptr_t offset = 0, expected = 0, base = 0;
   int rval = OK;
 
   MPD_MSG("\n\t ---------- Checking mpd address space ---------- \n");
 
-  base = (uint32_t) & MPDp[id]->magic_value;
+  base = (uintptr_t) & MPDp[id]->magic_value;
 
-  offset = ((uint32_t) & MPDp[id]->reset_reg) - base;
+  offset = ((uintptr_t) & MPDp[id]->reset_reg) - base;
   expected = 0x100;
   if (offset != expected)
     {
-      MPD_ERR(" MPDp[id]->reset_reg \n not at offset = 0x%x (@ 0x%x)\n",
+      MPD_ERR(" MPDp[id]->reset_reg \n not at offset = 0x%lx (@ 0x%lx)\n",
 	      expected, offset);
       rval = ERROR;
     }
 
-  offset = ((uint32_t) & MPDp[id]->a24_bar) - base;
+  offset = ((uintptr_t) & MPDp[id]->a24_bar) - base;
   expected = 0x180;
   if (offset != expected)
     {
-      MPD_ERR(" MPDp[id]->a24_bar \n not at offset = 0x%x (@ 0x%x)\n",
+      MPD_ERR(" MPDp[id]->a24_bar \n not at offset = 0x%lx (@ 0x%lx)\n",
 	      expected, offset);
       rval = ERROR;
     }
 
-  offset = ((uint32_t) & MPDp[id]->ob_status.evb_fifo_word_count) - base;
+  offset = ((uintptr_t) & MPDp[id]->ob_status.evb_fifo_word_count) - base;
   expected = 0x200;
   if (offset != expected)
     {
       MPD_ERR
-	(" MPDp[id]->ob_status.evb_fifo_word_count \n not at offset = 0x%x (@ 0x%x)\n",
+	(" MPDp[id]->ob_status.evb_fifo_word_count \n not at offset = 0x%lx (@ 0x%lx)\n",
 	 expected, offset);
       rval = ERROR;
     }
 
-  offset = ((uint32_t) & MPDp[id]->adc_config) - base;
+  offset = ((uintptr_t) & MPDp[id]->adc_config) - base;
   expected = 0x300;
   if (offset != expected)
     {
-      MPD_ERR(" MPDp[id]->adc_config \n not at offset = 0x%x (@ 0x%x)\n",
+      MPD_ERR(" MPDp[id]->adc_config \n not at offset = 0x%lx (@ 0x%lx)\n",
 	      expected, offset);
       rval = ERROR;
     }
 
-  offset = ((uint32_t) & MPDp[id]->i2c.clock_prescaler_low) - base;
+  offset = ((uintptr_t) & MPDp[id]->i2c.clock_prescaler_low) - base;
   expected = 0x400;
   if (offset != expected)
     {
       MPD_ERR
-	(" MPDp[id]->i2c.clock_prescaler_low \n not at offset = 0x%x (@ 0x%x)\n",
+	(" MPDp[id]->i2c.clock_prescaler_low \n not at offset = 0x%lx (@ 0x%lx)\n",
 	 expected, offset);
       rval = ERROR;
     }
 
-  offset = ((uint32_t) & MPDp[id]->histo[0].csr) - base;
+  offset = ((uintptr_t) & MPDp[id]->histo[0].csr) - base;
   expected = 0x1000;
   if (offset != expected)
     {
-      MPD_ERR(" MPDp[id]->histo[0].csr \n not at offset = 0x%x (@ 0x%x)\n",
+      MPD_ERR(" MPDp[id]->histo[0].csr \n not at offset = 0x%lx (@ 0x%lx)\n",
 	      expected, offset);
       rval = ERROR;
     }
 
-  offset = ((uint32_t) & MPDp[id]->histo_memory[0][0]) - base;
+  offset = ((uintptr_t) & MPDp[id]->histo_memory[0][0]) - base;
   expected = 0x4000;
   if (offset != expected)
     {
       MPD_ERR
-	(" MPDp[id]->histo_memory[0][0] \n not at offset = 0x%x (@ 0x%x)\n",
+	(" MPDp[id]->histo_memory[0][0] \n not at offset = 0x%lx (@ 0x%lx)\n",
 	 expected, offset);
       rval = ERROR;
     }
 
-  offset = ((uint32_t) & MPDp[id]->data_ch[0][0]) - base;
+  offset = ((uintptr_t) & MPDp[id]->data_ch[0][0]) - base;
   expected = 0x10000;
   if (offset != expected)
     {
-      MPD_ERR(" MPDp[id]->data_ch[0][0] \n not at offset = 0x%x (@ 0x%x)\n",
+      MPD_ERR(" MPDp[id]->data_ch[0][0] \n not at offset = 0x%lx (@ 0x%lx)\n",
 	      expected, offset);
       rval = ERROR;
     }
 
-  offset = ((uint32_t) & MPDp[id]->ch_flags.used_word_ch_pair[0]) - base;
+  offset = ((uintptr_t) & MPDp[id]->ch_flags.used_word_ch_pair[0]) - base;
   expected = 0x30000;
   if (offset != expected)
     {
       MPD_ERR
-	(" MPDp[id]->ch_flags.used_word_ch_pair[0] \n not at offset = 0x%x (@ 0x%x)\n",
+	(" MPDp[id]->ch_flags.used_word_ch_pair[0] \n not at offset = 0x%lx (@ 0x%lx)\n",
 	 expected, offset);
       rval = ERROR;
     }
 
-  offset = ((uint32_t) & MPDp[id]->ped[0][0]) - base;
+  offset = ((uintptr_t) & MPDp[id]->ped[0][0]) - base;
   expected = 0x34000;
   if (offset != expected)
     {
-      MPD_ERR(" MPDp[id]->ped[0][0] \n not at offset = 0x%x (@ 0x%x)\n",
+      MPD_ERR(" MPDp[id]->ped[0][0] \n not at offset = 0x%lx (@ 0x%lx)\n",
 	      expected, offset);
       rval = ERROR;
     }
 
-  offset = ((uint32_t) & MPDp[id]->thres[0][0]) - base;
+  offset = ((uintptr_t) & MPDp[id]->thres[0][0]) - base;
   expected = 0x36000;
   if (offset != expected)
     {
-      MPD_ERR(" MPDp[id]->thres[0][0] \n not at offset = 0x%x (@ 0x%x)\n",
+      MPD_ERR(" MPDp[id]->thres[0][0] \n not at offset = 0x%lx (@ 0x%lx)\n",
 	      expected, offset);
       rval = ERROR;
     }
@@ -2188,7 +2189,7 @@ mpdAPV_TryNoHdmi(int id, uint8_t apv_addr)
 {
 
   int timeout = 0;
-  uint8_t x = apv_addr + 32, y = 0;
+  uint8_t x = apv_addr + 32;
   int ret = ERROR;
   uint8_t reg = latency_addr;
 
@@ -2317,7 +2318,7 @@ mpdGetApvEnableMask(int id)
 int
 mpdAPV_Scan(int id)
 {
-  int iapv = 0, iapv_addr = 0, ihdmi = 0, nhdmi = 2;
+  int iapv = 0, iapv_addr = 0, ihdmi = 0;
   int nFound = 0;
   unsigned int configApvMask = 0;
 
@@ -2325,11 +2326,6 @@ mpdAPV_Scan(int id)
     {
       MPD_ERR("MPD in slot %d is not initialized.\n", id);
       return ERROR;
-    }
-
-  if(mpdGetFpgaCompileTime(id) < MPD_HDMI_SUPPORTED_FIRMWARE_TIME)
-    {
-      nhdmi = 1;
     }
 
   // !!! Blindscan used to determine which HDMI output to use
@@ -3892,8 +3888,8 @@ mpdOBUF_Read(int id, volatile uint32_t * data, int size, int *wrec)
   if (retVal != 0)
     {
       MPD_ERR("ERROR in DMA transfer start (returned 0x%x)\n", retVal);
-      MPD_ERR("  id=%d apv laddr = 0x%08x  vmeAdrs = 0x%08x  size = %d\n",
-	      id, (uint32_t) laddr, vmeAdrs, size);
+      MPD_ERR("  id=%d apv laddr = 0x%08lx  vmeAdrs = 0x%08x  size = %d\n",
+	      id, (uintptr_t) laddr, vmeAdrs, size);
       *wrec = 0;
       MPDUNLOCK;
       return (retVal);
@@ -3995,7 +3991,7 @@ mpdOBUF_ReadLL(volatile uint32_t * data, int size, int *wrec, int rflag)
       else
 	dmaSizeLL[ilist] = fifowords << 2;
 
-      destAdrLL[ilist] = (uint32_t) & laddr[buf_index];
+      destAdrLL[ilist] = (uintptr_t) & laddr[buf_index];
       buf_index += (dmaSizeLL[ilist] >> 2);
       ilist++;
 
@@ -4008,7 +4004,7 @@ mpdOBUF_ReadLL(volatile uint32_t * data, int size, int *wrec, int rflag)
 		   dmaSizeLL[ilist]);
 	}
 
-      vmeDmaSetupLL((uint32_t) laddr, vmeAdrLL, dmaSizeLL, numLL);
+      vmeDmaSetupLL((uintptr_t) laddr, vmeAdrLL, dmaSizeLL, numLL);
     }
 
   retVal = vmeDmaSendLL();
@@ -4142,7 +4138,7 @@ mpdFIFO_ReadSingle(int id, int channel,	// apv channel (FIFO)
   vmeDmaConfig(1, 2, 0);	//A24 BLT32
 
   vmeAdrs =
-    (uint32_t) & MPDp[id]->data_ch[fApv[id][channel].adc][0] - mpdA24Offset;
+    (uintptr_t) & MPDp[id]->data_ch[fApv[id][channel].adc][0] - mpdA24Offset;
 
   MPD_DBGN(MPD_DEBUG_DMA,
 	   "dbuf addr = 0x%lx  vmeAdrs = 0x%08x   size = %d\n",
@@ -6195,11 +6191,9 @@ mpdApvStatus(int id, uint16_t apv_mask)
   };
 
   /* Holds all the readback values */
-  struct sRVAL *s_rval[16];
   uint8_t err[16][18], rval[16][18];
 
   /* Holds all the register addresses */
-  struct sRVAL *s_reg;
   uint8_t APVreg[18]  =
     {
       ipre_addr, ipcasc_addr, ipsf_addr, isha_addr, issf_addr,
@@ -6217,12 +6211,6 @@ mpdApvStatus(int id, uint16_t apv_mask)
       "LATENCY", "MUXGAIN", "ERROR"
     };
 
-
-  /* Make the struct point to the uint8_t data */
-  for(ireg = 0; ireg < 18; ireg++)
-    s_rval[ireg] = (struct sRVAL *) rval[ireg];
-
-  s_reg = (struct sRVAL *)APVreg;
 
   if (CHECKMPD(id))
     {
