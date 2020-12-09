@@ -47,7 +47,7 @@ main(int argc, char *argv[])
   vmeBusLock();
 
 
-  if(mpdConfigInit("config_apv.txt") < 0)
+  if(mpdConfigInit("/home/sbs-onl/cfg/mpd_config.cfg") < 0)
     {
       printf(" Config initialization ERROR!\n");
       goto CLOSE;
