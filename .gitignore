@@ -1,7 +1,3 @@
-# Extensionless files (next 3 lines)
-*
-!/**/
-!*.*
 # Temporary/backup files
 *~
 \#*
