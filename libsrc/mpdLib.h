@@ -197,7 +197,7 @@ struct mpd_struct
 #define MPD_IN_P0    0
 #define MPD_IN_FRONT 1
 
-#define MPD_FIBER_DISABLED         (1<<0)
+#define MPD_FIBER_DISABLE          (1<<0)
 #define MPD_SFP_TRANSMIT_DISABLED  (1<<1)
 #define MPD_FIBER_RESET            (1<<3)
 #define MPD_FIBER_ERROR_COUNT_MASK 0x00000FF0

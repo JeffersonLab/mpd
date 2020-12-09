@@ -3,7 +3,7 @@
 #    Makefile
 #
 # Description:
-#    Makefile for the fADC250 (v2) Library using a VME Controller
+#    Makefile for the MPD Library using a VME Controller
 #      running vxWorks or Linux
 #
 #
@@ -74,9 +74,9 @@ CFLAGS			+= -Wall -g
 else
 CFLAGS			+= -O2
 endif
-SRC			= ${BASENAME}Lib.c ${BASENAME}Config.c
+SRC			= ${BASENAME}Lib.c ${BASENAME}Config.c sspMpdConfig.c
 HDRS			= $(SRC:.c=.h)
-OBJ			= ${BASENAME}Lib.o ${BASENAME}Config.o
+OBJ			= $(SRC:.c=.o)
 DEPS			= $(SRC:.c=.d)
 
 ifeq ($(OS),LINUX)
@@ -109,6 +109,8 @@ install: $(LIBS)
 	${Q}cp ${PWD}/${BASENAME}Lib.h $(LINUXVME_INC)
 	@echo " CP     ${BASENAME}Config.h"
 	${Q}cp ${PWD}/${BASENAME}Config.h $(LINUXVME_INC)
+	@echo " CP     sspMpdConfig.h"
+	${Q}cp ${PWD}/sspMpdConfig.h $(LINUXVME_INC)
 
 coda_install: $(LIBS)
 	@echo " CODACP $<"
@@ -119,6 +121,8 @@ coda_install: $(LIBS)
 	${Q}cp ${PWD}/${BASENAME}Lib.h $(CODA_VME)/include
 	@echo " CODACP ${BASENAME}Config.h"
 	${Q}cp ${PWD}/${BASENAME}Config.h $(CODA_VME)/include
+	@echo " CODACP sspMpdConfig.h"
+	${Q}cp ${PWD}/sspMpdConfig.h $(CODA_VME)/include
 
 %.d: %.c
 	@echo " DEP    $@"
@@ -132,7 +136,7 @@ coda_install: $(LIBS)
 endif
 
 clean:
-	@rm -vf ${BASENAME}Lib.{o,d} fadc250Config.{o,d} lib${BASENAME}.{a,so}
+	@rm -vf ${OBJ} ${DEPS} lib${BASENAME}.{a,so} *.d.*
 
 echoarch:
 	@echo "Make for $(OS)-$(ARCH)"

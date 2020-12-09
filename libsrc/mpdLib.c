@@ -73,9 +73,9 @@ LOCAL UINT32 mpdIntVec = 0;	/* default interrupt Vector */
 
 /* Define global variables */
 int nmpd = 0;			/* Number of MPDs in Crate */
-int mpdA32Base = 0x09000000;	/* Minimum VME A32 Address for use by MPDs */
-int mpdA32Offset = 0x08000000;	/* Difference in CPU A32 Base - VME A32 Base */
-int mpdA24Offset = 0x0;		/* Difference in CPU A24 Base - VME A24 Base */
+unsigned long mpdA32Base = 0x09000000;	 /* Minimum VME A32 Address for use by MPDs */
+unsigned long mpdA32Offset = 0x08000000; /* Difference in CPU A32 Base - VME A32 Base */
+unsigned long mpdA24Offset = 0x0;	 /* Difference in CPU A24 Base - VME A24 Base */
 volatile struct mpd_struct *MPDp[(MPD_MAX_BOARDS + 1)];	/* pointers to MPD memory map */
 volatile uint32_t *MPDpd[(MPD_MAX_BOARDS + 1)];	/* pointers to MPD FIFO memory */
 volatile uint32_t *MPDpmb;	/* pointer to Multblock window */
@@ -444,7 +444,7 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
 	    {
 	      laddr_inc = laddr + ii * addr_inc;
 	    }
-	  MPD_MSG("Looking for MPD with Address 0x%x\n", (uint32_t)laddr_inc - mpdA24Offset);
+	  MPD_MSG("Looking for MPD with Address 0x%08lx\n", (unsigned long)laddr_inc - mpdA24Offset);
 	  mpd = (struct mpd_struct *) laddr_inc;
 
 #ifdef VXWORKS
@@ -585,7 +585,7 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
 	{
 	  printf
 	    ("               - MPD %2d at VME (Local) address 0x%08lx (0x%08lx)\n\n",
-	     impd, (uintptr_t) MPDp[boardID] - mpdA24Offset,
+	     impd, (unsigned long) MPDp[boardID] - mpdA24Offset,
 	     (uintptr_t) MPDp[boardID]);
 	}
 
@@ -5539,7 +5539,7 @@ mpdFiberStatus(int id)
   printf("\n");
 
   printf("  Fiber %s\n",
-	 (fiber_status_ctrl & MPD_FIBER_DISABLED) ? "Disabled" : "Enabled");
+	 (fiber_status_ctrl & MPD_FIBER_DISABLE) ? "Disabled" : "Enabled");
 
   printf("  SFP transmit %s\n",
 	 (fiber_status_ctrl & MPD_SFP_TRANSMIT_DISABLED) ? "Disabled" :
@@ -5588,7 +5588,7 @@ mpdFiberEnable(int id)
     }
 
   MPDLOCK;
-  mpdWrite32(&MPDp[id]->fiber_status_ctrl, 1);
+  mpdWrite32(&MPDp[id]->fiber_status_ctrl, 0);
   MPDUNLOCK;
 
   return OK;
@@ -5610,7 +5610,7 @@ mpdFiberDisable(int id)
     }
 
   MPDLOCK;
-  mpdWrite32(&MPDp[id]->fiber_status_ctrl, 0);
+  mpdWrite32(&MPDp[id]->fiber_status_ctrl, MPD_FIBER_DISABLE);
   MPDUNLOCK;
 
   return OK;
