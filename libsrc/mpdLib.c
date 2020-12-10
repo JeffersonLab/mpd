@@ -5531,7 +5531,7 @@ mpdFiberStatus(int id)
   fiber_status_ctrl = mpdRead32(&MPDp[id]->fiber_status_ctrl);
   MPDUNLOCK;
 
-  printf("Fiber Status for SSP in slot %d\n", id);
+  printf("Fiber Status for MPD in slot %d\n", id);
   printf
     ("--------------------------------------------------------------------------------\n");
   printf("\n");
@@ -5547,9 +5547,10 @@ mpdFiberStatus(int id)
 
   printf("\n");
 
-
+#ifdef WORKING_SFP_PRESENT_BIT
   printf("  SFP %s\n",
 	 (fiber_status_ctrl & MPD_SFP_PRESENT) ? "Present" : "NOT Present");
+#endif
 
   if (fiber_status_ctrl & MPD_SFP_LOS)
     printf("  SFP -Loss of Signal- DETECTED\n");
