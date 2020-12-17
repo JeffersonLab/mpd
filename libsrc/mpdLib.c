@@ -141,7 +141,7 @@ extern uint32_t sspMpdReadReg(int id, int impd, unsigned int reg);
 extern int sspMpdWriteReg(int id, int impd, unsigned int reg,
 			  unsigned int value);
 
-#define CHECKMPD(x) ((MPDp[x]==NULL) || (x<0) || (x>21))
+#define CHECKMPD(x) ((MPDp[x]==NULL) || ((long)MPDp[x]==-1) || (x<0) || (x>21))
 
 
 uint32_t
