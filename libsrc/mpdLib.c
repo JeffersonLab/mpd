@@ -238,13 +238,14 @@ mpdSetSSPFiberMap_preInit(int ssp, uint32_t mpdmask)
     }
 
   mpdSSPFiberMask[ssp] = mpdmask;
-  printf("sspFiberMask: SSP in slot %d, fiber mask 0x%08x\n",ssp,mpdmask);
+  printf("%s: SSP in slot %d, fiber mask 0x%08x\n",
+	 __func__, ssp,mpdmask);
   /* Count up currently stored ports to use */
   mpdSSPFiberMaskUsed = 0;
-  for (issp = 0; issp < nSSP; issp++)
+  for (issp = 0; issp < MPD_SSP_MAX_BOARDS; issp++)
     {
       for (impd = 0; impd < 32; impd++)
-	if (mpdSSPFiberMask[sspID[issp]] & (1 << impd))
+	if (mpdSSPFiberMask[issp] & (1 << impd))
 	  mpdSSPFiberMaskUsed++;
     }
 
@@ -332,13 +333,11 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
 
       if (mpdSSPFiberMaskUsed > 0)
 	{
-	  MPD_MSG
-	    ("WARNING: May Overwrite previously stored SSP Fiber Masks\n");
+	  MPD_MSG("Using pre-initialization SSP Fiber Masks\n");
 	}
       else
 	{
 	  /* Initialize fiber mask array */
-	  // FIXME: Need to check if preInit routine was called
 	  memset(&mpdSSPFiberMask, 0, sizeof(mpdSSPFiberMask));
 	}
 
@@ -405,6 +404,9 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
       printf("****************************************\n");
       /* Make a quick and dirty array to use in the next iteration
          over mpds up to ninc */
+      if(ninc == 0)
+	ninc = mpdSSPFiberMaskUsed;
+
       mpdssp_list = (int *) malloc(ninc * sizeof(int));
       for (issp = 0; issp < nSSP; issp++)
 	{
