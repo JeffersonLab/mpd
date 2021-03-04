@@ -29,6 +29,8 @@ pthread_mutex_t   mpdMutex = PTHREAD_MUTEX_INITIALIZER;
 extern volatile struct mpd_struct *MPDp[(MPD_MAX_BOARDS+1)]; /* pointers to MPD memory map */
 extern int mpdOutputBufferBaseAddr;               /* output buffer base address */
 extern int mpdOutputBufferSpace;                  /* output buffer space (8 Mbyte) */
+extern int mpdPrintDebug;
+extern void mpdWrite32(volatile uint32_t * reg, uint32_t val);
 #define DMA_BUFSIZE 40000
 
 extern GEF_VME_BUS_HDL vmeHdl;
@@ -36,7 +38,6 @@ GEF_VME_DMA_HDL dmaHdl;
 uint32_t vmeAdrs;
 unsigned long physMemBase;
 uint32_t *fBuffer; // DMA data buffer
-extern int mpdPrintDebug;
 
 int DMA_Init(int id, int fast_readout);
 int DMA_Read(int id, int size, int *wrec);
@@ -55,7 +56,6 @@ main(int argc, char *argv[])
   uint32_t hcount;
   int scount, sfreq;
   int sch0, sch1;
-  int hgain;
   int rdone, rtout;
 
   uint16_t mfull,mempty;
@@ -68,16 +68,40 @@ main(int argc, char *argv[])
   uint32_t hdata[MAX_HDATA]; // histogram data buffer
   uint32_t sdata[MAX_SDATA]; // samples data buffer
 
+  // command line parameters
   char outfile[1000];
   int acq_mode = 1;
   int n_event=10;
+  int h_gain=5;
+  int softri=1; // soft trigger flag, 1 if enabled
+  int waitus=10000; // us sleep time between trigger
+
+  int clp_clock0 = 0;
+  int clp_clock1 = 50;
+  int clp_clockd = 2;
+
+  int mask_mpd = 0x0; // if bit set, corresponding MPD is masked; first bit is MPD with lower slot ID
+  int mpd_slot0=999; // lowest MPD address (slot number), will be determined below
+
+  FILE *fout;
 
   if (argc<2) {
-    printf("SYNTAX: %s [out_data_file 0xacq_mode #events]\n",argv[0]);
-    printf("        acq_mode_bit0 : EVENT readout");
-    printf("        acq_mode_bit1 : SAMPLE check");
-    printf("        acq_mode_bit2 : HISTO output");
-    printf("        #events: number of events only for EVENT_READOUT\n");
+    printf("SYNTAX: %s out_data_file [0xacq_mode par0 par1 par2 ...]\n",argv[0]);
+    //#events gain]\n",argv[0]);
+    printf("         par_# depends on acq_mode (%d):\n",acq_mode);
+    printf("         acq_mode_bit0 (1) : EVENT readout\n");
+    printf("               par0 = number of events (%d)\n",n_event);
+    printf("               par1 = software trigger flag, 1 to enable (%d)\n",softri);
+    printf("               par2 = us between trigger (%d)\n",waitus);
+    printf("         acq_mode_bit1 (2) : SAMPLE check\n");
+    printf("               par0 = min_clock_phase  (%d)\n",clp_clock0);
+    printf("               par1 = max_clock_phase  (%d)\n", clp_clock1);
+    printf("               par2 = clock_phase_step (%d)\n", clp_clockd);
+    printf("         acq_mode_bit2 (4) : HISTO mode\n");
+    printf("               par0 = gain (%d)\n",h_gain);
+    printf("               par1 = MPD mask, if bit set corresponding MPD configuration disabled (0x%x)\n",mask_mpd);
+
+    return 0;
   }
 
   if (argc>1) {
@@ -92,17 +116,27 @@ main(int argc, char *argv[])
 
   if (argc>3) {
     sscanf(argv[3],"%d",&n_event);
+    clp_clock0 = n_event;
+    h_gain = n_event;
+  }
+
+  if (argc>4) {
+    sscanf(argv[4],"%d",&clp_clock1);
+    softri = clp_clock1;
+    sscanf(argv[4],"%x",&mask_mpd);
+  }
+
+  if (argc>5) {
+    sscanf(argv[5],"%d",&clp_clockd);
   }
 
   printf("\nMPD Library Tests\n");
   printf("----------------------------\n");
   printf(" outfile = %s\n",outfile);
   printf(" acq_mode= 0x%x\n",acq_mode);
-  printf(" n_event = %d\n", n_event);
 
   signal(SIGINT, sig_handler);
   signal(SIGTSTP, sig_handler);
-
 
   if(vmeOpenDefaultWindows()!=OK)
     {
@@ -134,11 +168,25 @@ main(int argc, char *argv[])
     return -1;
   }
 
-  printf(" MPD discovered = %d\n",fnMPD);
+  for (k=0;k<fnMPD;k++) { // get lowest slot
+    i = mpdSlot(k);
+    mpd_slot0 = (i<mpd_slot0) ? i : mpd_slot0;
+  }
+
+  printf(" MPD discovered = %d starting from slot %d (MPD mask 0x%x)\n",fnMPD, mpd_slot0, mask_mpd);
 
   // APV configuration on all active MPDs
-  for (k=0;k<fnMPD;k++) { // only active mpd set
+  for (k=0;k<fnMPD;k++) { // only active mpd and not masked will be set
     i = mpdSlot(k);
+
+    if (mask_mpd & (1<<(i-mpd_slot0))) {
+      printf(" MPD in slot %d disabled \n", i);
+      mpdSetApvEnableMask(i,0);
+      continue;
+    }
+
+    printf(" MPD Slot %d - HW Revision: %d - Firmware Revision: %d - Firmware Revision Time: %d\n",
+	   i, mpdGetHWRevision(i), mpdGetFWRevision(i), mpdGetFpgaCompileTime(i));
 
     // first test MPD histo memory write/read
     printf(" test mpd %d histo memory\n",i);
@@ -158,7 +206,6 @@ main(int argc, char *argv[])
       printf("HISTO Read/Write test SUCCESS on MPD slot %d\n",i);
     }
     // END of first test MPD histo memory write/read
-
 
     printf(" Try initialize I2C mpd in slot %d\n",i);
     if (mpdI2C_Init(i) != OK) {
@@ -206,12 +253,39 @@ main(int argc, char *argv[])
 
   } // end loop on mpds
 
-    /**********************************
-     * SAMPLES TEST
-     * sample APV output at 40 MHz
-     * only for testing not for normal daq
-     **********************************/
+
+  // Summary Printout
+  printf("Configured APVs (ADC 15 ... 0)\n");
+  for (k=0;k<fnMPD;k++) {
+    i = mpdSlot(k);
+
+    if (mpdGetApvEnableMask(i) != 0) {
+      printf("MPD %2d : ",i);
+      j=0;
+      for (kk=15;kk>=0;kk--) {
+	if (mpdGetApvEnableMask(i) & (1<<kk)) {
+	  printf("1");
+	  j++;
+	} else {
+	  printf(".");
+	}
+      }
+      printf(" (#APV %d)\n",j);
+    }
+  }
+
+  /**********************************
+   * SAMPLES TEST
+   * sample APV output at 40 MHz
+   * only for testing not for normal daq
+   **********************************/
   if (acq_mode & 0x2) {
+
+    fout = fopen(outfile,"w");
+    if (fout == NULL) { fout = stdout; }
+
+    fprintf(fout,"# SAMPLE MODE OUTPUT\n");
+    fprintf(fout,"# CLOCK_RANGE: %d %d %d\n",clp_clock0, clp_clock1, clp_clockd);
 
     for (k=0;k<fnMPD;k++) { // only active mpd set
       i = mpdSlot(k);
@@ -221,74 +295,93 @@ main(int argc, char *argv[])
       // load pedestal and thr default values
       mpdPEDTHR_Write(i);
 
-      // set clock phase
-      mpdDELAY25_Set(i, 23, 23); // use 20 as test, but other values may work better
+      for (kk=clp_clock0;kk<clp_clock1;kk+=clp_clockd) { // loop on clock phases
 
-      // enable acq
-      mpdDAQ_Enable(i);
+	// set clock phase
+	mpdDELAY25_Set(i, kk, kk);
 
-      // wait for FIFOs to get full
-      mfull=0;
-      mempty=1;
-      do {
-	mpdFIFO_GetAllFlags(i,&mfull,&mempty);
-	printf("SAMPLE test: %x (%x) %x\n",mfull,mpdGetApvEnableMask(i),mempty);
-	sleep(1);
-      } while (mfull!=mpdGetApvEnableMask(i));
+	// enable acq
+	mpdDAQ_Enable(i);
 
-      // read data from FIFOs and estimate synch pulse period
-      for (j=0;j<16;j++) { // 16 = number of ADC channel in one MPD
-	if (mpdGetApvEnableMask(i) & (1<<j)) { // apv is enabled
-	  mpdFIFO_Samples(i,j, sdata, &scount, MAX_SDATA, &error_count);
+	// wait for FIFOs to get full
+	mfull=0;
+	mempty=1;
+	printf("MPD / Clock : %d %d\n",i, kk);
 
-	  printf("i: %d",i);
-	  if (error_count != 0) {
-	    printf("ERROR returned from FIFO_Samples %d\n",error_count);
-	  }
-	  printf("MPD/APV : %d / %d, peaks around: ",i,j);
-	  sch0=-1;
-	  sch1=-1;
-	  sfreq=0;
-	  for (h=0;h<scount;h++) { // detects synch peaks
-	    //  	  printf("%04d ", sdata[h]); // output data
-	    if (sdata[h]>2500) { // threshold could be lower
-	      if (sch0<0) { sch0=h; sch1=sch0;} else {
-		if (h==(sch1+1)) { sch1=h; } else {
-		  printf("%d-%d (v %d) ",sch0,sch1, sdata[h]);
-		  sch0=h;
-		  sch1=sch0;
-		  sfreq++;
+	rtout = 2;
+	do {
+	  mpdFIFO_GetAllFlags(i,&mfull,&mempty);
+	  printf("SAMPLE test wait fifo full: %x (%x) %x\n",mfull,mpdGetApvEnableMask(i),mempty);
+	  sleep(1);
+	  rtout--;
+	} while ((mfull!=mpdGetApvEnableMask(i)) && (rtout>0));
+
+	// read data from FIFOs and estimate synch pulse period
+	for (j=0;j<16;j++) { // 16 = number of ADC channel in one MPD
+	  if (mpdGetApvEnableMask(i) & (1<<j)) { // apv is enabled
+	    mpdFIFO_Samples(i,j, sdata, &scount, MAX_SDATA, &error_count);
+
+	    printf("i: %d",i);
+	    if (error_count != 0) {
+	      printf("ERROR returned from FIFO_Samples %d\n",error_count);
+	      continue;
+	    }
+
+	    fprintf(fout,"# MPD_ADC_COUNT_CLOCK_TOUT: %d %d %d %d %d\n",i, j, scount, kk, rtout);
+	    printf("MPD/APV : %d / %d, peaks around: ",i,j);
+	    sch0=-1;
+	    sch1=-1;
+	    sfreq=0;
+	    for (h=0;h<scount;h++) { // detects synch peaks
+	      //  	  printf("%04d ", sdata[h]); // output data
+	      fprintf(fout,"%d ",sdata[h]);
+	      if (sdata[h]>2500) { // threshold could be lower
+		if (sch0<0) { sch0=h; sch1=sch0;} else {
+		  if (h==(sch1+1)) { sch1=h; } else {
+		    printf("%d-%d (v %d) ",sch0,sch1, sdata[h]);
+		    sch0=h;
+		    sch1=sch0;
+		    sfreq++;
+		  }
 		}
 	      }
 	    }
+	    fprintf(fout,"\n");
+	    printf("\n Estimated synch period = %f (us) ,expected (20MHz:1.8, 40MHz:0.9)\n",((float) scount)/sfreq/40);
 	  }
-	  printf("\n Estimated synch period = %f (us) ,expected (20MHz:1.8, 40MHz:0.9)\n",((float) scount)/sfreq/40);
 	}
-      }
+
+      } // end loop on clock phases
 
     } // end loop on mpds
 
+    if (fout != stdout)  fclose(fout);
+
   } // sample check mode
 
-    /********************************************
-     * HISTO Mode; sampled data are histogrammed
-     * only for testing, non for normal daq
-     ********************************************/
+  /********************************************
+   * HISTO Mode (obsolete); sampled data are histogrammed
+   * only for testing, non for normal daq
+   ********************************************/
 
-  if (acq_mode & 0x4) {
+  if (acq_mode & 0x8) {
+
+    fout = fopen(outfile,"w");
+    if (fout == NULL) { fout = stdout; }
+
+    fprintf(fout,"# HISTO MODE OUTPUT (mpd adc gain ch0 ... ch4095)\n");
 
     for (k=0;k<fnMPD;k++) { // only active mpd set
       i = mpdSlot(k);
 
       mpdSetAcqMode(i, "histo");
-      hgain = 5; // this will be read from config file
 
       // load pedestal and thr default values
       mpdPEDTHR_Write(i);
 
-
       // set ADC gain
-      mpdADS5281_SetGain(i,0,hgain,hgain,hgain,hgain,hgain,hgain,hgain,hgain);
+      mpdADS5281_SetGain(i,0,h_gain,h_gain,h_gain,h_gain,h_gain,h_gain,h_gain,h_gain);
+      mpdADS5281_SetGain(i,1,h_gain,h_gain,h_gain,h_gain,h_gain,h_gain,h_gain,h_gain);
 
       // loop on adc channels
 
@@ -314,7 +407,13 @@ main(int argc, char *argv[])
 	printf(" ### histo peaks integral MPD/ADCch = %d / %d (total Integral= %d)\n",i,j,hcount);
 	sch0=-1;
 	sch1=0;
+
+	fprintf(fout,"# MPD=%d\n# ADC=%d\n# GAIN=%d\n",i,j,h_gain);
+	fprintf(fout,"%d %d %d",i,j,h_gain);
+
 	for (h=0;h<4096;h++) {
+
+	  fprintf(fout," %d",hdata[h]);
 
 	  if (hdata[h]>0) {
 	    if (sch0<0) { printf(" first bin= %d: ", h); } else {
@@ -326,6 +425,9 @@ main(int argc, char *argv[])
 
 	  //	if ((h%64) == 63) { printf("\n"); }
 	}
+
+	fprintf(fout, "\n");
+
 	if (sch1>0) {
 	  printf( "%d last bin= %d\n",sch1,sch0);
 	} else { printf("\n");}
@@ -333,6 +435,108 @@ main(int argc, char *argv[])
       } // end loop adc channels in histo mode
 
     }
+
+    if (fout != stdout)  fclose(fout);
+
+  } // histo mode ends
+
+    /********************************************
+     * HISTO Mode speed optimized; sampled data are histogrammed
+     * only for testing, non for normal daq
+     ********************************************/
+
+  if (acq_mode & 0x4) {
+
+    fout = fopen(outfile,"w");
+    if (fout == NULL) { fout = stdout; }
+
+    fprintf(fout,"# MODE=%d\n# OUTPUT=mpd adc gain ch0 ... ch4095\n",acq_mode);
+
+    for (k=0;k<fnMPD;k++) { // only active mpd set
+      i = mpdSlot(k);
+
+      mpdSetAcqMode(i, "histo");
+
+      // load pedestal and thr default values
+      mpdPEDTHR_Write(i);
+
+      // set ADC gain
+      mpdADS5281_SetGain(i,0,h_gain,h_gain,h_gain,h_gain,h_gain,h_gain,h_gain,h_gain);
+      mpdADS5281_SetGain(i,1,h_gain,h_gain,h_gain,h_gain,h_gain,h_gain,h_gain,h_gain);
+    }
+
+    for (j=0;j<16;j++) {  // loop on adc channels
+
+      for (k=0;k<fnMPD;k++) { // only active mpd set
+	i = mpdSlot(k);
+	//
+	mpdHISTO_Clear(i,j,0);
+
+	mpdHISTO_Start(i,j);
+
+      }
+
+      sleep(1); // wait to get some data
+
+      for (k=0;k<fnMPD;k++) { // only active mpd set
+	i = mpdSlot(k);
+
+	mpdHISTO_Stop(i,j);
+
+	hcount=0;
+	mpdHISTO_GetIntegral(i,j,&hcount);
+	error_count = mpdHISTO_Read(i,j, hdata);
+
+	if (error_count != OK) {
+	  printf("ERROR: reading histogram data from MPD %d ADCch %d\n",i,j);
+	  continue;
+	}
+
+	printf(" ### histo peaks integral MPD/ADCch = %d / %d (total Integral= %d)\n",i,j,hcount);
+	sch0=-1;
+	sch1=0;
+
+	fprintf(fout,"# MPD=%d\n# ADC=%d\n# GAIN=%d\n",i,j,h_gain);
+	fprintf(fout,"%d %d %d",i,j,h_gain);
+
+	for (h=0;h<4096;h++) {
+
+	  fprintf(fout," %d",hdata[h]);
+
+	  if (hdata[h]>0) {
+	    if (sch0<0) { printf(" first bin= %d: ", h); } else {
+	      if ((sch0+1) < h) { printf( "%d last bin= %d\n first bin= %d: ",sch1,sch0,h); sch1=0; }
+	    }
+	    sch1 += hdata[h];
+	    sch0=h;
+	  }
+
+	  //	if ((h%64) == 63) { printf("\n"); }
+	}
+
+	fprintf(fout, "\n");
+
+	if (sch1>0) {
+	  printf( "%d last bin= %d\n",sch1,sch0);
+	} else { printf("\n");}
+
+      }
+
+    } // end loop adc channels in histo mode
+
+    if (fout != stdout)  fclose(fout);
+
+
+/*
+    mpdGStatus(0);
+    for (k=0;k<fnMPD;k++) {
+      i = mpdSlot(k);
+      mpdApvStatus(i, 0xFFFF);
+    }
+*/
+
+
+
 
   } // histo mode ends
 
@@ -355,7 +559,7 @@ main(int argc, char *argv[])
 
 #define FILE_VERSION 0x1
     // open out file
-    FILE *fout;
+
     fout = fopen(outfile,"w");
     if (fout == NULL) { fout = stdout; }
     fprintf(fout,"%x\n", FILE_VERSION | VERSION_TAG);
@@ -377,9 +581,19 @@ main(int argc, char *argv[])
 
     evt=0;
     vmeDmaConfig(1,2,0);
-    printf(" ============ START ACQ ===========\n");
+
+    printf(" ============ START ACQ (NO Evt Bulfer) ===========\n");
+
     do { // simulate loop on trigger
-      sleep(1); // wait for event
+
+      if (softri) { // issue soft trigger
+	for (k=0;k<fnMPD;k++) {
+	  i = mpdSlot(k);
+	  mpdAPV_SoftTrigger(i);
+	}
+      }
+      usleep(waitus);
+
       printf(" ---- Event %d occurred -----\n",evt);
       // event occurred ... need some trigger logic
       rtout=0;
@@ -394,6 +608,7 @@ main(int argc, char *argv[])
       fprintf(fout,"%x\n", evt | EVENT_TAG ); // event number
       for (kk=0;kk<fnMPD;kk++) { // only active mpd set
 	i = mpdSlot(kk);
+	if (mask_mpd & (1<<(i-mpd_slot0))) { continue; }
 	//usleep(10000);
 	mpdFIFO_ClearAll(i); // @@@ THIS SEEMS TO BE IN THE WRONG PLACE, should go above! before any event @@@
 	mpdTRIG_Disable(i);
@@ -471,7 +686,7 @@ main(int argc, char *argv[])
 
     int mpd_evt[21];
     int UseSdram, FastReadout;
-    int empty, full, nwords;
+    int empty, full, nwords,obuf_nblock, evb_nblock, old_nblock;
     int nwread;
     int iw, blen;
 
@@ -489,7 +704,6 @@ main(int argc, char *argv[])
     FastReadout = mpdGetFastReadout(mpdSlot(0));
 
     printf(" UseSDRAM= %d , FastReadout= %d\n",UseSdram, FastReadout);
-
 
     for (k=0;k<fnMPD;k++) { // only active mpd set
       if (k==0) { evt = mpd_evt[i]; }
@@ -517,8 +731,21 @@ main(int argc, char *argv[])
 
 
     evt=0;
+    verbose_level=2;
+
     do { // simulate loop on trigger
-      // sleep(1); // wait for event
+
+      printf("    |-Buffer LEN-| |-------- SDRAM Status ---------| |----- OBUFF status -----|\n");
+      printf("MPD    32bwords    init overrun rdaddr wraddr nwords empty full nwords  nblocks\n");
+
+      if (softri) { // issue soft trigger
+	for (k=0;k<fnMPD;k++) {
+	  i = mpdSlot(k);
+	  mpdAPV_SoftTrigger(i);
+	}
+      }
+      usleep(waitus); // wait for "event"
+
       // event occurred ... need some trigger logic
       rtout=0;
 
@@ -527,12 +754,14 @@ main(int argc, char *argv[])
 
       for (k=0;k<fnMPD;k++) { // only active mpd set
 	i = mpdSlot(k);
+	if (mask_mpd & (1<<(i-mpd_slot0))) { continue; }
 	vmeSetQuietFlag(1);
 	vmeClearException(1);
 	mpdArmReadout(i); // prepare internal variables for readout @@ use old buffer scheme, need improvement
 //	blen = mpdApvGetBufferAvailable(i, 0);
 	blen = DMA_BUFSIZE;
-	if( verbose_level > 1 ) printf("Buffer LEN = %d (bytes) -> %d (32b words)\n",blen,blen/4);
+	//	if( verbose_level > 1 ) printf("MPD %d: Buffer LEN = %d (bytes) -> %d (32b words)\n",i,blen,blen/4);
+        if (verbose_level > 1) printf(" %2d   %10d   ",i,blen/4);
 	nwread = 0;
 
 	if ( UseSdram ) {
@@ -540,23 +769,30 @@ main(int argc, char *argv[])
 	  int sd_init, sd_overrun, sd_rdaddr, sd_wraddr, sd_nwords;
 
 	  mpdSDRAM_GetParam(i, &sd_init, &sd_overrun, &sd_rdaddr, &sd_wraddr, &sd_nwords);
+	  /*
 	  if( verbose_level > 0 )
-	    printf("SDRAM status: init=%d, overrun=%d, rdaddr=0x%x, wraddr=0x%x, nwords=%d\n",
-		 sd_init, sd_overrun, sd_rdaddr, sd_wraddr, sd_nwords);
+	    printf("MPD %2d: SDRAM status: init=%d, overrun=%d, rdaddr=0x%x, wraddr=0x%x, nwords=%d\n",
+	    	   i, sd_init, sd_overrun, sd_rdaddr, sd_wraddr, sd_nwords);
+	  */
+	  if( verbose_level > 0 ) printf(" %1d  %1d  0x%6x 0x%6x %6d ", sd_init, sd_overrun, sd_rdaddr, sd_wraddr, sd_nwords);
 
+	  obuf_nblock = mpdOBUF_GetBlockCount(i);
 	  mpdOBUF_GetFlags(i, &empty, &full, &nwords);
 
+	  /*
 	  if( verbose_level > 0 )
-	    printf("OBUFF status: empty=%d, full=%d, nwords=%d\n",empty, full, nwords);
+	    printf("MPD %d: OBUFF status: empty=%d, full=%d, nwords=%d : nblock %d\n",i, empty, full, nwords, obuf_nblock);
+	  */
+	  if( verbose_level > 0 ) printf(" %d %d %d %d\n", empty, full, nwords, obuf_nblock);
 
 	  if (FastReadout>0) { //64bit transfer
 	    if ( nwords < 128 ) { empty = 1; } else { nwords *= 2; }
 	  }
 
-	  if (!empty ) { // read data
+	  if ( obuf_nblock > 0) { // read data
 
 	    if( verbose_level > 0 )
-	      printf("Data waiting to be read in obuf: %d (32b-words)\n",nwords);
+	      printf("MPD %d: Data waiting to be read in obuf: %d (32b-words)\n",i, nwords);
 
 	    if (nwords > blen/4) { nwords = blen/4; }
 	    nwords = (nwords/4)*4; // 128 bit boundary
@@ -564,10 +800,10 @@ main(int argc, char *argv[])
 //  	    mpdOBUF_GetFlags(i, &empty, &full, &nwords);	// DUMMY
 	    DMA_Read(i, nwords, &nwread);
 	    if( verbose_level > 0 )
-	      printf("try to read %d 32b-words 128b-aligned from obuf, got %d 32b-words\n",nwords, nwread);
+	      printf("MPD %d: try to read %d 32b-words 128b-aligned from obuf, got %d 32b-words\n",i, nwords, nwread);
 
 	    if (nwords != nwread ) {
-	      printf("Error: 32bit-word read count does not match %d %d\n", nwords, nwread);
+	      printf("MPD %d: Error: 32bit-word read count does not match %d %d\n", i, nwords, nwread);
 	    }
 
 	  }
@@ -582,7 +818,7 @@ main(int argc, char *argv[])
 	    nwread = blen/4;
 	    mpdFIFO_ReadSingle(i, 0, mpdApvGetBufferPointer(i, 0, 0), &nwread, 20);
 	    if (nwread == 0) {
-	      printf("Error: word read count is 0, while some words are expected back\n");
+	      printf("MPD %d: Error: word read count is 0, while some words are expected back\n",i);
 	    }
 	  }
 
@@ -603,6 +839,8 @@ main(int argc, char *argv[])
 	      datao = mpdApvGetBufferElement(i, 0, iw);
 
 	    fprintf(fout,"%x\n",datao);
+	    if(iw == (nwread-1) )
+	      fprintf(fout,"end\n");
 	    if (datao ==0) {
 	      zero_count++;
 	    }
@@ -626,6 +864,9 @@ main(int argc, char *argv[])
 
 	  if( verbose_level > 0 )
 	    printf("MPD %d: nwords=%d nwcount=%d zero_count=%d evt %d\n",i,nwords,nwread,zero_count,mpd_evt[i]);
+
+	  printf(" press return to continue\n");
+	  getchar();
 	}
       } // active mpd loop
 
@@ -689,7 +930,6 @@ int DMA_Init(int id, int fast_readout)
   GEF_VME_DMA_HDL dma_hdl;
   int fBufSize = DMA_BUFSIZE;
   uint32_t data;
-  extern void mpdWrite32(volatile uint32_t * reg, uint32_t val);
 
   switch (fast_readout) {
   case 0:
