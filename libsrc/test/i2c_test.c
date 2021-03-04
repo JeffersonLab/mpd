@@ -210,6 +210,10 @@ main(int argc, char *argv[])
 /*   mpdGStatus(1); */
   mpdApvStatus(slot, 0xffff);
 
+  /* mpdInit(..) disables fiber mode, re-enable it for incoming fiber connections */
+  mpdFiberEnable(slot);
+  printf(" --- Fiber Mode enabled ---\n");
+
  CLOSE:
   vmeBusUnlock();
 

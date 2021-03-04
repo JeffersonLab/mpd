@@ -75,8 +75,8 @@ main(int argc, char *argv[])
   for(impd = 0; impd < nmpd; impd++)
     {
       mpdFiberEnable(mpdSlot(impd));
-
     }
+  printf(" --- Fiber Mode enabled ---\n");
 
  CLOSE:
   vmeBusUnlock();
