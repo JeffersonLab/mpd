@@ -103,10 +103,11 @@ unsigned short fApvEnableMask[(MPD_MAX_BOARDS) + 1];
 int nApv[(MPD_MAX_BOARDS) + 1];
 static int mpdFiberMode = 0;
 #ifdef VTP
-static uint32_t mpdVTPFiberMask;	/* value = fiber port mask of MPDs */
+static uint32_t mpdVTPFiberMask = 0;	/* value = fiber port mask of MPDs */
+static uint32_t nmpdVTPFiber = 0;	/* number of high bits in mpdVTPFiberMask */
 #else
 static uint32_t mpdSSPFiberMask[(MPD_SSP_MAX_BOARDS) + 1];	/* index = ssp#, value = fiber port mask of MPDs */
-static int mpdSSPFiberMaskUsed = 0;
+static int mpdSSPFiberMaskUsed = 0;	/* number of high bits in mpdSSPFiberMask[*] */
 #endif
 int mpdPrintDebug = 0;
 
@@ -253,6 +254,10 @@ mpdSetVTPFiberMap_preInit(uint32_t mpdmask)
   printf("%s: VTP fiber mask 0x%08x\n",
 	 __func__, mpdmask);
 
+  for (impd = 0; impd < 32; impd++)
+    if (mpdVTPFiberMask & (1 << impd))
+      nmpdVTPFiber;
+
   return OK;
 }
 
@@ -350,7 +355,7 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
   int useList = 0;
   int noFirmwareCheck = 0;
   int noConfigFileCheck = 0;
-  int *mpdssp_list = NULL, nlist = 0;
+  int *mpd_addr_list = NULL, nlist = 0;
   int rval = OK;
   int value;
 
@@ -472,15 +477,15 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
   /* Make a quick and dirty array to use in the next iteration
      over mpds up to ninc */
   if(ninc == 0)
-    ninc = 1;
+    ninc = nmpdVTPFiber;
 
-  mpdssp_list = (int *) malloc(ninc * sizeof(int));
+  mpd_addr_list = (int *) malloc(ninc * sizeof(int));
   value = 0;
   for (ibit = 0; ibit < 32; ibit++)
     {
       if (mpdVTPFiberMask & (1 << ibit))
 	{
-	  mpdssp_list[nlist++] = value | (ibit << 24);
+	  mpd_addr_list[nlist++] = value | (ibit << 24);
 	  MPD_MSG("Added VTP MPD %2d\n", ibit);
 	}
     }
@@ -493,7 +498,7 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
       if(ninc == 0)
 	ninc = mpdSSPFiberMaskUsed;
 
-      mpdssp_list = (int *) malloc(ninc * sizeof(int));
+      mpd_addr_list = (int *) malloc(ninc * sizeof(int));
       for (issp = 0; issp < nSSP; issp++)
 	{
 	  value = issp << 28;
@@ -501,7 +506,7 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
 	    {
 	      if (mpdSSPFiberMask[sspID[issp]] & (1 << ibit))
 		{
-		  mpdssp_list[nlist++] = value | (ibit << 24);
+		  mpd_addr_list[nlist++] = value | (ibit << 24);
 		  MPD_MSG("Added SSP %2d MPD %2d\n", issp, ibit);
 		}
 	    }
@@ -515,7 +520,7 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
       errFlag = 0;
 
 #ifdef VTP
-      laddr_inc = mpdssp_list[ii];
+      laddr_inc = mpd_addr_list[ii];
       mpd = (struct mpd_struct *) laddr_inc;
 
       rdata = mpdRead32(&mpd->magic_value);
@@ -523,7 +528,7 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
 #else
       if (mpdFiberMode)
 	{
-	  laddr_inc = mpdssp_list[ii];
+	  laddr_inc = mpd_addr_list[ii];
 	  mpd = (struct mpd_struct *) laddr_inc;
 
 	  rdata = mpdRead32(&mpd->magic_value);
@@ -597,17 +602,20 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
       impd_disc++;
 
       if (mpdFiberMode)
-	boardID = (mpdssp_list[ii] >> 24) & 0xf;
-      else
-	boardID = mpdRead32(&mpd->a24_bar) >> 3;
-
-      if ((boardID < 0) || (boardID > 21))
 	{
-	  MPD_ERR("For Board at 0x%lx,  Slot number is not in range: %d\n",
-		  (uintptr_t) mpd - mpdA24Offset, boardID);
-	  continue;
+	  boardID = (mpd_addr_list[ii] >> 24) & 0x1f;
 	}
+      else
+	{
+	  boardID = mpdRead32(&mpd->a24_bar) >> 3;
 
+	  if ((boardID < 0) || (boardID > 21))
+	    {
+	      MPD_ERR("For Board at 0x%lx,  Slot number is not in range: %d\n",
+		      (uintptr_t) mpd - mpdA24Offset, boardID);
+	      continue;
+	    }
+	}
 
       /* read firmware revision */
       rdata = mpdRead32(&mpd->revision_id);
@@ -673,9 +681,15 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
 
       if (mpdFiberMode)
 	{
+#ifdef VTP
+	  MPD_MSG("MPD %2d at VTP Fiber Connection %ld initialized\n",
+		  impd,
+		  (laddr_inc & 0x1F000000) >> 24);
+#else
 	  MPD_MSG("MPD %2d at SSP %ld Fiber Connection %ld initialized\n",
 		  impd, (laddr_inc & 0xE0000000) >> 29,
 		  (laddr_inc & 0x1F000000) >> 24);
+#endif
 	  MPD_DBG(" Local address = 0x%08lx \n", (uintptr_t) MPDp[boardID]);
 	}
       else
@@ -5693,7 +5707,11 @@ mpdFiberEnable(int id)
 
   if (mpdFiberMode)
     {
+#ifdef VTP
+      MPD_ERR("Cannot Enable/Disable Fiber in VTP Mode\n");
+#else
       MPD_ERR("Cannot Enable/Disable Fiber in SSP Mode\n");
+#endif
       return ERROR;
     }
 
@@ -5715,7 +5733,11 @@ mpdFiberDisable(int id)
 
   if (mpdFiberMode)
     {
+#ifdef VTP
+      MPD_ERR("Cannot Enable/Disable Fiber in VTP Mode\n");
+#else
       MPD_ERR("Cannot Enable/Disable Fiber in SSP Mode\n");
+#endif
       return ERROR;
     }
 

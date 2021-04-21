@@ -18,7 +18,7 @@
 #include "stdint.h"
 #endif
 #define MPD_MAGIC_VALUE       0x43524F4D
-#define MPD_MAX_BOARDS             21
+#define MPD_MAX_BOARDS             32
 #define MPD_SSP_MAX_BOARDS         21
 //#define MPD_MAX_APV                16
 #define MPD_MAX_APV                31
