@@ -22,8 +22,12 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stddef.h>
-#include "libconfig/libconfig.h"
+#include "libconfig.h"
+#ifdef VTP
+#include "vtp.h"
+#else
 #include "jvme.h"
+#endif
 #include "mpdConfig.h"
 #include "mpdLib.h"
 #include "sspMpdConfig.h"

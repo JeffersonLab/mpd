@@ -38,7 +38,11 @@
 #include <stdlib.h>
 #endif
 #include <string.h>
+#ifdef VTP
+#include "vtp.h"
+#else
 #include "jvme.h"
+#endif
 
 /* Include MPD definitions */
 #include "mpdLib.h"
@@ -98,8 +102,12 @@ mpdParameters fMpd[(MPD_MAX_BOARDS) + 1];
 unsigned short fApvEnableMask[(MPD_MAX_BOARDS) + 1];
 int nApv[(MPD_MAX_BOARDS) + 1];
 static int mpdSSPMode = 0;
+#ifdef VTP
+static uint32_t mpdVTPFiberMask;	/* value = fiber port mask of MPDs */
+#else
 static uint32_t mpdSSPFiberMask[(MPD_SSP_MAX_BOARDS) + 1];	/* index = ssp#, value = fiber port mask of MPDs */
 static int mpdSSPFiberMaskUsed = 0;
+#endif
 int mpdPrintDebug = 0;
 
 /* */
@@ -135,11 +143,16 @@ int I2C_SendNack(int id);
 int I2C_CtrlHdmiEnable(int id, int upper);
 int I2C_CtrlHdmiDisable(int id);
 
+#ifdef VTP
+extern unsigned int vtpMpdReadReg(int impd, unsigned int reg);
+extern int  vtpMpdWriteReg(int impd, unsigned int reg, unsigned int value);
+#else
 extern int sspID[MPD_SSP_MAX_BOARDS + 1];
 extern int nSSP;
 extern uint32_t sspMpdReadReg(int id, int impd, unsigned int reg);
 extern int sspMpdWriteReg(int id, int impd, unsigned int reg,
 			  unsigned int value);
+#endif
 
 #define CHECKMPD(x) ((MPDp[x]==NULL) || ((long)MPDp[x]==-1) || (x<0) || (x>21))
 
@@ -151,6 +164,12 @@ mpdRead32(volatile uint32_t * reg)
   uint32_t newreg;
   uint32_t read = 0;
 
+#ifdef VTP
+  impd = (int) (((uintptr_t) reg & 0x1F000000) >> 24);
+  newreg = (uint32_t) ((uintptr_t) reg & 0x00FFFFFF);
+
+  read = vtpMpdReadReg(impd, newreg);
+#else
   if (mpdSSPMode)
     {
       /* SSP stored in bits 29-31, mpd stored in bits 24-28 */
@@ -170,6 +189,7 @@ mpdRead32(volatile uint32_t * reg)
     }
   else
     read = vmeRead32(reg);
+#endif
 
 
   return read;
@@ -181,6 +201,12 @@ mpdWrite32(volatile uint32_t * reg, uint32_t val)
   int issp, impd;
   uintptr_t newreg;
 
+#ifdef VTP
+  impd = (int) (((uintptr_t) reg & 0x1F000000) >> 24);
+  newreg = (uint32_t) ((uintptr_t) reg & 0x00FFFFFF);
+
+  vtpMpdWriteReg(impd, newreg, val);
+#else
   if (mpdSSPMode)
     {
       /* SSP stored in bits 29-31, mpd stored in bits 24-28 */
@@ -200,6 +226,8 @@ mpdWrite32(volatile uint32_t * reg, uint32_t val)
     }
   else
     vmeWrite32(reg, val);
+#endif
+
 }
 
 /**
@@ -210,6 +238,25 @@ mpdWrite32(volatile uint32_t * reg, uint32_t val)
  * @defgroup Deprec Deprecated - To be removed
  */
 
+#ifdef VTP
+uint32_t mpdGetVTPFiberMask()
+{
+  return mpdVTPFiberMask;
+}
+
+int
+mpdSetVTPFiberMap_preInit(uint32_t mpdmask)
+{
+  int impd;
+
+  mpdVTPFiberMask = mpdmask;
+  printf("%s: VTP fiber mask 0x%08x\n",
+	 __func__, mpdmask);
+
+  return OK;
+}
+
+#else
 uint32_t mpdGetSSPFiberMask(int sspSlot)
 {
   if (sspSlot >= MPD_SSP_MAX_BOARDS)
@@ -251,6 +298,8 @@ mpdSetSSPFiberMap_preInit(int ssp, uint32_t mpdmask)
 
   return OK;
 }
+#endif
+
 
 /**
  *  @ingroup Config
@@ -322,7 +371,9 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
 
   memset(MPDp, -1, sizeof(MPDp));
 
+#ifdef VTP
 
+#else
   if (mpdSSPMode)
     {				// SSP Mode
       if (nSSP == 0)
@@ -395,10 +446,29 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
 	}
       MPD_DBG("A24 mapping: VME addr=0x%x -> Local 0x%lx\n", addr, laddr);
     }
+#endif
 
   impd = 0;
   impd_disc = 0;
 
+#ifdef VTP
+  printf("****************************************\n");
+  /* Make a quick and dirty array to use in the next iteration
+     over mpds up to ninc */
+  if(ninc == 0)
+    ninc = 1;
+
+  mpdssp_list = (int *) malloc(ninc * sizeof(int));
+  value = 0;
+  for (ibit = 0; ibit < 32; ibit++)
+    {
+      if (mpdVTPFiberMask & (1 << ibit))
+	{
+	  mpdssp_list[nlist++] = value | (ibit << 24);
+	  MPD_MSG("Added VTP MPD %2d\n", ibit);
+	}
+    }
+#else
   if (mpdSSPMode)
     {
       printf("****************************************\n");
@@ -421,13 +491,20 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
 	    }
 	}
     }
-
+#endif
 
   for (ii = 0; ii < ninc; ii++)
     {
 
       errFlag = 0;
 
+#ifdef VTP
+      laddr_inc = mpdssp_list[ii];
+      mpd = (struct mpd_struct *) laddr_inc;
+
+      rdata = mpdRead32(&mpd->magic_value);
+      res = 1;
+#else
       if (mpdSSPMode)
 	{
 	  laddr_inc = mpdssp_list[ii];
@@ -456,6 +533,7 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
 #else
 	  res = vmeMemProbe((char *) &mpd->magic_value, 4, (char *) &rdata);
 #endif
+
 	  if ((res < 0) || (rdata = -1))
 	    {
 	      /* Turn off fiber mode, and try again */
@@ -471,6 +549,7 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
 	  res = vmeMemProbe((char *) &mpd->magic_value, 4, (char *) &rdata);
 #endif
 	}
+#endif // VTP
 
 
 
@@ -3833,7 +3912,10 @@ mpdOBUF_GetFlags(int id, int *empty, int *full, int *nwords)
 int
 mpdOBUF_Read(int id, volatile uint32_t * data, int size, int *wrec)
 {
-
+#ifdef VTP
+  MPD_ERR("Not available with VTP\n");
+  return ERROR;
+#else
   uint32_t vmeAdrs;
   int retVal = 0;
   int dummy;
@@ -3937,11 +4019,16 @@ mpdOBUF_Read(int id, volatile uint32_t * data, int size, int *wrec)
     }
 
   return OK;
+#endif
 }
 
 int
 mpdOBUF_ReadLL(volatile uint32_t * data, int size, int *wrec, int rflag)
 {
+#ifdef VTP
+  MPD_ERR("Not available with VTP\n");
+  return ERROR;
+#else
   int retVal, xferCount, dummy, id, impd, ilist;
   volatile uint32_t *laddr;
   uint32_t vmeAdrLL[MPD_MAX_BOARDS], dmaSizeLL[MPD_MAX_BOARDS],
@@ -4043,7 +4130,7 @@ mpdOBUF_ReadLL(volatile uint32_t * data, int size, int *wrec, int rflag)
 
   MPDUNLOCK;
   return (OK);
-
+#endif
 }
 
 int
@@ -4086,7 +4173,10 @@ mpdFIFO_ReadSingle(int id, int channel,	// apv channel (FIFO)
 		   int *wrec,	// max number of words to get / return words received
 		   int max_retry)	// max number of retry for timeout
 {
-
+#ifdef VTP
+  MPD_ERR("Not available with VTP\n");
+  return ERROR;
+#else
   int success = OK, i, size;
   int nwords;			// words available in fifo
   int wmax;			// maximum word acceptable
@@ -4209,6 +4299,7 @@ mpdFIFO_ReadSingle(int id, int channel,	// apv channel (FIFO)
       return ERROR;
     }
   return success;
+#endif
 }
 
 /*
