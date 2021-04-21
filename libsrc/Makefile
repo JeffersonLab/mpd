@@ -76,7 +76,12 @@ CFLAGS			+= -Wall -Wno-unused -g
 else
 CFLAGS			+= -O2
 endif
+
+ifeq ($(ARCH),armv7l)
+SRC			= ${BASENAME}Lib.c ${BASENAME}Config.c vtpMpdConfig.c
+else
 SRC			= ${BASENAME}Lib.c ${BASENAME}Config.c sspMpdConfig.c
+endif
 HDRS			= $(SRC:.c=.h)
 OBJ			= $(SRC:.c=.o)
 DEPS			= $(SRC:.c=.d)

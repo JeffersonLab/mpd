@@ -354,6 +354,7 @@ typedef struct mpd_priv_struct
 #define MPD_INIT_USE_ADDRLIST         (1<<17)
 #define MPD_INIT_SKIP_FIRMWARE_CHECK  (1<<18)
 #define MPD_INIT_SSP_MODE             (1<<19)
+#define MPD_INIT_FIBER_MODE           (1<<19)
 #define MPD_INIT_NO_CONFIG_FILE_CHECK (1<<20)
 
 /* Function Prototypes */
@@ -362,8 +363,13 @@ int  mpdCheckAddresses(int id);
 int  mpdSlot(uint32_t i);
 int mpdSetPrintDebug(int debug);
 
+#ifdef VTP
+uint32_t mpdGetVTPFiberMask();
+int mpdSetVTPFiberMap_preInit(uint32_t mpdmask);
+#else
 int mpdSetSSPFiberMap_preInit(int ssp, uint32_t mpdmask);
 uint32_t mpdGetSSPFiberMask(int sspSlot);
+#endif
 void mpdSetZeroLevel(int id, uint16_t level);
 int  mpdGetZeroLevel(int id);
 void mpdSetOneLevel(int id, uint16_t level);

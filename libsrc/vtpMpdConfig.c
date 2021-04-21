@@ -2,7 +2,7 @@
 /**
  * @mainpage
  * <pre>
- *  mpdConfig.c
+ *  vtpMpdConfig.c
  *           - Configuration library for the MultiPurpose Digitizer (MPD)
  *             using a VxWorks 5.5 (PPC) or Linux 2.6.18 (Intel) or
  *             later based single board computer.
@@ -23,18 +23,18 @@
 #include <string.h>
 #include <stddef.h>
 #include "libconfig.h"
-#include "jvme.h"
+#include "vtp.h"
 #include "mpdConfig.h"
 #include "mpdLib.h"
-#include "sspMpdConfig.h"
+#include "vtpMpdConfig.h"
 
 static config_t mpd_cfg;
 static char *config_include_directory;
 //static config_setting_t *bus_setting, *mpd_setting, *run_setting, *bus_setting0;
 //static config_setting_t *d_setting, *d_bus_setting, *d_mpd_setting, *d_busset;
 static config_setting_t *d_setting, *d_busset;
-static config_setting_t *bus_set[2], *ssp_set[2], *mpd_set[2], *run_set[2], *ssp_set0[2]; // second element is pointer to default val
-static uint32_t nMPD, sspFiberMask[32];
+static config_setting_t *bus_set[2], *vtp_set[2], *mpd_set[2], *run_set[2], *vtp_set0[2]; // second element is pointer to default val
+static uint32_t nMPD, vtpFiberMask;
 static int32_t initOK = ERROR;
 
 extern int mpdPrintDebug;
@@ -42,7 +42,7 @@ extern int mpdPrintDebug;
 
 
 int
-sspMpdConfigInit(char *confFileName)
+vtpMpdConfigInit(char *confFileName)
 {
   if(confFileName==NULL)
     {
@@ -69,19 +69,23 @@ sspMpdConfigInit(char *confFileName)
 	 confFileName,
 	 mpdReadCfgString(&mpd_cfg, "version", 0));
 
-  ssp_set[0] = config_lookup(&mpd_cfg,"ssp");
-  if(ssp_set[0]==NULL)
+  vtp_set[0] = config_lookup(&mpd_cfg,"vtp");
+  if(vtp_set[0]==NULL)
     {
-      MPD_ERR("Unable to find ssp setting in %s\n",
+      MPD_ERR("Unable to find vtp setting in %s\n",
 	      confFileName);
       initOK = ERROR;
       return ERROR;
     }
 
-  // Assume it's the first and only. Otherwise, we'll need to loop to find the right one.
-  ssp_set0[0] = config_setting_get_elem(ssp_set[0],0);
+  // Assume it's the first and only.
+  vtp_set0[0] = config_setting_get_elem(vtp_set[0],0);
+  if(config_setting_length(vtp_set[0]) > 1)
+    {
+      MPD_WARN("Too many VTPs defined.  Using the first.\n");
+    }
 
-  mpd_set[0] = config_setting_get_member(ssp_set0[0],"ports");
+  mpd_set[0] = config_setting_get_member(vtp_set0[0],"ports");
   if(mpd_set[0]==NULL)
     {
       printf("%s: ERROR: Unable to find fiber port setting in %s\n",
@@ -107,7 +111,7 @@ sspMpdConfigInit(char *confFileName)
 }
 
 int
-sspMpdConfigLoad()
+vtpMpdConfigLoad()
 {
   config_setting_t *mpdset[2]={NULL,NULL},
     *adc_set[2]={NULL, NULL},
@@ -116,7 +120,7 @@ sspMpdConfigLoad()
 	  *apvset[2]={NULL, NULL},
 	    *i2c_set[2]={NULL, NULL}; /* settings to iterate */
   int impd=0, iadc=0, iapv=0, igain=0;
-  int slot=0;
+  int fiberPort=0;
   int nApv;
   char *pattern;
 
@@ -128,21 +132,21 @@ sspMpdConfigLoad()
       return ERROR;
     }
 
-  int sspSlot;
-  sspSlot = mpdReadSettingInt(ssp_set0, "slot", 0);
-  printf("Configuring SSP in slot: %d\n", sspSlot);;
+  MPD_MSG("Configuring VTP\n", __func__);
+
+  vtpFiberMask = 0;
   for(impd=0; impd<nMPD; impd++)
     {
       mpdset[0] = config_setting_get_elem(mpd_set[0],impd);
       mpdset[1] = config_setting_get_elem(mpd_set[1],0);
 
-      slot = mpdReadSettingInt(mpdset, "fiberPort", 0);
-      sspFiberMask[sspSlot] |= (0x1 << slot);
+      fiberPort = mpdReadSettingInt(mpdset, "fiberPort", 0);
+      vtpFiberMask |= (0x1 << fiberPort);
 
-      MPD_DBG("Loading MPD idx= %2d rotary (slot) = %2d\n",
-	      impd, slot);
+      MPD_DBG("Loading MPD idx= %2d fiberPort = %2d\n",
+	      impd, fiberPort);
 
-      if(slot<0)
+      if(fiberPort<0)
 	{
 	  MPD_DBG("Module %d is disabled (negative rotary)\n",
 		  impd);
@@ -150,74 +154,74 @@ sspMpdConfigLoad()
 	}
       mpdset[0] = config_setting_get_member(mpdset[0], "mpd");
       // Initialize MPD here...
-      mpdSetCommonNoiseSubtraction(slot, (short) mpdReadSettingInt(mpdset, "common_noise_subtraction",0));
+      mpdSetCommonNoiseSubtraction(fiberPort, (short) mpdReadSettingInt(mpdset, "common_noise_subtraction",0));
 
-      mpdSetZeroLevel(slot, mpdReadSettingInt(mpdset, "zero_level", 0));
-      mpdSetOneLevel(slot, mpdReadSettingInt(mpdset, "one_level", 0));
+      mpdSetZeroLevel(fiberPort, mpdReadSettingInt(mpdset, "zero_level", 0));
+      mpdSetOneLevel(fiberPort, mpdReadSettingInt(mpdset, "one_level", 0));
 
-      mpdSetTriggerMode(slot,
+      mpdSetTriggerMode(fiberPort,
       			mpdReadSettingInt(mpdset, "calib_latency", 0),
       			mpdReadSettingInt(mpdset, "trigger_latency", 0),
       			mpdReadSettingInt(mpdset, "trigger_number", 0));
 
       //      if(run_set[1])
       //	{
-      //	  mpdSetAcqMode(slot,
+      //	  mpdSetAcqMode(fiberPort,
       //			(char *)mpdReadSettingString(run_set,"mode",0));
       //	}
 
-      mpdSetEventBuilding(slot,
+      mpdSetEventBuilding(fiberPort,
 			  mpdReadSettingInt(mpdset, "event_building",0));
 
 
-      mpdSetEventPerBlock(slot,
+      mpdSetEventPerBlock(fiberPort,
 			  mpdReadSettingInt(mpdset, "event_per_block",0));
 
 
-      mpdSetUseSdram(slot,
+      mpdSetUseSdram(fiberPort,
 			  mpdReadSettingInt(mpdset, "use_sdram",0));
 
-      mpdSetFastReadout(slot,
+      mpdSetFastReadout(fiberPort,
 			  mpdReadSettingInt(mpdset, "fast_readout",0));
 
 
 
-      mpdSetCommonOffset(slot,
+      mpdSetCommonOffset(fiberPort,
 			 mpdReadSettingInt(mpdset, "common_offset",0));
 
-      mpdSetPedThrCommon(slot,
+      mpdSetPedThrCommon(fiberPort,
 			 mpdReadSettingInt(mpdset, "ped_common",0),
 			 mpdReadSettingInt(mpdset, "thr_common",0));
 
-      mpdSetPedThrPath(slot,
+      mpdSetPedThrPath(fiberPort,
 		       (char *)mpdReadSettingString(mpdset, "pedthr_file",0));
 
-      mpdSetChannelMark(slot,mpdReadSettingInt(mpdset, "channel_mark",0));
+      mpdSetChannelMark(fiberPort,mpdReadSettingInt(mpdset, "channel_mark",0));
 
 
-      mpdSetInPath0(slot,
+      mpdSetInPath0(fiberPort,
 		    mpdReadSettingBool(mpdset, "en_trig1_P0",0),
 		    mpdReadSettingBool(mpdset, "en_trig2_P0",0),
 		    mpdReadSettingBool(mpdset, "en_trig_Front",0),
 		    mpdReadSettingBool(mpdset, "en_sync_P0",0),
 		    mpdReadSettingBool(mpdset, "en_sync_Front",0));
 
-      mpdSetInputLevel(slot, 0, mpdReadSettingInt(mpdset, "input_0_level", 0));
-      mpdSetInputLevel(slot, 1, mpdReadSettingInt(mpdset, "input_1_level", 0));
+      mpdSetInputLevel(fiberPort, 0, mpdReadSettingInt(mpdset, "input_0_level", 0));
+      mpdSetInputLevel(fiberPort, 1, mpdReadSettingInt(mpdset, "input_1_level", 0));
 
-      mpdSetOutputLevel(slot, 0, mpdReadSettingInt(mpdset, "output_0_level",0));
-      mpdSetOutputLevel(slot, 1, mpdReadSettingInt(mpdset, "output_1_level",0));
+      mpdSetOutputLevel(fiberPort, 0, mpdReadSettingInt(mpdset, "output_0_level",0));
+      mpdSetOutputLevel(fiberPort, 1, mpdReadSettingInt(mpdset, "output_1_level",0));
 
       int ifir;
 
-      mpdSetFIRenable(slot, mpdReadSettingInt(mpdset, "fir_enable", 0));
+      mpdSetFIRenable(fiberPort, mpdReadSettingInt(mpdset, "fir_enable", 0));
       for (ifir=0;ifir<16;ifir++) {
-	mpdSetFIRcoeff(slot, ifir,
+	mpdSetFIRcoeff(fiberPort, ifir,
 		       mpdReadSettingInt(mpdset, "fir_coeff", ifir));
       }
 
 #ifdef NOTDONE
-      mpdReadPedThr(slot);
+      mpdReadPedThr(fiberPort);
 #endif
 
 
@@ -228,38 +232,38 @@ sspMpdConfigLoad()
 	{
 	  adcset[0] = config_setting_get_elem(adc_set[0],iadc);
 	  adcset[1] = config_setting_get_elem(adc_set[1],0);
-	  mpdSetAdcClockPhase(slot, iadc, mpdReadSettingInt(adcset,"clock_phase",0));
+	  mpdSetAdcClockPhase(fiberPort, iadc, mpdReadSettingInt(adcset,"clock_phase",0));
 
 	  for(igain=0; igain<8; igain++)
 	    {
-	      mpdSetAdcGain(slot, iadc, igain,
+	      mpdSetAdcGain(fiberPort, iadc, igain,
 			    mpdReadSettingInt(adcset,"gain",igain));
 	    }
 
-	  mpdSetAdcInvert(slot, iadc, mpdReadSettingBool(adcset, "invert", 0));
+	  mpdSetAdcInvert(fiberPort, iadc, mpdReadSettingBool(adcset, "invert", 0));
 	  pattern = (char *)mpdReadSettingString(adcset, "pattern", 0);
 	  if( strcmp(pattern,"none")==0)
-	    mpdSetAdcPattern(slot, iadc, MPD_ADS5281_PAT_NONE);
+	    mpdSetAdcPattern(fiberPort, iadc, MPD_ADS5281_PAT_NONE);
 	  if( strcmp(pattern,"sync")==0)
-	    mpdSetAdcPattern(slot, iadc, MPD_ADS5281_PAT_SYNC);
+	    mpdSetAdcPattern(fiberPort, iadc, MPD_ADS5281_PAT_SYNC);
 	  if( strcmp(pattern,"deskew")==0)
-	    mpdSetAdcPattern(slot, iadc, MPD_ADS5281_PAT_DESKEW);
+	    mpdSetAdcPattern(fiberPort, iadc, MPD_ADS5281_PAT_DESKEW);
 	  if( strcmp(pattern,"ramp")==0)
-	    mpdSetAdcPattern(slot, iadc, MPD_ADS5281_PAT_RAMP);
+	    mpdSetAdcPattern(fiberPort, iadc, MPD_ADS5281_PAT_RAMP);
 
 	}
 
       i2c_set[0] = config_setting_get_member(mpdset[0],"i2c");
       i2c_set[1] = config_setting_get_member(mpdset[1],"i2c");
 
-      mpdSetI2CSpeed(slot, mpdReadSettingInt(i2c_set, "speed",0));
-      mpdSetI2CMaxRetry(slot, mpdReadSettingInt(i2c_set, "timeout",0));
+      mpdSetI2CSpeed(fiberPort, mpdReadSettingInt(i2c_set, "speed",0));
+      mpdSetI2CMaxRetry(fiberPort, mpdReadSettingInt(i2c_set, "timeout",0));
       apv_set[0] = config_setting_get_member(mpdset[0],"apv");
       apv_set[1] = config_setting_get_member(mpdset[1],"apv");
 
       nApv = config_setting_length(apv_set[0]);
       MPD_DBG("%d APV elements in given MPD %d\n",
-	      nApv,slot);
+	      nApv,fiberPort);
       if(nApv>16)
 	{
 	  MPD_ERR("Too many APV settings (%d)\n",
@@ -267,7 +271,7 @@ sspMpdConfigLoad()
 	  return ERROR;
 	}
 
-      mpdSetNumberAPV(slot, nApv);
+      mpdSetNumberAPV(fiberPort, nApv);
 
       /* APV */
       int apv_freq=0, apv_smode=0, mode=0;
@@ -336,16 +340,16 @@ sspMpdConfigLoad()
 
 	  gApv.Mode = mode;
 
-	  mpdAddApv(slot, gApv);
+	  mpdAddApv(fiberPort, gApv);
 	  apv_count++;
 	}
 
-      MPD_DBG("%2d APV loaded in Slot=%d MPD settings\n",
-	      apv_count,slot);
+      MPD_DBG("%2d APV loaded in fiberPort = %d MPD settings\n",
+	      apv_count,fiberPort);
 
     }
 
-  mpdSetSSPFiberMap_preInit(sspSlot,sspFiberMask[sspSlot]);
+  mpdSetVTPFiberMap_preInit(vtpFiberMask);
 
   return OK;
 }
