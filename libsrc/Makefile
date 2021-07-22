@@ -102,7 +102,7 @@ libmpd.so: ${SRC}
 
 %.a: $(OBJ)
 	@echo " AR     $@"
-	${Q}$(AR) ru $@ $<
+	${Q}$(AR) r $@ $(OBJ)
 	@echo " RANLIB $@"
 	${Q}$(RANLIB) $@
 
@@ -118,6 +118,8 @@ install: $(LIBS)
 	${Q}cp ${PWD}/${BASENAME}Config.h $(LINUXVME_INC)
 	@echo " CP     sspMpdConfig.h"
 	${Q}cp ${PWD}/sspMpdConfig.h $(LINUXVME_INC)
+	@echo " CP     vtpMpdConfig.h"
+	${Q}cp ${PWD}/vtpMpdConfig.h $(LINUXVME_INC)
 
 coda_install: $(LIBS)
 	@echo " CODACP $<"
