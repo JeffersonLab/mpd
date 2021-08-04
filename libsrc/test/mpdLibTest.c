@@ -638,7 +638,10 @@ main(int argc, char *argv[])
  CLOSE:
 
   for (k=0;k<fnMPD;k++)
-    mpdDAQ_Disable(mpdSlot(k));
+    {
+      mpdDAQ_Disable(mpdSlot(k));
+      mpdFiberEnable(mpdSlot(k));
+    }
   DMA_Free();
   vmeCloseDefaultWindows();
 
