@@ -408,6 +408,7 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
 	ninc = mpdSSPFiberMaskUsed;
 
       mpdssp_list = (int *) malloc(ninc * sizeof(int));
+      nlist = 0;
       for (issp = 0; issp < nSSP; issp++)
 	{
 	  value = issp << 28;
@@ -420,6 +421,7 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
 		}
 	    }
 	}
+      ninc = nlist;
     }
 
 
