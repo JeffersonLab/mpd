@@ -182,6 +182,7 @@ main(int argc, char *argv[])
 
   mpdApvStatus(slot, mpdGetApvEnableMask(slot));
 
+  mpdFiberEnable(slot);
  CLOSE:
   vmeBusUnlock();
 
