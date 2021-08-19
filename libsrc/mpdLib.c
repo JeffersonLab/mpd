@@ -155,7 +155,7 @@ extern int sspMpdWriteReg(int id, int impd, unsigned int reg,
 			  unsigned int value);
 #endif
 
-#define CHECKMPD(x) ((MPDp[x]==NULL) || ((long)MPDp[x]==-1) || (x<0) || (x>21))
+#define CHECKMPD(x) ((MPDp[x]==NULL) || ((long)MPDp[x]==-1) || (x<0) || (x>32))
 
 
 uint32_t
@@ -486,7 +486,7 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
       if (mpdVTPFiberMask & (1 << ibit))
 	{
 	  mpd_addr_list[nlist++] = value | (ibit << 24);
-	  MPD_MSG("Added VTP MPD %2d\n", ibit);
+	  MPD_MSG("Added VTP MPD %2d to init list\n", ibit);
 	}
     }
 #else
@@ -507,7 +507,7 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
 	      if (mpdSSPFiberMask[sspID[issp]] & (1 << ibit))
 		{
 		  mpd_addr_list[nlist++] = value | (ibit << 24);
-		  MPD_MSG("Added SSP %2d MPD %2d\n", issp, ibit);
+		  MPD_MSG("Added SSP %2d MPD %2d to init list\n", issp, ibit);
 		}
 	    }
 	}
