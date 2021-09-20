@@ -12,6 +12,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include "vtp.h"
 #include "jvme.h"
 #include "mpdLib.h"
 #include "vtpMpdConfig.h"

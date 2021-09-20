@@ -32,15 +32,23 @@ endif
 LINUXVME_INC	?= .
 LINUXVME_LIB	?= .
 
+
 CROSS_COMPILE		=
 CC			= $(CROSS_COMPILE)gcc
 AR                      = ar
 RANLIB                  = ranlib
 INCS			= -I. -I../ -I${LINUXVME_INC} ${CODA_VME_INC}
 CFLAGS			= -L. -L../ -L${LINUXVME_LIB} ${CODA_LIB} \
-			 -lrt -ljvme -lmpd -lconfig -lssp
+			 -lrt -ljvme -lmpd -lconfig
 ifdef DEBUG
 CFLAGS			+= -Wall -Wno-unused -g
+endif
+
+ifeq ($(ARCH),armv7l)
+CC			+= -DARCH_armv7l -DVTP
+CFLAGS			+= -lvtp -li2c
+else
+CFLAGS			+= -lssp
 endif
 
 SRC			= $(wildcard *.c)
