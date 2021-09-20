@@ -155,7 +155,7 @@ extern int sspMpdWriteReg(int id, int impd, unsigned int reg,
 			  unsigned int value);
 #endif
 
-#define CHECKMPD(x) ((MPDp[x]==NULL) || ((long)MPDp[x]==-1) || (x<0) || (x>32))
+#define CHECKMPD(x) (((long)MPDp[x]==-1) || ((x<0) || (x>32)))
 
 
 uint32_t
@@ -256,7 +256,7 @@ mpdSetVTPFiberMap_preInit(uint32_t mpdmask)
 
   for (impd = 0; impd < 32; impd++)
     if (mpdVTPFiberMask & (1 << impd))
-      nmpdVTPFiber;
+      nmpdVTPFiber++;
 
   return OK;
 }
@@ -489,6 +489,9 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
 	  MPD_MSG("Added VTP MPD %2d to init list\n", ibit);
 	}
     }
+  if(nlist < ninc)
+    ninc = nlist;
+
 #else
   if (mpdFiberMode)
     {
@@ -587,6 +590,9 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
 	  errFlag = 1;
 	  continue;
 	}
+
+      MPD_DBG("address = 0x%x: data code 0x%x (expected 0x%x)\n",
+	      (UINT32) addr + ii * addr_inc, rdata, magic_const);
 
       if (rdata != magic_const)
 	{
@@ -732,6 +738,179 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
       return (ERROR);
     }
 #endif
+
+  printf("\n");
+  return (rval);
+}
+
+int32_t
+mpdInitVTP(uint32_t fibermask, int iFlag)
+{
+
+  int ii, issp, ibit, impd, impd_disc, res, errFlag = 0;
+  int boardID = 0;
+  uint32_t magic_const = MPD_MAGIC_VALUE;
+  uint32_t rdata;
+  uintptr_t laddr, laddr_inc;
+  volatile struct mpd_struct *mpd = NULL;
+  int noBoardInit = 0;
+  int useList = 0;
+  int noFirmwareCheck = 0;
+  int noConfigFileCheck = 0;
+  int *mpd_addr_list = NULL, nlist = 0;
+  int rval = OK;
+  int value;
+
+  /* Check if we are to exit when pointers are setup */
+  noBoardInit = (iFlag & MPD_INIT_SKIP) ? 1 : 0;
+
+  /* Are we skipping the firmware check? */
+  noFirmwareCheck = (iFlag & MPD_INIT_SKIP_FIRMWARE_CHECK) ? 1 : 0;
+
+  /* Are we skipping the config file check? */
+  noConfigFileCheck = (iFlag & MPD_INIT_NO_CONFIG_FILE_CHECK) ? 1 : 0;
+
+  memset(MPDp, -1, sizeof(MPDp));
+
+  mpdFiberMode = 1;
+
+  if(fibermask)
+    {
+      mpdVTPFiberMask = fibermask;
+    }
+  if(mpdVTPFiberMask)
+    {
+      MPD_MSG("Using VTP Fibermask (0x%08x) scan for MPDs\n",
+	      mpdVTPFiberMask);
+    }
+  else
+    {
+      MPD_ERR("No fibermask provided\n");
+      return ERROR;
+    }
+
+  impd = 0;
+  impd_disc = 0;
+
+  /* Loop over 32 bits, continue for those bits not in mpdVTPFiberMask */
+  for (ibit = 0; ibit < 32; ibit++)
+    {
+      if ((mpdVTPFiberMask & (1 << ibit)) == 0)
+	continue;
+
+      MPD_MSG("Attempting VTP MPD %2d initialization\n", ibit);
+      errFlag = 0;
+
+      mpd = (struct mpd_struct *) (ibit << 24);
+
+      rdata = mpdRead32(&mpd->magic_value);
+      res = 1;
+
+      if (res < 0)
+	{
+	  MPD_MSG("No addressable board at Fiber %d\n", ibit);
+	  printf("\n");
+	  errFlag = 1;
+	  continue;
+	}
+
+      MPD_DBG("Fiber %2d data code 0x%x (expected 0x%x)\n",
+	      ibit, rdata, magic_const);
+
+      if (rdata != magic_const)
+	{
+	  MPD_ERR("Fiber %2d Invalid data code 0x%x (expected 0x%x)\n",
+		  ibit, rdata, magic_const);
+	  errFlag = 2;
+	  continue;
+	}
+
+      // discovered new board
+      impd_disc++;
+
+      boardID = ibit;
+
+      /* read firmware revision */
+      rdata = mpdRead32(&mpd->revision_id);
+
+      printf("   MPD Slot %2d - Firmware Revision ID = 0x%x\n", boardID, rdata);
+
+      if (!noFirmwareCheck)
+	{
+
+	  // Check FPGA firmware version
+	  if ((rdata & MPD_VERSION_MASK) < MPD_SUPPORTED_CTRL_FIRMWARE)
+	    {
+	      MPD_ERR("Slot %2d: Control FPGA Firmware (0x%02x) not supported by this driver.\n",
+		      boardID, rdata & MPD_VERSION_MASK);
+	      printf("\tUpdate to 0x%02x to use this driver.\n",
+		     MPD_SUPPORTED_CTRL_FIRMWARE);
+	      continue;
+	    }
+	}
+      else
+	{
+
+	  // Check FPGA firmware version
+	  if ((rdata & MPD_VERSION_MASK) < MPD_SUPPORTED_CTRL_FIRMWARE)
+	    {
+	      MPD_MSG("WARN: Slot %2d: Control FPGA Firmware (0x%02x) not supported by this driver (ignored).\n",
+		 boardID, rdata & MPD_VERSION_MASK);
+	    }
+	}
+
+      fMpd[boardID].FpgaRevision = rdata;
+
+      /* time revision */
+      rdata = mpdRead32(&mpd->compile_time);
+
+      fMpd[boardID].FpgaCompileTime = rdata;
+      printf("               - Firmware Revision Time: %s",
+	     ctime((const time_t *) &fMpd[boardID].FpgaCompileTime));
+
+      if (!noConfigFileCheck)
+	{
+	  // set it, if it is presents in config file
+	  if (mpdGetNumberAPV(boardID) <= 0)
+	    {			// not in config file (to be improved)
+	      printf("--             - NOT in config file, drop it\n");
+	      printf("\n");
+	      continue;
+	    }
+	  printf("++             - is in config file, INIT IT\n");
+	}
+
+      mpdID[impd] = boardID;
+
+      MPDp[boardID] = (struct mpd_struct *) (ibit << 24);
+
+      MPD_MSG("MPD %2d at VTP Fiber Connection %ld initialized\n",
+	      impd,
+	      ibit);
+
+      if (!noBoardInit)
+	{
+	  /* Some more initialize here, if needed */
+	  fMpd[boardID].CtrlHdmiMask[0] = 0;
+	  fMpd[boardID].CtrlHdmiMask[1] = 0;
+	  fMpd[boardID].CtrlHdmiInitMask = 0;
+
+	}
+
+      impd++;
+    }
+
+
+  rval = nmpd = impd;
+  mpdBlockLevel = 1;
+
+  if (!noBoardInit)
+    mpdInited = rval;
+
+  if (rval > 0)
+    {
+      MPD_MSG("%d MPD(s) initialized, %d discovered\n", rval, impd_disc);
+    }
 
   printf("\n");
   return (rval);
@@ -6295,6 +6474,136 @@ mpdGStatus(int sflag)
   printf("\n");
   printf("\n");
 
+  return OK;
+}
+
+int
+mpdOutputBufferCheck()
+{
+  int impd, id;
+  struct mpd_struct st[MPD_MAX_BOARDS + 1];
+  uint8_t blkhist[256];
+  uint8_t blkcount = 0;
+
+  memset(blkhist, 0, sizeof(blkhist));
+
+  MPDLOCK;
+  for (impd = 0; impd < nmpd; impd++)
+    {
+      id = mpdSlot(impd);
+
+      st[id].ob_status.evb_fifo_word_count
+	= mpdRead32(&MPDp[id]->ob_status.evb_fifo_word_count);
+      st[id].ob_status.event_count
+	= mpdRead32(&MPDp[id]->ob_status.event_count);
+      st[id].ob_status.block_count
+	= mpdRead32(&MPDp[id]->ob_status.block_count);
+      st[id].ob_status.trigger_count
+	= mpdRead32(&MPDp[id]->ob_status.trigger_count);
+      st[id].ob_status.missed_trigger
+	= mpdRead32(&MPDp[id]->ob_status.missed_trigger);
+      st[id].ob_status.incoming_trigger
+	= mpdRead32(&MPDp[id]->ob_status.incoming_trigger);
+
+      blkcount = st[id].ob_status.block_count & 0xFF;
+      blkhist[blkcount]++;
+
+    }
+  MPDUNLOCK;
+
+  printf("\n");
+  printf("                              MPD Output Buffer Status\n");
+  printf("\n");
+  printf("           Event Builder\n");
+  printf("         OutFIFO   Full Flags       \n");
+  printf("Slot   nWrds  F E    O E C T   Blks    Events     Trigs    Missed  Incoming\n");
+  printf("--------------------------------------------------------------------------------\n");
+
+  for(impd=0; impd<nmpd; impd++)
+    {
+      id = mpdSlot(impd);
+      printf(" %2d     ",id);
+
+      printf("%4d  ",
+	     st[id].ob_status.evb_fifo_word_count & 0xFFFF);
+
+      printf("%d %d    ",
+	     (st[id].ob_status.evb_fifo_word_count & (1<<17) ? 1 : 0),
+	     (st[id].ob_status.evb_fifo_word_count & (1<<16) ? 1 : 0));
+
+      printf("%d %d %d %d    ",
+	     (st[id].ob_status.evb_fifo_word_count & (1<<27) ? 1 : 0),
+	     (st[id].ob_status.evb_fifo_word_count & (1<<26) ? 1 : 0),
+	     (st[id].ob_status.evb_fifo_word_count & (1<<25) ? 1 : 0),
+	     (st[id].ob_status.evb_fifo_word_count & (1<<24) ? 1 : 0));
+
+      printf("%3d  ",
+	     st[id].ob_status.block_count & 0xFF);
+
+      printf("%8d  ",
+	     st[id].ob_status.event_count & 0xFFFFFF);
+
+      printf("%8d  ",
+	     st[id].ob_status.trigger_count);
+
+      printf("%8d  ",
+	     st[id].ob_status.missed_trigger);
+
+      printf("%8d",
+	     st[id].ob_status.incoming_trigger);
+
+      printf("\n");
+    }
+  printf("--------------------------------------------------------------------------------\n");
+
+  /* Here we assume that the block count and missed are
+     the main indicators of a problem */
+  int32_t iblk = 0, maxCount = 0;
+  uint8_t medianBlk = 0;
+  for(iblk = 0; iblk < 256; iblk++)
+    {
+      if(blkhist[iblk] >= maxCount)
+	{
+	  maxCount = blkhist[iblk];
+	  medianBlk = iblk;
+	}
+    }
+
+  /* Tag the Slots with mismatched blocks */
+  uint32_t blkMask = 0, missedMask = 0;
+  for (impd = 0; impd < nmpd; impd++)
+    {
+      id = mpdSlot(impd);
+      if( (st[id].ob_status.block_count & 0xFF) != medianBlk)
+	blkMask |= (1 << id);
+
+      if(st[id].ob_status.missed_trigger > 0)
+	missedMask |= (1 << id);
+
+    }
+
+  if((missedMask != 0) || (blkMask != 0))
+    {
+      printf("*******************************************************\n");
+      printf("\n\n Missed on Fiber / slots : ");
+      for(impd = 0; impd < 32; impd++)
+	{
+	  if(missedMask & (1 << impd))
+	    printf("%2d  ", impd);
+	}
+      printf("\n\n Block Count Difference on Fiber / slots : ");
+      for(impd = 0; impd < 32; impd++)
+	{
+	  if(blkMask & (1 << impd))
+	    printf("%2d  ", impd);
+	}
+      printf("\n\n");
+      printf(" medianBlk = %d missedMask = 0x%08x  blkMask = 0x%08x\n",
+	     medianBlk, missedMask, blkMask);
+      printf("*******************************************************\n");
+    }
+
+  printf("\n\n");
   return OK;
 }
 

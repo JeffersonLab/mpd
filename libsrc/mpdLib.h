@@ -21,7 +21,7 @@
 #define MPD_MAX_BOARDS             32
 #define MPD_SSP_MAX_BOARDS         21
 //#define MPD_MAX_APV                16
-#define MPD_MAX_APV                31
+#define MPD_MAX_APV                32
 
 #define MPD_SUPPORTED_FIRMWARE 0x23
 #define MPD_HDMI_SUPPORTED_FIRMWARE_TIME 0x5b84f50f
@@ -359,6 +359,7 @@ typedef struct mpd_priv_struct
 
 /* Function Prototypes */
 STATUS mpdInit (UINT32 addr, UINT32 addr_inc, int nadc, int iFlag);
+int32_t mpdInitVTP(uint32_t fibermask, int iFlag);
 int  mpdCheckAddresses(int id);
 int  mpdSlot(uint32_t i);
 int mpdSetPrintDebug(int debug);
@@ -624,6 +625,7 @@ void mpdRUPD_wr_param(int id, int par, int val);
 int mpdRUPD_rd_param(int id, int par);
 
 int mpdGStatus(int sflag);
+int mpdOutputBufferCheck();
 int mpdApvStatus(int id, uint16_t apv_mask);
 int mpdReset(int id, int pflag);
 #endif /* __MPDLIB__ */
