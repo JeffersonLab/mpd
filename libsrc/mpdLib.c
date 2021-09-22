@@ -6304,7 +6304,7 @@ mpdGStatus(int sflag)
   printf("                              READOUT CONFIG\n");
   printf("\n");
   printf("             EB   SDRAM FIFO  SDRAM FIFO   Common  Baseline   Event\n");
-  printf("Slot  Mode  Pack  to DataOut   to EB Out   Offset  Subtract   Build\n");
+  printf("Slot  Mode  Pack  to DataOut   to EB Out   Offset  Subtract   Build     FIR\n");
   printf("--------------------------------------------------------------------------------\n");
 
   for(impd=0; impd<nmpd; impd++)
@@ -6329,8 +6329,11 @@ mpdGStatus(int sflag)
       printf("%s     ",
 	     st[id].readout_config & (1<<28) ? " ON" : "OFF");
 
-      printf("%s",
+      printf("%s     ",
 	     st[id].readout_config & (1<<30) ? " ON" : "OFF");
+
+      printf("%s",
+	     st[id].readout_config & (1<<4) ? " ON" : "OFF");
 
       printf("\n");
     }
