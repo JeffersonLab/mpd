@@ -6262,12 +6262,12 @@ mpdGStatus(int sflag)
 	     st[id].obuf_base_addr, st[id].sdram_base_addr);
 
       printf("%s  %s    ",
-	     (st[id].io_config & 0x1) ? "TTL" : "NIM",
-	     (st[id].io_config & 0x2) ? "TTL" : "NIM");
+	     (st[id].io_config & 0x1) ? "NIM" : "TTL",
+	     (st[id].io_config & 0x2) ? "NIM" : "TTL");
 
       printf("%s  %s   ",
-	     (st[id].io_config & 0x4) ? "TTL" : "NIM",
-	     (st[id].io_config & 0x8) ? "TTL" : "NIM");
+	     (st[id].io_config & 0x4) ? "NIM" : "TTL",
+	     (st[id].io_config & 0x8) ? "NIM" : "TTL");
 
       printf("\n");
     }
