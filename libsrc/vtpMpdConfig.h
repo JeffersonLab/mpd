@@ -19,5 +19,5 @@
 
 int  vtpMpdConfigInit(char *confFileName);
 int  vtpMpdConfigLoad();
-
+int  vtpMpdConfigWrite(char *filename);
 #endif /* __VTPMPDCONFIG_H_ */

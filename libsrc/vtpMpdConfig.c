@@ -353,3 +353,18 @@ vtpMpdConfigLoad()
 
   return OK;
 }
+
+int
+vtpMpdConfigWrite(char *filename)
+{
+  if(filename==NULL)
+    {
+      printf("%s: ERROR: filanem may not be NULL\n", __func__);
+      return -1;
+    }
+
+  /* write the modified config back */
+  config_write_file(&mpd_cfg, filename);
+
+  return 0;
+}
