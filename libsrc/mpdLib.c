@@ -141,7 +141,8 @@ extern uint32_t sspMpdReadReg(int id, int impd, unsigned int reg);
 extern int sspMpdWriteReg(int id, int impd, unsigned int reg,
 			  unsigned int value);
 
-#define CHECKMPD(x) ((MPDp[x]==NULL) || ((long)MPDp[x]==-1) || (x<0) || (x>21))
+#define CHECKMPD(x) (((long)MPDp[x]==-1) || (x<0) || (x>21))
+/* #define CHECKMPD(x) ((MPDp[x]==NULL) || ((long)MPDp[x]==-1) || (x<0) || (x>21)) */
 
 
 uint32_t
@@ -348,6 +349,9 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
 
       for (issp = 0; issp < nSSP; issp++)
 	{
+	  printf("%s: sspID[%d] = %d : 0x%x\n", __func__,
+		 issp, sspID[issp],
+		 mpdSSPFiberMask[sspID[issp]]);
 	  if (mpdSSPFiberMask[sspID[issp]])
 	    {
 	      MPD_MSG("Using SSP (%d) Fibermask (0x%08x) scan for MPDs\n",
@@ -5558,6 +5562,26 @@ mpdSetTriggerDelay(int id, int delay)
 }
 
 int
+mpdFiberReset(int id)
+{
+  uint32_t fiber_status_ctrl = 0;
+  if (CHECKMPD(id))
+    {
+      MPD_ERR("MPD in slot %d is not initialized.\n", id);
+      return ERROR;
+    }
+
+  MPDLOCK;
+  fiber_status_ctrl = mpdRead32(&MPDp[id]->fiber_status_ctrl);
+  mpdWrite32(&MPDp[id]->fiber_status_ctrl, fiber_status_ctrl | MPD_FIBER_RESET);
+  mpdWrite32(&MPDp[id]->fiber_status_ctrl, fiber_status_ctrl);
+  MPDUNLOCK;
+
+  return OK;
+}
+
+
+int
 mpdFiberStatus(int id)
 {
   uint32_t fiber_status_ctrl = 0;
@@ -6275,6 +6299,8 @@ mpdApvStatus(int id, uint16_t apv_mask)
     apv_mask = mpdGetApvEnableMask(id);
 
   /* Read the data from the APVs */
+  printf("apv_mask = 0x%x\n", apv_mask);
+
   for(iapv = 0; iapv < 16; iapv++)
     {
       if( apv_mask & (1 << iapv))
@@ -6301,7 +6327,9 @@ mpdApvStatus(int id, uint16_t apv_mask)
       printf("--------------------------------------------------------------------------------\n");
       for(iapv = 0; iapv < MPD_MAX_APV; iapv++)
 	{
-	  if( apv_mask & (1 << iapv))
+	  if(!mpdApvEnabled(id, iapv))
+	    continue;
+	  if( apv_mask & (1 << fApv[id][iapv].adc))
 	    {
 	      printf(" %2d - 0x%02x ", fApv[id][iapv].adc, fApv[id][iapv].i2c);
 	      for(ireg = itable*6; ireg < (itable+1)*6; ireg++)
