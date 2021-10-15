@@ -123,7 +123,7 @@ main(int argc, char *argv[])
   if (argc>4) {
     sscanf(argv[4],"%d",&clp_clock1);
     softri = clp_clock1;
-    sscanf(argv[4],"%x",&mask_mpd);
+    if (acq_mode==0x4) { sscanf(argv[4],"%x",&mask_mpd); } // Fixed 03/21 - sscanf(argv[4],"%x",&mask_mpd);
   }
 
   if (argc>5) {
@@ -150,7 +150,7 @@ main(int argc, char *argv[])
    * Read config file and fill internal variables
    *
    */
-  mpdConfigInit("cfg/config_apv.txt");
+  mpdConfigInit("cfg/config_apv_UVa.txt");
   mpdConfigLoad();
 
   printf(" CO)NFIGURATIN DFO\n");
@@ -291,6 +291,7 @@ main(int argc, char *argv[])
       i = mpdSlot(k);
 
       mpdSetAcqMode(i, "sample");
+      mpdSetEventBuilding(i, 0);
 
       // load pedestal and thr default values
       mpdPEDTHR_Write(i);
@@ -333,10 +334,10 @@ main(int argc, char *argv[])
 	    sch1=-1;
 	    sfreq=0;
 	    for (h=0;h<scount;h++) { // detects synch peaks
-	      //  	  printf("%04d ", sdata[h]); // output data
+	      //    printf("%04d ", sdata[h]); // output data
 	      fprintf(fout,"%d ",sdata[h]);
 	      if (sdata[h]>2500) { // threshold could be lower
-		if (sch0<0) { sch0=h; sch1=sch0;} else {
+	     	if (sch0<0) { sch0=h; sch1=sch0;} else {
 		  if (h==(sch1+1)) { sch1=h; } else {
 		    printf("%d-%d (v %d) ",sch0,sch1, sdata[h]);
 		    sch0=h;
@@ -347,7 +348,7 @@ main(int argc, char *argv[])
 	      }
 	    }
 	    fprintf(fout,"\n");
-	    printf("\n Estimated synch period = %f (us) ,expected (20MHz:1.8, 40MHz:0.9)\n",((float) scount)/sfreq/40);
+	    printf("\n Estimated synch period = %f (us) ,expected (20MHz:1.8, 40MHz:0.9)\n",((float) scount)/sfreq/40.0);
 	  }
 	}
 
@@ -879,7 +880,10 @@ main(int argc, char *argv[])
  CLOSE:
 
   for (k=0;k<fnMPD;k++)
-    mpdDAQ_Disable(mpdSlot(k));
+    {
+      mpdDAQ_Disable(mpdSlot(k));
+      mpdFiberEnable(mpdSlot(k));
+    }
   DMA_Free();
   vmeCloseDefaultWindows();
 
@@ -900,7 +904,10 @@ void sig_handler(int signo)
     if (sig_ctrl == 0) { // force quit
       fnMPD = mpdGetNumberMPD();
       for (k=0;k<fnMPD;k++)
-        mpdDAQ_Disable(mpdSlot(k));
+	{
+	  mpdDAQ_Disable(mpdSlot(k));
+	  mpdFiberEnable(mpdSlot(k));
+	}
       vmeCloseDefaultWindows();
       exit(1);  /* exit if CRTL/C is issued */
     }

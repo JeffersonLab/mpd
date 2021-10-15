@@ -18,10 +18,30 @@
 #include "mpdLib.h"
 #include "mpdConfig.h"
 
+char filename[255] = "/home/sbs-onl/cfg/config_apv_INFN.txt";
+char progname[255];
+
+void
+Usage()
+{
+  printf("\n");
+  printf("%s: Initialize the MPD at <slot number> and APVs defined in <configfile>\n",
+	 __FILE__);
+  printf("\n");
+  printf("   %s <slot number> <configfile>\n", progname);
+  printf("\n");
+  printf("     if <configfile> is not provided, this one will be used:\n");
+  printf("      %s\n", filename);
+  printf("\n");
+
+}
+
 int
 main(int argc, char *argv[])
 {
   int stat, slot;
+
+  strncpy(progname, argv[0], 255);
 
   if (argc > 1)
     {
@@ -32,9 +52,15 @@ main(int argc, char *argv[])
 	  printf("invalid slot... using 21");
 	  slot = 2;
 	}
+      if(argc > 2)
+	{
+	  strncpy(filename, argv[2], 255);
+	}
     }
-  else
-    slot = 2;
+  {
+    Usage();
+    return 0;
+  }
 
   printf("\n %s: slot = %d\n", argv[0], slot);
   printf("----------------------------\n");
@@ -47,7 +73,7 @@ main(int argc, char *argv[])
   vmeBusLock();
 
 
-  if(mpdConfigInit("/home/sbs-onl/cfg/mpd_config.cfg") < 0)
+  if(mpdConfigInit(filename) < 0)
     {
       printf(" Config initialization ERROR!\n");
       goto CLOSE;
