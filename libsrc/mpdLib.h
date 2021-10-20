@@ -137,7 +137,8 @@ struct mpd_struct
   /* 0x001A0 */          uint32_t blank2[(0x200-0x1A0)>>2];
 
   /* 0x00200 */ struct output_buffer_struct ob_status;
-  /* 0x00230 */          uint32_t blank3[(0x300-0x230)>>2];
+  /* 0x00230 */ volatile uint32_t apv_drop_status[16];
+  /* 0x00270 */          uint32_t blank3[(0x300-0x270)>>2];
   /* 0x00300 */ volatile uint32_t adc_config;
   /* 0x00304 */          uint32_t blank4[(0x380-0x304)>>2];
 
@@ -625,6 +626,7 @@ void mpdRUPD_wr_param(int id, int par, int val);
 int mpdRUPD_rd_param(int id, int par);
 
 int mpdGStatus(int sflag);
+int mpdGAPVDropStatus(int printall);
 int mpdOutputBufferCheck();
 int mpdApvStatus(int id, uint16_t apv_mask);
 int mpdReset(int id, int pflag);
