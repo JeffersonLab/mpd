@@ -6390,10 +6390,10 @@ mpdGStatus(int sflag)
   printf("                              Output Buffer Status\n");
   printf("\n");
   printf("           Event Builder\n");
-  printf("         OutFIFO   Full Flags       \n");
-  printf("Slot   nWrds  F E    O E C T   Blks    Events     Trigs    Missed  Incoming\n");
+  printf("         OutFIFO   Full Flags                           Missed   APV\n");
+  printf("Slot   nWrds  F E    O E C T   Blks    Events     Trigs    Cnt   Wait   Incoming\n");
   printf("--------------------------------------------------------------------------------\n");
-
+  //       20     1234  1 1    1 1 1 1    123  12345678  12345678  12345 0x1234   12345678
   for(impd=0; impd<nmpd; impd++)
     {
       id = mpdSlot(impd);
@@ -6421,8 +6421,9 @@ mpdGStatus(int sflag)
       printf("%8d  ",
 	     st[id].ob_status.trigger_count);
 
-      printf("%8d  ",
-	     st[id].ob_status.missed_trigger);
+      printf("%5d 0x%04x   ",
+	     st[id].ob_status.missed_trigger & 0xFFFF,
+	     (st[id].ob_status.missed_trigger & 0xFFFF0000) >> 16);
 
       printf("%8d",
 	     st[id].ob_status.incoming_trigger);
@@ -6477,8 +6478,88 @@ mpdGStatus(int sflag)
   printf("\n");
   printf("\n");
 
+  mpdGAPVDropStatus(sflag);
+
   return OK;
 }
+
+int
+mpdGAPVDropStatus(int printall)
+{
+  uint32_t ds[MPD_MAX_BOARDS + 1][16];
+  uint16_t apvfault_mask[MPD_MAX_BOARDS + 1];
+  int fault_found = 0;
+  int impd, id, iapv;
+
+  memset(apvfault_mask, 0, sizeof(apvfault_mask));
+
+  MPDLOCK;
+  for(impd = 0; impd < nmpd; impd++)
+    {
+      id = mpdSlot(impd);
+      for(iapv = 0; iapv < 16; iapv++)
+	{
+	  ds[id][iapv] = mpdRead32(&MPDp[id]->apv_drop_status[iapv]);
+
+	  if(ds[id][iapv] > 0)
+	    {
+	      apvfault_mask[id] = 1 << iapv;
+	      fault_found++;
+	    }
+	}
+    }
+  MPDUNLOCK;
+
+  printf("%s:  %d faults found\n",
+	 __func__, fault_found);
+  if((fault_found == 0) || (printall != 1))
+    {
+      return OK;
+    }
+
+
+  printf("            Write Missed  |  Write  Missed  |  Write  Missed  |  Write  Missed\n");
+  printf("Slot  APV    Full  Event  |   Full   Event  |   Full   Event  |   Full   Event\n");
+  printf("--------------------------------------------------------------------------------\n");
+  //       12  0- 3    0xff   0xff  |   0xff    0xff  |   0xff    0xff  |   0xff    0xff
+  for (impd = 0; impd < nmpd; impd++)
+    {
+      id = mpdSlot(impd);
+      if((apvfault_mask[id]) || (printall == 1))
+	{
+	  printf(" %2d ", id);
+	  for(iapv = 0; iapv < 16; iapv+=4)
+	    {
+	      if((iapv % 4) != 0)
+		printf("    ");
+
+	      printf("%2d-%2d    ",
+		     iapv, iapv+3);
+
+	      printf("0x02x   0x%02x  |   ",
+		     (ds[id][iapv] & 0xFF) >> 8, ds[id][iapv] & 0xFF);
+	      printf("0x02x   0x%02x  |   ",
+		     (ds[id][iapv+1] & 0xFF) >> 8, ds[id][iapv+1] & 0xFF);
+	      printf("0x02x   0x%02x  |   ",
+		     (ds[id][iapv+2] & 0xFF) >> 8, ds[id][iapv+2] & 0xFF);
+	      printf("0x02x   0x%02x",
+		     (ds[id][iapv+3] & 0xFF) >> 8, ds[id][iapv=3] & 0xFF);
+
+	      printf("\n");
+	    }
+	  printf("\n");
+	}
+    }
+
+  printf("--------------------------------------------------------------------------------\n");
+
+  printf("\n");
+  printf("\n");
+
+  return OK;
+}
+
+/* Flag and show the MPD showing irregular behavior (wrt to other MPD) */
 
 int
 mpdOutputBufferCheck()
