@@ -500,6 +500,7 @@ int  mpdTRIG_BitSet(int id);
 int  mpdTRIG_BitClear(int id);
 int  mpdTRIG_Enable(int id);
 int  mpdTRIG_PauseEnable(int id, int time);
+int  mpdTRIG_SetFrontInput(int id, int choice);
 int  mpdTRIG_Disable(int id);
 int  mpdTRIG_GetMissed(int id, uint32_t *missed);
 int  mpdDELAY25_Set(int id, int apv1_delay, int apv2_delay);

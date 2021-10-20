@@ -3345,6 +3345,47 @@ mpdTRIG_Enable(int id)
   return OK;
 }
 
+
+/*
+  Choose which signal is provided as a front panel input
+
+  choice = 0 : SyncReset
+           1 : trigger
+
+*/
+
+int
+mpdTRIG_SetFrontInput(int id, int choice)
+{
+  uint32_t data = 0;
+  const uint32_t FP_SYNC_ENABLE = (1 << 17),
+    FP_TRIG_ENABLE = (1 << 23),
+    FP_INPUT_MASK = FP_TRIG_ENABLE | FP_SYNC_ENABLE;
+
+  if (CHECKMPD(id))
+    {
+      MPD_ERR("MPD in slot %d is not initialized.\n", id);
+      return ERROR;
+    }
+
+  MPDLOCK;
+  data = mpdRead32(&MPDp[id]->trigger_config) & ~FP_INPUT_MASK;
+
+  if(choice == 0)
+    {
+      data |= FP_SYNC_ENABLE;
+    }
+  else
+    {
+      data |= FP_TRIG_ENABLE;
+    }
+
+  mpdWrite32(&MPDp[id]->trigger_config, data);
+  MPDUNLOCK;
+
+  return OK;
+}
+
 int
 mpdTRIG_Disable(int id)
 {
