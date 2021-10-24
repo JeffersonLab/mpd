@@ -3387,6 +3387,40 @@ mpdTRIG_SetFrontInput(int id, int choice)
 }
 
 int
+mpdTRIG_GSetFrontInput(int choice)
+{
+  uint32_t data = 0;
+  const uint32_t FP_SYNC_ENABLE = (1 << 17),
+    FP_TRIG_ENABLE = (1 << 23),
+    FP_INPUT_MASK = FP_TRIG_ENABLE | FP_SYNC_ENABLE;
+
+  int id, impd;
+
+  MPDLOCK;
+  for (impd = 0; impd < nmpd; impd++)
+    {
+      id = mpdSlot(impd);
+
+      data = mpdRead32(&MPDp[id]->trigger_config) & ~FP_INPUT_MASK;
+
+      if(choice == 0)
+	{
+	  data |= FP_SYNC_ENABLE;
+	}
+      else
+	{
+	  data |= FP_TRIG_ENABLE;
+	}
+
+      mpdWrite32(&MPDp[id]->trigger_config, data);
+    }
+  MPDUNLOCK;
+
+  return OK;
+}
+
+
+int
 mpdTRIG_Disable(int id)
 {
 
@@ -6431,10 +6465,10 @@ mpdGStatus(int sflag)
   printf("                              Output Buffer Status\n");
   printf("\n");
   printf("           Event Builder\n");
-  printf("         OutFIFO   Full Flags                           Missed   APV\n");
-  printf("Slot   nWrds  F E    O E C T   Blks    Events     Trigs    Cnt   Wait   Incoming\n");
+  printf("         OutFIFO   Full Flags                                      APV\n");
+  printf("Slot   nWrds  F E    O E C T  Blks    Events     Trigs Sync Miss   Wait Incoming\n");
   printf("--------------------------------------------------------------------------------\n");
-  //       20     1234  1 1    1 1 1 1    123  12345678  12345678  12345 0x1234   12345678
+  //       20     1234  1 1    1 1 1 1   123  12345678  12345678  123 123  0x1234 12345678
   for(impd=0; impd<nmpd; impd++)
     {
       id = mpdSlot(impd);
@@ -6447,7 +6481,7 @@ mpdGStatus(int sflag)
 	     (st[id].ob_status.evb_fifo_word_count & (1<<17) ? 1 : 0),
 	     (st[id].ob_status.evb_fifo_word_count & (1<<16) ? 1 : 0));
 
-      printf("%d %d %d %d    ",
+      printf("%d %d %d %d   ",
 	     (st[id].ob_status.evb_fifo_word_count & (1<<27) ? 1 : 0),
 	     (st[id].ob_status.evb_fifo_word_count & (1<<26) ? 1 : 0),
 	     (st[id].ob_status.evb_fifo_word_count & (1<<25) ? 1 : 0),
@@ -6462,8 +6496,9 @@ mpdGStatus(int sflag)
       printf("%8d  ",
 	     st[id].ob_status.trigger_count);
 
-      printf("%5d 0x%04x   ",
-	     st[id].ob_status.missed_trigger & 0xFFFF,
+      printf("%3d %3d  0x%04x ",
+	     (st[id].ob_status.missed_trigger & 0xFF00) >> 8,
+	     (st[id].ob_status.missed_trigger & 0xFF),
 	     (st[id].ob_status.missed_trigger & 0xFFFF0000) >> 16);
 
       printf("%8d",
@@ -6540,7 +6575,7 @@ mpdGAPVDropStatus(int printall)
       id = mpdSlot(impd);
       for(iapv = 0; iapv < 16; iapv++)
 	{
-	  ds[id][iapv] = mpdRead32(&MPDp[id]->apv_drop_status[iapv]);
+	  ds[id][iapv] = mpdRead32(&MPDp[id]->apv_drop_status[iapv]) & 0xFFFF;
 
 	  if(ds[id][iapv] > 0)
 	    {
@@ -6553,38 +6588,38 @@ mpdGAPVDropStatus(int printall)
 
   printf("%s:  %d faults found\n",
 	 __func__, fault_found);
-  if((fault_found == 0) || (printall != 1))
+  if(fault_found == 0)
     {
       return OK;
     }
 
 
-  printf("            Write Missed  |  Write  Missed  |  Write  Missed  |  Write  Missed\n");
-  printf("Slot  APV    Full  Event  |   Full   Event  |   Full   Event  |   Full   Event\n");
+  printf("            Write Missed  |  Write Missed  |  Write Missed  |  Write Missed\n");
+  printf("Slot  APV    Full  Event  |   Full  Event  |   Full  Event  |   Full  Event\n");
   printf("--------------------------------------------------------------------------------\n");
-  //       12  0- 3    0xff   0xff  |   0xff    0xff  |   0xff    0xff  |   0xff    0xff
+  //       12  0- 3    0xff   0xff  |   0xff   0xff  |   0xff   0xff  |   0xff   0xff
   for (impd = 0; impd < nmpd; impd++)
     {
       id = mpdSlot(impd);
-      if((apvfault_mask[id]) || (printall == 1))
+      if(apvfault_mask[id])
 	{
 	  printf(" %2d ", id);
 	  for(iapv = 0; iapv < 16; iapv+=4)
 	    {
-	      if((iapv % 4) != 0)
+	      if(iapv != 0)
 		printf("    ");
 
 	      printf("%2d-%2d    ",
 		     iapv, iapv+3);
 
-	      printf("0x02x   0x%02x  |   ",
+	      printf("0x%02x   0x%02x  |   ",
 		     (ds[id][iapv] & 0xFF) >> 8, ds[id][iapv] & 0xFF);
-	      printf("0x02x   0x%02x  |   ",
+	      printf("0x%02x   0x%02x  |   ",
 		     (ds[id][iapv+1] & 0xFF) >> 8, ds[id][iapv+1] & 0xFF);
-	      printf("0x02x   0x%02x  |   ",
+	      printf("0x%02x   0x%02x  |   ",
 		     (ds[id][iapv+2] & 0xFF) >> 8, ds[id][iapv+2] & 0xFF);
-	      printf("0x02x   0x%02x",
-		     (ds[id][iapv+3] & 0xFF) >> 8, ds[id][iapv=3] & 0xFF);
+	      printf("0x%02x   0x%02x",
+		     (ds[id][iapv+3] & 0xFF) >> 8, ds[id][iapv+3] & 0xFF);
 
 	      printf("\n");
 	    }
@@ -6636,14 +6671,18 @@ mpdOutputBufferCheck()
     }
   MPDUNLOCK;
 
+  printf("%s:  Checking output buffers for inconsistencies.\n",
+	 __func__);
+
+#ifdef DEBUGOBC
   printf("\n");
-  printf("                              MPD Output Buffer Status\n");
+  printf("                              Output Buffer Status\n");
   printf("\n");
   printf("           Event Builder\n");
-  printf("         OutFIFO   Full Flags       \n");
-  printf("Slot   nWrds  F E    O E C T   Blks    Events     Trigs    Missed  Incoming\n");
+  printf("         OutFIFO   Full Flags                                      APV\n");
+  printf("Slot   nWrds  F E    O E C T  Blks    Events     Trigs Sync Miss   Wait Incoming\n");
   printf("--------------------------------------------------------------------------------\n");
-
+  //       20     1234  1 1    1 1 1 1   123  12345678  12345678  123 123  0x1234 12345678
   for(impd=0; impd<nmpd; impd++)
     {
       id = mpdSlot(impd);
@@ -6656,7 +6695,7 @@ mpdOutputBufferCheck()
 	     (st[id].ob_status.evb_fifo_word_count & (1<<17) ? 1 : 0),
 	     (st[id].ob_status.evb_fifo_word_count & (1<<16) ? 1 : 0));
 
-      printf("%d %d %d %d    ",
+      printf("%d %d %d %d   ",
 	     (st[id].ob_status.evb_fifo_word_count & (1<<27) ? 1 : 0),
 	     (st[id].ob_status.evb_fifo_word_count & (1<<26) ? 1 : 0),
 	     (st[id].ob_status.evb_fifo_word_count & (1<<25) ? 1 : 0),
@@ -6671,8 +6710,10 @@ mpdOutputBufferCheck()
       printf("%8d  ",
 	     st[id].ob_status.trigger_count);
 
-      printf("%8d  ",
-	     st[id].ob_status.missed_trigger);
+      printf("%3d %3d  0x%04x ",
+	     (st[id].ob_status.missed_trigger & 0xFF00) >> 8,
+	     (st[id].ob_status.missed_trigger & 0xFF),
+	     (st[id].ob_status.missed_trigger & 0xFFFF0000) >> 16);
 
       printf("%8d",
 	     st[id].ob_status.incoming_trigger);
@@ -6680,7 +6721,7 @@ mpdOutputBufferCheck()
       printf("\n");
     }
   printf("--------------------------------------------------------------------------------\n");
-
+#endif // DEBUGOBC
   /* Here we assume that the block count and missed are
      the main indicators of a problem */
   int32_t iblk = 0, maxCount = 0;
@@ -6702,11 +6743,12 @@ mpdOutputBufferCheck()
       if( (st[id].ob_status.block_count & 0xFF) != medianBlk)
 	blkMask |= (1 << id);
 
-      if(st[id].ob_status.missed_trigger > 0)
+      if((st[id].ob_status.missed_trigger & 0xFFFF00FF) > 0)
 	missedMask |= (1 << id);
 
     }
 
+  int32_t iadc = 0; uint16_t apv_missed_mask = 0;
   if((missedMask != 0) || (blkMask != 0))
     {
       printf("*******************************************************\n");
@@ -6716,16 +6758,33 @@ mpdOutputBufferCheck()
 	  if(missedMask & (1 << impd))
 	    printf("%2d  ", impd);
 	}
-      printf("\n\n Block Count Difference on Fiber / slots : ");
+      printf("\n\n Block Count Differences on Fiber / slots :\n ");
       for(impd = 0; impd < 32; impd++)
 	{
 	  if(blkMask & (1 << impd))
-	    printf("%2d  ", impd);
+	    {
+	      printf("\t%2d  APV: ", impd);
+	      id = mpdSlot(impd);
+	      apv_missed_mask = (uint16_t)((st[id].ob_status.missed_trigger & 0xFFFF0000) >> 16);
+	      for(iadc = 0; iadc < 16; iadc++)
+		{
+		  if(apv_missed_mask & (1 << iadc))
+		    {
+		      printf(" %2d", iadc);
+		    }
+		}
+	      printf("\n");
+
+	    }
 	}
       printf("\n\n");
       printf(" medianBlk = %d missedMask = 0x%08x  blkMask = 0x%08x\n",
 	     medianBlk, missedMask, blkMask);
       printf("*******************************************************\n");
+    }
+  else
+    {
+      printf(" No inconsistencies found\n");
     }
 
   printf("\n\n");
