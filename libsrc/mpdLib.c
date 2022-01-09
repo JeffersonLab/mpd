@@ -2591,13 +2591,35 @@ mpdAPV_TryHdmi(int id, uint8_t apv_addr, int ihdmi)
 void
 mpdSetApvEnableMask(int id, uint16_t mask)
 {
+  int iapv;
+
   fApvEnableMask[id] |= mask;
+
+  /* Update .enabled and nApv */
+  nApv[id] = 0;
+  for(iapv = 0; iapv < 16; iapv++)
+    {
+      if(fApvEnableMask[id] & (1 << iapv))
+	{
+	  fApv[id][iapv].enabled = 1;
+	  nApv[id]++;
+	}
+    }
 }
 
 void
 mpdResetApvEnableMask(int id)
 {
+  int iapv;
+
   fApvEnableMask[id] = 0;
+
+  /* Update .enabled and nApv */
+  nApv[id] = 0;
+  for(iapv = 0; iapv < 16; iapv++)
+    {
+      fApv[id][iapv].enabled = 0;
+    }
 }
 
 uint16_t
@@ -2606,8 +2628,6 @@ mpdGetApvEnableMask(int id)
   return fApvEnableMask[id];
 }
 
-#define NEWSCAN
-#ifdef NEWSCAN
 int
 mpdAPV_Scan(int id)
 {
@@ -2695,8 +2715,6 @@ mpdAPV_Scan(int id)
 
   mpdResetApvEnableMask(id);
 
-  nApv[id] = 0;
-
   for (iapv = 0; iapv < fMpd[id].nAPV; iapv++)
     {
       MPD_DBGN(MPD_DEBUG_APVINIT,
@@ -2718,8 +2736,6 @@ mpdAPV_Scan(int id)
 
       mpdSetApvEnableMask(id, (1 << fApv[id][iapv].adc));
 
-      fApv[id][iapv].enabled = 1;
-      nApv[id]++;
     }
 
   MPD_DBG("MPD %2d: %2d APV found matching settings (adc mask = 0x%08x)\n",
@@ -2727,107 +2743,6 @@ mpdAPV_Scan(int id)
 
   return nApv[id];
 }
-#else
-int
-mpdAPV_Scan(int id)
-{
-  int iapv = 0, ihdmi = 0, nhdmi = 2;
-  int nFound = 0;
-
-  if (CHECKMPD(id))
-    {
-      MPD_ERR("MPD in slot %d is not initialized.\n", id);
-      return ERROR;
-    }
-
-  if(mpdGetFpgaCompileTime(id) < MPD_HDMI_SUPPORTED_FIRMWARE_TIME)
-    {
-      nhdmi = 1;
-    }
-
-  // !!! Blindscan used to determine which HDMI output to use
-  MPD_DBGN(MPD_DEBUG_APVINIT,
-	   "MPD %2d Blind scan on %d apvs: \n", id, MPD_MAX_APV);
-
-  for (iapv = 0; iapv < MPD_MAX_APV; iapv++)
-    {
-      for (ihdmi = 0; ihdmi < nhdmi; ihdmi++)
-	{
-	  if (mpdAPV_TryHdmi(id, iapv, ihdmi) == OK)
-	    {
-	      if(fMpd[id].CtrlHdmiInitMask & (1 << iapv))
-		{
-		  MPD_ERR("MPD %2d: Multiple APV cards with i2c addr 0x%02x (separate HDMI control)\n", id, iapv);
-		  break;
-		}
-
-	      fMpd[id].CtrlHdmiMask[ihdmi] |= (1 << iapv);
-	      fMpd[id].CtrlHdmiInitMask  |= (1 << iapv);
-	      MPD_DBGN(MPD_DEBUG_APVINIT,
-		       "MPD %2d HDMI %d found candidate card at i2c addr 0x%02x 0x%04x\n",
-		       id, ihdmi, iapv, mpdRead32(&MPDp[id]->readout_config));
-	      MPD_DBGN(MPD_DEBUG_APVINIT,
-		       "  CtrlHdmiMask[%d] = 0x%x   CtrlHdmiInitMask = 0x%x\n",
-		       ihdmi,
-		       fMpd[id].CtrlHdmiMask[ihdmi],
-		       fMpd[id].CtrlHdmiInitMask);
-	      nFound++;
-	      break;
-	    }
-	}
-    }
-  MPD_DBG("MPD %2d: %2d APV found in blind scan (i2c adr mask = 0x%08x)\n",
-	  id, nFound, (uint32_t)(fMpd[id].CtrlHdmiInitMask));
-
-  mpdResetApvEnableMask(id);
-
-  nApv[id] = 0;
-
-  for (iapv = 0; iapv < fMpd[id].nAPV; iapv++)
-    {
-      MPD_DBGN(MPD_DEBUG_APVINIT,
-	       "Try i2c=0x%02x adc=%2d : \n", fApv[id][iapv].i2c,
-	       fApv[id][iapv].adc);
-
-      if ((fMpd[id].CtrlHdmiInitMask & (1 << fApv[id][iapv].i2c)) == 0)
-	{
-	  /* MPD_DBGN(MPD_DEBUG_APVINIT, */
-	  MPD_ERR("Slot %d: I2C 0x%02x  ADC %d  Not found in blindscan.  It is disabled\n",
-		   id, fApv[id][iapv].i2c, fApv[id][iapv].adc);
-	  fApvEnableMask[id] &= ~(1 << fApv[id][iapv].adc);
-	  fApv[id][iapv].enabled = 0;
-	  continue;
-	}
-
-      if (
-	   (mpdAPV_Try(id, fApv[id][iapv].i2c) == OK) &&
-	   (fApv[id][iapv].adc > -1)
-	  )
-	{
-	  MPD_DBGN(MPD_DEBUG_APVINIT,
-		   "0x%02x matched in MPD in slot %d\n", fApv[id][iapv].i2c, id);
-
-	  mpdSetApvEnableMask(id, (1 << fApv[id][iapv].adc));
-
-	  fApv[id][iapv].enabled = 1;
-	  nApv[id]++;
-	}
-      else
-	{
-	  /* MPD_DBGN(MPD_DEBUG_APVINIT, */
-	  MPD_ERR("MPD %2d APV i2c = 0x%02x (adc %d) does not respond.  It is disabled\n",
-		  id, fApv[id][iapv].i2c, fApv[id][iapv].adc);
-	  fApvEnableMask[id] &= ~(1 << fApv[id][iapv].adc);
-	  fApv[id][iapv].enabled = 0;
-	}
-    }
-
-  MPD_DBG("MPD %2d: %2d APV found matching settings (adc mask = 0x%08x)\n",
-	  id, nApv[id], fApvEnableMask[id]);
-
-  return nApv[id];
-}
-#endif
 
 int
 mpdAPV_Write(int id, uint8_t apv_addr, uint8_t reg_addr, uint8_t val)
