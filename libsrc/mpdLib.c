@@ -2718,6 +2718,7 @@ mpdAPV_Scan(int id)
 	       id, nFound, (uint32_t)(fMpd[id].CtrlHdmiInitMask));
     }
 
+  nApv[id] = 0;
   fApvEnableMask[id] = 0;
 
   for (iapv = 0; iapv < fMpd[id].nAPV; iapv++)
