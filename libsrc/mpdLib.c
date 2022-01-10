@@ -2597,9 +2597,14 @@ mpdSetApvEnableMask(int id, uint16_t mask)
 
   /* Update .enabled and nApv */
   nApv[id] = 0;
-  for(iapv = 0; iapv < 16; iapv++)
+  for(iapv = 0; iapv < MPD_MAX_APV; iapv++)
     {
-      if(fApvEnableMask[id] & (1 << iapv))
+      /* Skip the uninitialized indicies */
+      if(fApv[id][iapv].Ipre == 0)
+	  continue;
+
+      /* Remember... the mask bits are ADC channels.  NOT APV index */
+      if(fApvEnableMask[id] & (1 << fApv[id][iapv].adc))
 	{
 	  fApv[id][iapv].enabled = 1;
 	  nApv[id]++;
@@ -2616,7 +2621,7 @@ mpdResetApvEnableMask(int id)
 
   /* Update .enabled and nApv */
   nApv[id] = 0;
-  for(iapv = 0; iapv < 16; iapv++)
+  for(iapv = 0; iapv < MPD_MAX_APV; iapv++)
     {
       fApv[id][iapv].enabled = 0;
     }
@@ -2713,7 +2718,7 @@ mpdAPV_Scan(int id)
 	       id, nFound, (uint32_t)(fMpd[id].CtrlHdmiInitMask));
     }
 
-  mpdResetApvEnableMask(id);
+  fApvEnableMask[id] = 0;
 
   for (iapv = 0; iapv < fMpd[id].nAPV; iapv++)
     {
@@ -2734,7 +2739,9 @@ mpdAPV_Scan(int id)
       MPD_DBGN(MPD_DEBUG_APVINIT,
 	       "0x%02x matched in MPD in slot %d\n", fApv[id][iapv].i2c, id);
 
-      mpdSetApvEnableMask(id, (1 << fApv[id][iapv].adc));
+      fApvEnableMask[id] |= (1 << fApv[id][iapv].adc);
+      fApv[id][iapv].enabled = 1;
+      nApv[id]++;
 
     }
 
