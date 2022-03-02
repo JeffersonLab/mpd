@@ -39,7 +39,14 @@ static int32_t initOK = ERROR;
 
 extern int mpdPrintDebug;
 
+typedef struct
+{
+  char name[256];
+  int32_t offset;
+} layer_latency_t;
 
+layer_latency_t *layer; // pointer to array of layers
+uint8_t nlayers = 0;
 
 int
 vtpMpdConfigInit(char *confFileName)
@@ -68,6 +75,7 @@ vtpMpdConfigInit(char *confFileName)
   MPD_MSG("%s: Version = %s\n",
 	 confFileName,
 	 mpdReadCfgString(&mpd_cfg, "version", 0));
+
 
   vtp_set[0] = config_lookup(&mpd_cfg,"vtp");
   if(vtp_set[0]==NULL)
@@ -104,6 +112,54 @@ vtpMpdConfigInit(char *confFileName)
 
   mpd_set[1]   = config_setting_get_member(d_busset,"mpd");
   run_set[1]   = config_setting_get_member(d_setting,"run");
+
+  /* Get the layer latency settings */
+  config_setting_t *layer_latency_setting =
+    config_lookup(&mpd_cfg,"layer_latency");
+
+  if(layer_latency_setting)
+    {
+      nlayers = config_setting_length(layer_latency_setting);
+    }
+  else
+    {
+      /* Get it from defaults */
+      layer_latency_setting = config_setting_get_member(d_setting, "layer_latency");
+      if(layer_latency_setting)
+	{
+	  nlayers = config_setting_length(layer_latency_setting);
+	}
+      else
+	{
+	  MPD_ERR(" layer_latency setting is undefined in config file\n");
+	  initOK = ERROR;
+	  return ERROR;
+	}
+    }
+
+  MPD_DBG(" nlayers (layer_latency) = %d\n", nlayers);
+  /* Alloc an array of layer latency settings */
+  layer = (layer_latency_t *)malloc(nlayers*sizeof(layer_latency_t));
+
+  /* Fill er up */
+  int ilayer;
+
+  for(ilayer = 0; ilayer < nlayers; ilayer++)
+    {
+      config_setting_t *ll_elem =
+	config_setting_get_elem(layer_latency_setting, ilayer);
+
+      const char *thisname;
+      config_setting_lookup_string(ll_elem, "name", &thisname);
+      strncpy(layer[ilayer].name, thisname, 256);
+
+      config_setting_lookup_int(ll_elem, "offset", &layer[ilayer].offset);
+
+      MPD_DBG(" layer.name = %s  layer.offset = %d\n",
+	      layer[ilayer].name, layer[ilayer].offset);
+    }
+
+
 
   printf("%s: Number of MPDs in config file = %d\n",__FUNCTION__,nMPD);
   initOK = OK;
@@ -294,6 +350,13 @@ vtpMpdConfigLoad()
 	  gApv.i2c = mpdReadSettingInt(apvset, "i2c",0);
 	  gApv.adc = mpdReadSettingInt(apvset, "adc",0);
 
+	  const char *layername = mpdReadSettingString(apvset, "layer", 0);
+	  if(layer != NULL)
+	    {
+	      strncpy(gApv.layer, layername, 256);
+	    }
+	  MPD_DBG("layer = %s\n", gApv.layer);
+
 	  gApv.Ipre    = mpdReadSettingInt(apvset, "Ipre",0);
 
 	  gApv.Ipcasc  = mpdReadSettingInt(apvset, "Ipcasc",0);
@@ -323,6 +386,20 @@ vtpMpdConfigLoad()
 	  gApv.Csel    = mpdReadSettingInt(apvset, "Csel",0);
 
 	  gApv.Latency = mpdReadSettingInt(apvset, "Latency",0);
+	  // apply correction based on layer name and offset
+	  int ilayer;
+	  for(ilayer = 0; ilayer < nlayers; ilayer++)
+	    {
+	      if(strncmp(layername, layer[ilayer].name, 256) == 0)
+		{
+		  MPD_DBG(" Updating latency for layer %s  offset = %d  latency = %d\n",
+			  layer[ilayer].name, layer[ilayer].offset, gApv.Latency);
+		  gApv.Latency += layer[ilayer].offset;
+		  MPD_DBG("   --> new latency = %d\n",
+			  gApv.Latency);
+		  break;
+		}
+	    }
 
 	  gApv.Muxgain = mpdReadSettingInt(apvset, "Muxgain",0);
 

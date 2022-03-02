@@ -230,6 +230,7 @@ typedef struct apvparm_struct // actually a structure
   short enabled; // if 0 card is disabled
 
   // config settings
+  char  layer[256];
   short i2c;
   short adc;
   uint8_t Ipre;
