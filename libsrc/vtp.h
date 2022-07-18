@@ -1,6 +1,7 @@
 #ifndef __VTP_H
 #define __VTP_H
 
+#define VTP_MPD_MAX   40
 #define INT16  short
 #define UINT16 unsigned short
 #define INT32  int

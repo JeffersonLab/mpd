@@ -34,7 +34,8 @@ static char *config_include_directory;
 //static config_setting_t *d_setting, *d_bus_setting, *d_mpd_setting, *d_busset;
 static config_setting_t *d_setting, *d_busset;
 static config_setting_t *bus_set[2], *vtp_set[2], *mpd_set[2], *run_set[2], *vtp_set0[2]; // second element is pointer to default val
-static uint32_t nMPD, vtpFiberMask;
+static uint32_t nMPD;
+static uint64_t vtpFiberMask;
 static int32_t initOK = ERROR;
 
 extern int mpdPrintDebug;
@@ -119,7 +120,8 @@ vtpMpdConfigLoad()
 	*apv_set[2]={NULL, NULL},
 	  *apvset[2]={NULL, NULL},
 	    *i2c_set[2]={NULL, NULL}; /* settings to iterate */
-  int impd=0, iadc=0, iapv=0, igain=0;
+  int iadc=0, iapv=0, igain=0;
+  uint64_t impd=0;
   int fiberPort=0;
   int nApv;
   char *pattern;
@@ -141,7 +143,7 @@ vtpMpdConfigLoad()
       mpdset[1] = config_setting_get_elem(mpd_set[1],0);
 
       fiberPort = mpdReadSettingInt(mpdset, "fiberPort", 0);
-      vtpFiberMask |= (0x1 << fiberPort);
+      vtpFiberMask |= (0x1ull << fiberPort);
 
       MPD_DBG("Loading MPD idx= %2d fiberPort = %2d\n",
 	      impd, fiberPort);

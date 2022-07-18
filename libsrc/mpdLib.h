@@ -18,7 +18,7 @@
 #include "stdint.h"
 #endif
 #define MPD_MAGIC_VALUE       0x43524F4D
-#define MPD_MAX_BOARDS             32
+#define MPD_MAX_BOARDS             40
 #define MPD_SSP_MAX_BOARDS         21
 //#define MPD_MAX_APV                16
 #define MPD_MAX_APV                32
@@ -360,14 +360,14 @@ typedef struct mpd_priv_struct
 
 /* Function Prototypes */
 STATUS mpdInit (UINT32 addr, UINT32 addr_inc, int nadc, int iFlag);
-int32_t mpdInitVTP(uint32_t fibermask, int iFlag);
+int32_t mpdInitVTP(uint64_t fibermask, int iFlag);
 int  mpdCheckAddresses(int id);
 int  mpdSlot(uint32_t i);
 int mpdSetPrintDebug(int debug);
 
 #ifdef VTP
-uint32_t mpdGetVTPFiberMask();
-int mpdSetVTPFiberMap_preInit(uint32_t mpdmask);
+uint64_t mpdGetVTPFiberMask();
+int mpdSetVTPFiberMap_preInit(uint64_t mpdmask);
 #else
 int mpdSetSSPFiberMap_preInit(int ssp, uint32_t mpdmask);
 uint32_t mpdGetSSPFiberMask(int sspSlot);
@@ -501,7 +501,7 @@ int  mpdTRIG_BitClear(int id);
 int  mpdTRIG_Enable(int id);
 int  mpdTRIG_PauseEnable(int id, int time);
 int  mpdTRIG_SetFrontInput(int id, int choice);
-int  mpdTRIG_GSetFrontInput(int choice);
+
 int  mpdTRIG_Disable(int id);
 int  mpdTRIG_GetMissed(int id, uint32_t *missed);
 int  mpdDELAY25_Set(int id, int apv1_delay, int apv2_delay);
