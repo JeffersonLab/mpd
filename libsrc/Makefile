@@ -120,6 +120,8 @@ install: $(LIBS)
 	${Q}cp ${PWD}/sspMpdConfig.h $(LINUXVME_INC)
 	@echo " CP     vtpMpdConfig.h"
 	${Q}cp ${PWD}/vtpMpdConfig.h $(LINUXVME_INC)
+	@echo " CP     vtp.h"
+	${Q}cp ${PWD}/vtp.h $(LINUXVME_INC)
 
 coda_install: $(LIBS)
 	@echo " CODACP $<"

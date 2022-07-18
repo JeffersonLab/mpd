@@ -103,8 +103,8 @@ unsigned short fApvEnableMask[(MPD_MAX_BOARDS) + 1];
 int nApv[(MPD_MAX_BOARDS) + 1];
 static int mpdFiberMode = 0;
 #ifdef VTP
-static uint32_t mpdVTPFiberMask = 0;	/* value = fiber port mask of MPDs */
-static uint32_t nmpdVTPFiber = 0;	/* number of high bits in mpdVTPFiberMask */
+static uint64_t mpdVTPFiberMask = 0;	/* value = fiber port mask of MPDs */
+static uint64_t nmpdVTPFiber = 0;	/* number of high bits in mpdVTPFiberMask */
 #else
 static uint32_t mpdSSPFiberMask[(MPD_SSP_MAX_BOARDS) + 1];	/* index = ssp#, value = fiber port mask of MPDs */
 static int mpdSSPFiberMaskUsed = 0;	/* number of high bits in mpdSSPFiberMask[*] */
@@ -155,7 +155,11 @@ extern int sspMpdWriteReg(int id, int impd, unsigned int reg,
 			  unsigned int value);
 #endif
 
+#ifdef VTP
+#define CHECKMPD(x) (((long)MPDp[x]==-1) || ((x<0) || (x>VTP_MPD_MAX)))
+#else
 #define CHECKMPD(x) (((long)MPDp[x]==-1) || ((x<0) || (x>32)))
+#endif
 
 
 uint32_t
@@ -166,7 +170,7 @@ mpdRead32(volatile uint32_t * reg)
   uint32_t read = 0;
 
 #ifdef VTP
-  impd = (int) (((uintptr_t) reg & 0x1F000000) >> 24);
+  impd = (int) (((uintptr_t) reg & 0x3F000000) >> 24);
   newreg = (uint32_t) ((uintptr_t) reg & 0x00FFFFFF);
 
   read = vtpMpdReadReg(impd, newreg);
@@ -203,7 +207,7 @@ mpdWrite32(volatile uint32_t * reg, uint32_t val)
   uintptr_t newreg;
 
 #ifdef VTP
-  impd = (int) (((uintptr_t) reg & 0x1F000000) >> 24);
+  impd = (int) (((uintptr_t) reg & 0x3F000000) >> 24);
   newreg = (uint32_t) ((uintptr_t) reg & 0x00FFFFFF);
 
   vtpMpdWriteReg(impd, newreg, val);
@@ -240,22 +244,22 @@ mpdWrite32(volatile uint32_t * reg, uint32_t val)
  */
 
 #ifdef VTP
-uint32_t mpdGetVTPFiberMask()
+uint64_t mpdGetVTPFiberMask()
 {
   return mpdVTPFiberMask;
 }
 
 int
-mpdSetVTPFiberMap_preInit(uint32_t mpdmask)
+mpdSetVTPFiberMap_preInit(uint64_t mpdmask)
 {
-  int impd;
+  uint64_t impd;
 
   mpdVTPFiberMask = mpdmask;
-  printf("%s: VTP fiber mask 0x%08x\n",
+  printf("%s: VTP fiber mask 0x%16llx\n",
 	 __func__, mpdmask);
 
-  for (impd = 0; impd < 32; impd++)
-    if (mpdVTPFiberMask & (1 << impd))
+  for (impd = 0; impd < VTP_MPD_MAX; impd++)
+    if (mpdVTPFiberMask & (1ull << impd))
       nmpdVTPFiber++;
 
   return OK;
@@ -343,7 +347,8 @@ STATUS
 mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
 {
 
-  int ii, issp, ibit, impd, impd_disc, res, errFlag = 0;
+  int ii, issp, impd, impd_disc, res, errFlag = 0;
+  uint64_t ibit;
   int boardID = 0;
   int maxSlot = 1;
   int minSlot = 21;
@@ -385,7 +390,7 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
 	}
       if (mpdVTPFiberMask)
 	{
-	  MPD_MSG("Using VTP Fibermask (0x%08x) scan for MPDs\n",
+	  MPD_MSG("Using VTP Fibermask (0x%16llx) scan for MPDs\n",
 		  mpdVTPFiberMask);
 	}
     }
@@ -481,9 +486,9 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
 
   mpd_addr_list = (int *) malloc(ninc * sizeof(int));
   value = 0;
-  for (ibit = 0; ibit < 32; ibit++)
+  for (ibit = 0; ibit < VTP_MPD_MAX; ibit++)
     {
-      if (mpdVTPFiberMask & (1 << ibit))
+      if (mpdVTPFiberMask & (1ull << ibit))
 	{
 	  mpd_addr_list[nlist++] = value | (ibit << 24);
 	  MPD_MSG("Added VTP MPD %2d to init list\n", ibit);
@@ -744,10 +749,11 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
 }
 
 int32_t
-mpdInitVTP(uint32_t fibermask, int iFlag)
+mpdInitVTP(uint64_t fibermask, int iFlag)
 {
 
-  int ii, issp, ibit, impd, impd_disc, res, errFlag = 0;
+  int ii, issp, impd, impd_disc, res, errFlag = 0;
+  uint64_t ibit;
   int boardID = 0;
   uint32_t magic_const = MPD_MAGIC_VALUE;
   uint32_t rdata;
@@ -780,7 +786,7 @@ mpdInitVTP(uint32_t fibermask, int iFlag)
     }
   if(mpdVTPFiberMask)
     {
-      MPD_MSG("Using VTP Fibermask (0x%08x) scan for MPDs\n",
+      MPD_MSG("Using VTP Fibermask (0x%16llx) scan for MPDs\n",
 	      mpdVTPFiberMask);
     }
   else
@@ -793,15 +799,15 @@ mpdInitVTP(uint32_t fibermask, int iFlag)
   impd_disc = 0;
 
   /* Loop over 32 bits, continue for those bits not in mpdVTPFiberMask */
-  for (ibit = 0; ibit < 32; ibit++)
+  for (ibit = 0; ibit < VTP_MPD_MAX; ibit++)
     {
-      if ((mpdVTPFiberMask & (1 << ibit)) == 0)
+      if ((mpdVTPFiberMask & (1ull << ibit)) == 0)
 	continue;
 
       MPD_MSG("Attempting VTP MPD %2d initialization\n", ibit);
       errFlag = 0;
 
-      mpd = (struct mpd_struct *) (ibit << 24);
+      mpd = (struct mpd_struct *) ((int)ibit << 24);
 
       rdata = mpdRead32(&mpd->magic_value);
       res = 1;
@@ -882,7 +888,7 @@ mpdInitVTP(uint32_t fibermask, int iFlag)
 
       mpdID[impd] = boardID;
 
-      MPDp[boardID] = (struct mpd_struct *) (ibit << 24);
+      MPDp[boardID] = (struct mpd_struct *) ((int)ibit << 24);
 
       MPD_MSG("MPD %2d at VTP Fiber Connection %ld initialized\n",
 	      impd,
