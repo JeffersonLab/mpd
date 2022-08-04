@@ -6168,8 +6168,10 @@ int
 mpdGStatus(int sflag)
 {
   int impd, id;
-  struct mpd_struct st[MPD_MAX_BOARDS + 1];
+  struct mpd_struct *st;
   unsigned int a24addr[MPD_MAX_BOARDS + 1];
+
+  st = (struct mpd_struct *)malloc((MPD_MAX_BOARDS + 1)*sizeof(struct mpd_struct));
 
   MPDLOCK;
   for (impd = 0; impd < nmpd; impd++)
@@ -6485,6 +6487,9 @@ mpdGStatus(int sflag)
 
   mpdGAPVDropStatus(sflag);
 
+  if(st)
+    free(st);
+
   return OK;
 }
 
@@ -6570,9 +6575,12 @@ int
 mpdOutputBufferCheck()
 {
   int impd, id;
-  struct mpd_struct st[MPD_MAX_BOARDS + 1];
+  struct mpd_struct *st;
   uint8_t blkhist[256];
   uint8_t blkcount = 0;
+
+
+  st = (struct mpd_struct *)malloc((MPD_MAX_BOARDS + 1)*sizeof(struct mpd_struct));
 
   memset(blkhist, 0, sizeof(blkhist));
 
@@ -6717,6 +6725,10 @@ mpdOutputBufferCheck()
     }
 
   printf("\n\n");
+
+  if(st)
+    free(st);
+
   return OK;
 }
 
