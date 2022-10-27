@@ -135,7 +135,7 @@ int I2C_SendNack(int id);
 int I2C_CtrlHdmiEnable(int id, int upper);
 int I2C_CtrlHdmiDisable(int id);
 
-extern int sspID[MPD_SSP_MAX_BOARDS + 1];
+extern int sspSL[MPD_SSP_MAX_BOARDS + 1];
 extern int nSSP;
 extern uint32_t sspMpdReadReg(int id, int impd, unsigned int reg);
 extern int sspMpdWriteReg(int id, int impd, unsigned int reg,
@@ -159,7 +159,7 @@ mpdRead32(volatile uint32_t * reg)
       impd = (int) (((uintptr_t) reg & 0x1F000000) >> 24);
 
       /* Check if this is in the mask */
-      if ((mpdSSPFiberMask[sspID[issp]] & (1 << impd)) == 0)
+      if ((mpdSSPFiberMask[sspSL[issp]] & (1 << impd)) == 0)
 	{
 	  MPD_ERR("SSP %d, MPD %d, not initializated\n", issp, impd);
 	  return ERROR;
@@ -189,7 +189,7 @@ mpdWrite32(volatile uint32_t * reg, uint32_t val)
       impd = (int) (((uintptr_t) reg & 0x1F000000) >> 24);
 
       /* Check if this is in the mask */
-      if ((mpdSSPFiberMask[sspID[issp]] & (1 << impd)) == 0)
+      if ((mpdSSPFiberMask[sspSL[issp]] & (1 << impd)) == 0)
 	{
 	  MPD_ERR("SSP %d, MPD %d, not initializated\n", issp, impd);
 	  return;
@@ -344,18 +344,18 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
 
       if (addr)
 	{
-	  mpdSSPFiberMask[sspID[0]] = addr;
+	  mpdSSPFiberMask[sspSL[0]] = addr;
 	}
 
       for (issp = 0; issp < nSSP; issp++)
 	{
-	  printf("%s: sspID[%d] = %d : 0x%x\n", __func__,
-		 issp, sspID[issp],
-		 mpdSSPFiberMask[sspID[issp]]);
-	  if (mpdSSPFiberMask[sspID[issp]])
+	  printf("%s: sspSL[%d] = %d : 0x%x\n", __func__,
+		 issp, sspSL[issp],
+		 mpdSSPFiberMask[sspSL[issp]]);
+	  if (mpdSSPFiberMask[sspSL[issp]])
 	    {
 	      MPD_MSG("Using SSP (%d) Fibermask (0x%08x) scan for MPDs\n",
-		      sspID[issp], mpdSSPFiberMask[sspID[issp]]);
+		      sspSL[issp], mpdSSPFiberMask[sspSL[issp]]);
 	    }
 	}
     }
@@ -418,7 +418,7 @@ mpdInit(UINT32 addr, UINT32 addr_inc, int ninc, int iFlag)
 	  value = issp << 28;
 	  for (ibit = 0; ibit < 32; ibit++)
 	    {
-	      if (mpdSSPFiberMask[sspID[issp]] & (1 << ibit))
+	      if (mpdSSPFiberMask[sspSL[issp]] & (1 << ibit))
 		{
 		  mpdssp_list[nlist++] = value | (ibit << 24);
 		  MPD_MSG("Added SSP %2d MPD %2d\n", issp, ibit);
