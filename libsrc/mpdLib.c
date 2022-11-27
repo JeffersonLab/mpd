@@ -6673,15 +6673,15 @@ mpdOutputBufferCheck()
     }
 
   /* Tag the Slots with mismatched blocks */
-  uint32_t blkMask = 0, missedMask = 0;
+  uint64_t blkMask = 0, missedMask = 0;
   for (impd = 0; impd < nmpd; impd++)
     {
       id = mpdSlot(impd);
       if( (st[id].ob_status.block_count & 0xFF) != medianBlk)
-	blkMask |= (1 << id);
+	blkMask |= (1ull << id);
 
       if((st[id].ob_status.missed_trigger & 0xFFFF00FF) > 0)
-	missedMask |= (1 << id);
+	missedMask |= (1ull << id);
 
     }
 
@@ -6689,16 +6689,25 @@ mpdOutputBufferCheck()
   if((missedMask != 0) || (blkMask != 0))
     {
       printf("*******************************************************\n");
-      printf("\n\n Missed on Fiber / slots : ");
-      for(impd = 0; impd < 32; impd++)
-	{
-	  if(missedMask & (1 << impd))
-	    printf("%2d  ", impd);
-	}
       printf("\n\n Block Count Differences on Fiber / slots :\n ");
-      for(impd = 0; impd < 32; impd++)
+      for(impd = 0; impd < MPD_MAX_BOARDS; impd++)
+        {
+          if(blkMask & (1ull << impd))
+            printf("%2d  ", impd);
+        }
+
+      printf("\n\n Missed Trigger on Fiber / slots :\n ");
+      for(impd = 0; impd < MPD_MAX_BOARDS; impd++)
+        {
+	  id = mpdSlot(impd);
+	  if((st[id].ob_status.missed_trigger & 0xFF) > 0)
+            printf("%2d  ", impd);
+        }
+
+      printf("\n\n APV Wait on Fiber / slots :\n ");
+      for(impd = 0; impd < MPD_MAX_BOARDS; impd++)
 	{
-	  if(blkMask & (1 << impd))
+	  if(missedMask & (1ull << impd))
 	    {
 	      printf("\t%2d  APV: ", impd);
 	      id = mpdSlot(impd);
@@ -6715,7 +6724,7 @@ mpdOutputBufferCheck()
 	    }
 	}
       printf("\n\n");
-      printf(" medianBlk = %d missedMask = 0x%08x  blkMask = 0x%08x\n",
+      printf(" medianBlk = %d missedMask = 0x%lx  blkMask = 0x%lx\n",
 	     medianBlk, missedMask, blkMask);
       printf("*******************************************************\n");
     }
