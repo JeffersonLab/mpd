@@ -939,6 +939,12 @@ mpdSetPrintDebug(int debug)
   return mpdPrintDebug;
 }
 
+void
+mpdParametersInit()
+{
+  memset((char *)&fMpd, 0, sizeof(fMpd));
+}
+
 int
 mpdGetNumberAPV(int id)
 {

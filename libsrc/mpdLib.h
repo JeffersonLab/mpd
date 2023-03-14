@@ -365,6 +365,7 @@ int32_t mpdInitVTP(uint64_t fibermask, int iFlag);
 int  mpdCheckAddresses(int id);
 int  mpdSlot(uint32_t i);
 int mpdSetPrintDebug(int debug);
+void mpdParametersInit();
 
 #ifdef VTP
 uint64_t mpdGetVTPFiberMask();
@@ -502,6 +503,7 @@ int  mpdTRIG_BitClear(int id);
 int  mpdTRIG_Enable(int id);
 int  mpdTRIG_PauseEnable(int id, int time);
 int  mpdTRIG_SetFrontInput(int id, int choice);
+int  mpdTRIG_GSetFrontInput(int choice);
 
 int  mpdTRIG_Disable(int id);
 int  mpdTRIG_GetMissed(int id, uint32_t *missed);

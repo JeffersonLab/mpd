@@ -193,6 +193,8 @@ vtpMpdConfigLoad()
   MPD_MSG("Configuring VTP\n", __func__);
 
   vtpFiberMask = 0;
+  mpdParametersInit();
+
   for(impd=0; impd<nMPD; impd++)
     {
       mpdset[0] = config_setting_get_elem(mpd_set[0],impd);
