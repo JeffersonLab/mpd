@@ -63,8 +63,8 @@ CC			+= -m32
 endif
 AR                      = ar
 RANLIB                  = ranlib
-CFLAGS			= -L. -Llibconfig -L${LINUXVME_LIB} ${LIB_CODA} -DLinux_vme -DLinux
-INCS			= -I. -Ilibconfig -I${LINUXVME_INC} ${INC_CODA}
+CFLAGS			= -L. -L${LINUXVME_LIB} ${LIB_CODA} -DLinux_vme -DLinux
+INCS			= -I. -I${LINUXVME_INC} ${INC_CODA}
 
 LIBS			= lib${BASENAME}.a lib${BASENAME}.so
 endif #OS=LINUX#
