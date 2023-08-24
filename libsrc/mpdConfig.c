@@ -112,6 +112,8 @@ mpdConfigLoad()
 
   MPD_DBG("Start\n");
 
+  mpdParametersInit();
+
   for(impd=0; impd<nMPD; impd++)
     {
       mpdset[0] = config_setting_get_elem(mpd_set[0],impd);

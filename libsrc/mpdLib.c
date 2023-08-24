@@ -650,6 +650,12 @@ mpdSetPrintDebug(int debug)
   return mpdPrintDebug;
 }
 
+void
+mpdParametersInit()
+{
+  memset((char *)&fMpd, 0, sizeof(fMpd));
+}
+
 int
 mpdGetNumberAPV(int id)
 {
@@ -1073,10 +1079,9 @@ mpdGetOutputLevel(int id, int conn)
 uint32_t
 mpdGetFpgaRevision(int id)
 {
-  if (fMpd[id].FpgaRevision == 99999)
+  if (fMpd[id].FpgaRevision == 0)
     {
-      MPD_MSG("Fpga revision not set yet, something wrong! exit(%d)", 0);
-/*     exit(0); */
+      MPD_ERR("FPGA revision not yet set.");
     }
   return fMpd[id].FpgaRevision;
 }
