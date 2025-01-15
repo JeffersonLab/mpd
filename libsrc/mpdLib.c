@@ -6889,6 +6889,114 @@ mpdReset(int id, int pflag)
   return OK;
 }
 
+int32_t
+mpdTransceiverGStatus()
+{
+  const uint8_t SFP_i2c_addr = 0x51;
+  const uint8_t SFP_i2c_temp_msb = 96;
+  const uint8_t SFP_i2c_temp_lsb = 97;
+  const uint8_t SFP_i2c_vcc_msb = 98;
+  const uint8_t SFP_i2c_vcc_lsb = 99;
+  const uint8_t SFP_i2c_txbias_msb = 100;
+  const uint8_t SFP_i2c_txbias_lsb = 101;
+  const uint8_t SFP_i2c_txpower_msb = 102;
+  const uint8_t SFP_i2c_txpower_lsb = 103;
+  const uint8_t SFP_i2c_rxpower_msb = 104;
+  const uint8_t SFP_i2c_rxpower_lsb = 105;
+  const uint8_t SFP_i2c_alarms_msb = 112;
+  const uint8_t SFP_i2c_alarms_lsb = 113;
+  const uint8_t SFP_i2c_warnings_msb = 116;
+  const uint8_t SFP_i2c_warnings_lsb = 117;
+
+  int32_t stat = OK;
+  int16_t temp = 0;
+  uint16_t vcc = 0, txbias = 0, txpower = 0, rxpower = 0;
+  uint8_t readval = 0, alarms[2], warnings[2];
+
+  printf("\n");
+
+  printf("                      MPD Transceiver Status\n\n");
+  printf("                             ....... TX .......     RX     Alarms    Warnings\n");
+  printf("Slot     Temp[C]   Vcc[V]    Bias[mA]  Power[mW] Power[mW] TVBPR     TVBPR\n");
+  printf("--------------------------------------------------------------------------------\n");
+
+  int32_t id, impd;
+
+  for (impd = 0; impd < nmpd; impd++)
+    {
+      id = mpdSlot(impd);
+      /* temperature */
+      CHECKRET(mpdI2C_ByteRead(id, SFP_i2c_addr, SFP_i2c_temp_msb, 1, &readval));
+      temp = (readval << 8);
+      CHECKRET(mpdI2C_ByteRead(id, SFP_i2c_addr, SFP_i2c_temp_lsb, 1, &readval));
+      temp |= readval;
+
+      /* vcc */
+      CHECKRET(mpdI2C_ByteRead(id, SFP_i2c_addr, SFP_i2c_vcc_msb, 1, &readval));
+      vcc = (readval << 8);
+      CHECKRET(mpdI2C_ByteRead(id, SFP_i2c_addr, SFP_i2c_vcc_lsb, 1, &readval));
+      vcc |= readval;
+
+      /* txbias */
+      CHECKRET(mpdI2C_ByteRead(id, SFP_i2c_addr, SFP_i2c_txbias_msb, 1, &readval));
+      txbias = (readval << 8);
+      CHECKRET(mpdI2C_ByteRead(id, SFP_i2c_addr, SFP_i2c_txbias_lsb, 1, &readval));
+      txbias |= readval;
+
+      /* txpower */
+      CHECKRET(mpdI2C_ByteRead(id, SFP_i2c_addr, SFP_i2c_txpower_msb, 1, &readval));
+      txpower = (readval << 8);
+      CHECKRET(mpdI2C_ByteRead(id, SFP_i2c_addr, SFP_i2c_txpower_lsb, 1, &readval));
+      txpower |= readval;
+
+      /* rxpower */
+      CHECKRET(mpdI2C_ByteRead(id, SFP_i2c_addr, SFP_i2c_rxpower_msb, 1, &readval));
+      rxpower = (readval << 8);
+      CHECKRET(mpdI2C_ByteRead(id, SFP_i2c_addr, SFP_i2c_rxpower_lsb, 1, &readval));
+      rxpower |= readval;
+
+      /* alarms */
+      CHECKRET(mpdI2C_ByteRead(id, SFP_i2c_addr, SFP_i2c_alarms_msb, 1, &readval));
+      alarms[0] = readval;
+      CHECKRET(mpdI2C_ByteRead(id, SFP_i2c_addr, SFP_i2c_alarms_lsb, 1, &readval));
+      alarms[1] = readval;
+
+      /* warnings */
+      CHECKRET(mpdI2C_ByteRead(id, SFP_i2c_addr, SFP_i2c_warnings_msb, 1, &readval));
+      warnings[0] = readval;
+      CHECKRET(mpdI2C_ByteRead(id, SFP_i2c_addr, SFP_i2c_warnings_lsb, 1, &readval));
+      warnings[1] = readval;
+
+      printf("  %2d     ", id);
+
+      printf("%5.1f     ", ((float) temp) / 256.);
+      printf("%5.2f     ", ((float) vcc) * 100. / 1000000.);
+      printf("%5.2f     ", ((float) txbias) * 2. / 1000.);
+      printf("%5.1f     ", ((float) txpower) * 10. / 1000);
+      printf("%5.1f     ", ((float) rxpower) * 10. / 1000);
+      printf("%s%s%s%s%s     ",
+	     (alarms[0] & (1<<7)) ? "H" : (alarms[0] & (1<<6)) ? "L" : "-",
+	     (alarms[0] & (1<<5)) ? "H" : (alarms[0] & (1<<4)) ? "L" : "-",
+	     (alarms[0] & (1<<3)) ? "H" : (alarms[0] & (1<<2)) ? "L" : "-",
+	     (alarms[0] & (1<<1)) ? "H" : (alarms[0] & (1<<0)) ? "L" : "-",
+	     (alarms[1] & (1<<7)) ? "H" : (alarms[1] & (1<<6)) ? "L" : "-"
+	     );
+      printf("%s%s%s%s%s",
+	     (warnings[0] & (1<<7)) ? "H" : (warnings[0] & (1<<6)) ? "L" : "-",
+	     (warnings[0] & (1<<5)) ? "H" : (warnings[0] & (1<<4)) ? "L" : "-",
+	     (warnings[0] & (1<<3)) ? "H" : (warnings[0] & (1<<2)) ? "L" : "-",
+	     (warnings[0] & (1<<1)) ? "H" : (warnings[0] & (1<<0)) ? "L" : "-",
+	     (warnings[1] & (1<<7)) ? "H" : (warnings[1] & (1<<6)) ? "L" : "-"
+	     );
+
+      printf("\n");
+
+    }
+  printf("\n");
+
+
+  return OK;
+}
 
 /*
   Local Variables:

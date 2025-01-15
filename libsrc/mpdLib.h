@@ -635,6 +635,7 @@ int mpdGAPVDropStatus(int printall);
 int mpdOutputBufferCheck();
 int mpdApvStatus(int id, uint16_t apv_mask);
 int mpdReset(int id, int pflag);
+int32_t mpdTransceiverGStatus();
 #endif /* __MPDLIB__ */
 
 
