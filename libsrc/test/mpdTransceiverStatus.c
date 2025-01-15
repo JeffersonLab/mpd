@@ -79,19 +79,7 @@ main(int argc, char *argv[])
       printf(" * * FAILED\n");
     }
 
-  double core_t = 0.0, air_t = 0.0;
-  stat = mpdLM95235_Read(slot, &core_t, &air_t);
-
-  printf("Slot %2d - Board temperatures: core: %.2f degC air: %.2f degC   stat = %d\n",
-	 slot, core_t, air_t, stat);
-
-  mpdDELAY25_GStatus();
-
-  uint8_t i2c_addr = 0xA2, reg_addr = 0x30, val = 0;
-  stat = mpdI2C_ByteRead(slot, i2c_addr, reg_addr, 1, &val);
-
-  printf("  stat = %d  i2c_addr = 0x%02x  reg_addr = 0x%02x   val = 0x%02x\n", stat,
-	 i2c_addr, reg_addr, val);
+  mpdTransceiverGStatus();
 
   mpdFiberEnable(slot);
   printf(" --- Fiber Mode enabled ---\n");
