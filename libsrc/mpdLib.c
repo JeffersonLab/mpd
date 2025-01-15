@@ -6969,11 +6969,11 @@ mpdTransceiverGStatus()
 
       printf("  %2d     ", id);
 
-      printf("%5.1f     ", ((float) temp) / 256.);
-      printf("%5.2f     ", ((float) vcc) * 100. / 1000000.);
-      printf("%5.2f     ", ((float) txbias) * 2. / 1000.);
-      printf("%5.1f     ", ((float) txpower) * 10. / 1000);
-      printf("%5.1f     ", ((float) rxpower) * 10. / 1000);
+      printf("%5.1f     ", ((float) temp) / 256.); /* [C] / 256 */
+      printf("%5.2f     ", ((float) vcc) * 100. / 1000000.); /* 100 [uV] */
+      printf("%5.2f     ", ((float) txbias) * 2. / 1000.);   /* 2 [uA] */
+      printf("%7.1f   ", ((float) txpower) * 0.100);  /* 0.1 [uW] */
+      printf("%7.1f   ", ((float) rxpower) * 0.100);  /* 0.1 [uW] */
       printf("%s%s%s%s%s     ",
 	     (alarms[0] & (1<<7)) ? "H" : (alarms[0] & (1<<6)) ? "L" : "-",
 	     (alarms[0] & (1<<5)) ? "H" : (alarms[0] & (1<<4)) ? "L" : "-",
