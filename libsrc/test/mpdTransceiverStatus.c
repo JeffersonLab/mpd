@@ -21,29 +21,26 @@
 int
 main(int argc, char *argv[])
 {
-  int stat, slot;
-  char filename[255] = "/daqfs/daq_setups/mpd_transceiver_status/cfg/davme7.cfg";
-
-
+  int stat = 0, slot = 0;
+  extern int32_t nmpd;
+  nmpd = 1;
   if (argc > 1)
     {
       slot = atoi(argv[1]);
-
-      if ((slot < 0) || (slot > 32))
+      if ((slot < 0) || (slot > 21))
 	{
-	  printf("invalid slot... using 21");
+	  printf("invalid slot... will scan");
 	  slot = 2;
-	}
-      if(argc > 2)
-	{
-	  strncpy(filename, argv[2], 255);
+	  nmpd = 20;
+
 	}
     }
   else
-    slot = 2;
+    {
+      slot = 2;
+      nmpd = 20;
 
-  printf("\n %s: slot = %d\n", argv[0], slot);
-  printf("----------------------------\n");
+    }
 
   stat = vmeOpenDefaultWindows();
   if(stat != OK)
@@ -52,32 +49,20 @@ main(int argc, char *argv[])
   vmeCheckMutexHealth(1);
   vmeBusLock();
 
-
-  if(mpdConfigInit(filename) < 0)
+  if(mpdInit((slot << 19), (1<<19), nmpd, MPD_INIT_NO_CONFIG_FILE_CHECK) < 0)
     {
-      printf(" Config initialization ERROR!\n");
-      goto CLOSE;
-    }
-  mpdConfigLoad();
-
-  if(mpdInit((slot << 19), (1<<19), 1, 0) < 0)
-    {
-      printf("%s: Init error \n",
-	     __func__);
-      goto CLOSE;
+      if(nmpd <= 0)
+	{
+	  printf("%s: Init error \n",
+		 __func__);
+	  goto CLOSE;
+	}
     }
 
   slot = mpdSlot(0);
-  printf("MPD slot %2d config:\n", slot);
-
-  mpdFiberStatus(slot);
-
-  printf(" - Initialize I2C\n");
-
-  if(mpdI2C_Init(slot) != OK)
-    {
-      printf(" * * FAILED\n");
-    }
+  mpdSetI2CSpeed(slot, 2000);
+  mpdSetI2CMaxRetry(slot, 200);
+  mpdI2C_Init(slot);
 
   mpdTransceiverGStatus();
 

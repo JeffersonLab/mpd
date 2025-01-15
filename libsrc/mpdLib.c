@@ -1403,7 +1403,7 @@ mpdI2C_ByteRead(int id, uint8_t dev_addr, uint8_t reg_addr,
       if (rval != OK)
 	{
 	  MPD_DBGN(MPD_DEBUG_I2C,
-		   "Slot %2d: I2C_SendByte returned ERROR.  dev_addr = 0x%02x, command = 0x%x",
+		   "Slot %2d: I2C_SendByte returned ERROR.  dev_addr = 0x%02x, command = 0x%x\n",
 		   id, dev_addr, command);
 	  I2C_SendStop(id);
 	  return ERROR;
@@ -1415,7 +1415,7 @@ mpdI2C_ByteRead(int id, uint8_t dev_addr, uint8_t reg_addr,
       if (rval != OK)
 	{
 	  MPD_DBGN(MPD_DEBUG_I2C,
-		   "Slot %2d: I2C_SendByte returned ERROR.  reg_addr = 0x%02x, command = 0x%x",
+		   "Slot %2d: I2C_SendByte returned ERROR.  reg_addr = 0x%02x, command = 0x%x\n",
 		   id, reg_addr, command);
 	  I2C_SendStop(id);
 	  return ERROR;
@@ -1427,7 +1427,7 @@ mpdI2C_ByteRead(int id, uint8_t dev_addr, uint8_t reg_addr,
   if (rval != OK)
     {
       MPD_DBGN(MPD_DEBUG_I2C,
-	       "Slot %2d: I2C_SendByte returned ERROR.  dev_addr = 0x%02x, command = 0x%x",
+	       "Slot %2d: I2C_SendByte returned ERROR.  dev_addr = 0x%02x, command = 0x%x\n",
 	       id, dev_addr, command);
       I2C_SendStop(id);
       return ERROR;
@@ -1444,7 +1444,7 @@ mpdI2C_ByteRead(int id, uint8_t dev_addr, uint8_t reg_addr,
       if (rval != OK)
 	{
 	  MPD_DBGN(MPD_DEBUG_I2C,
-		   "Slot %2d: I2C_ReceiveByte returned ERROR.  reg_addr = 0x%02x, command = 0x%x",
+		   "Slot %2d: I2C_ReceiveByte returned ERROR.  reg_addr = 0x%02x, command = 0x%x\n",
 		   id, reg_addr, command);
 	  I2C_SendStop(id);
 	  return ERROR;
@@ -1545,7 +1545,7 @@ I2C_SendByte(int id, uint8_t byteval, uint8_t command)
     {
       MPD_DBGN(MPD_DEBUG_I2C,
 	       "Slot %2d: Exceeded I2CMaxRetry(%d)."
-	       "byteval = 0x%x, command = 0x%x, comm_stat = 0x%x",
+	       "byteval = 0x%x, command = 0x%x, comm_stat = 0x%x\n",
 	       id, retry_count, byteval, command, rdata);
       rval = ERROR;
     }
