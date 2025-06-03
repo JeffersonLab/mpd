@@ -1,4 +1,0 @@
-[submodule "rolDBG"]
-	path = rolDBG
-	url = /home/moffit/work/rolDBG
-	branch = mpd_debug
